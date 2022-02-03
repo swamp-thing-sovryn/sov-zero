@@ -78,7 +78,7 @@ contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, 
         uint totalCollateral = balanceAfter.sub(balanceBefore).add(msg.value);
 
         // Open trove with obtained collateral, plus collateral sent by user
-        borrowerOperations.openTrove{ value: totalCollateral }(_maxFee, _ZUSDAmount, _upperHint, _lowerHint);
+        borrowerOperations.openTrove(_maxFee, _ZUSDAmount, _upperHint, _lowerHint, totalCollateral);
     }
 
     function claimSPRewardsAndRecycle(uint _maxFee, address _upperHint, address _lowerHint) external {
@@ -96,7 +96,7 @@ contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, 
         if (claimedCollateral > 0) {
             _requireUserHasTrove(address(this));
             uint ZUSDAmount = _getNetZUSDAmount(claimedCollateral);
-            borrowerOperations.adjustTrove{ value: claimedCollateral }(_maxFee, 0, ZUSDAmount, true, _upperHint, _lowerHint);
+            borrowerOperations.adjustTrove(_maxFee, 0, ZUSDAmount, true, _upperHint, _lowerHint, claimedCollateral);
             // Provide withdrawn ZUSD to Stability Pool
             if (ZUSDAmount > 0) {
                 stabilityPool.provideToSP(ZUSDAmount, address(0));
@@ -126,7 +126,7 @@ contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, 
         if (gainedCollateral > 0) {
             _requireUserHasTrove(address(this));
             netZUSDAmount = _getNetZUSDAmount(gainedCollateral);
-            borrowerOperations.adjustTrove{ value: gainedCollateral }(_maxFee, 0, netZUSDAmount, true, _upperHint, _lowerHint);
+            borrowerOperations.adjustTrove(_maxFee, 0, netZUSDAmount, true, _upperHint, _lowerHint, gainedCollateral);
         }
 
         uint totalZUSD = gainedZUSD.add(netZUSDAmount);

@@ -10,6 +10,8 @@ import "./Interfaces/IWrbtc.sol";
 import "./Interfaces/IZUSDToken.sol";
 import "./Dependencies/Ownable.sol";
 
+import "./Dependencies/IERC20.sol";
+
 contract FeeDistributorStorage is Ownable {
     string constant public NAME = "FeeDistributor";
 
@@ -26,6 +28,8 @@ contract FeeDistributorStorage is Ownable {
     IWrbtc public wrbtc;
 
     IZUSDToken public zusdToken;
+
+    IERC20 public sovToken;
 
     address public activePoolAddress;
 

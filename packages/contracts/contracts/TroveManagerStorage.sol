@@ -12,6 +12,7 @@ import "./Interfaces/IFeeDistributor.sol";
 import "./Dependencies/Ownable.sol";
 import "./Dependencies/BaseMath.sol";
 import "./Dependencies/console.sol";
+import "./Dependencies/IERC20.sol";
 
 contract TroveManagerStorage is Ownable, BaseMath {
     string constant public NAME = "TroveManager";
@@ -31,6 +32,8 @@ contract TroveManagerStorage is Ownable, BaseMath {
     IZUSDToken public _zusdToken;
 
     IZEROToken public _zeroToken;
+
+    IERC20 public sovToken;
 
     IZEROStaking public _zeroStaking;
 
@@ -74,26 +77,26 @@ contract TroveManagerStorage is Ownable, BaseMath {
     uint public totalCollateralSnapshot;
 
     /*
-    * L_ETH and L_ZUSDDebt track the sums of accumulated liquidation rewards per unit staked. During its lifetime, each stake earns:
+    * L_SOV and L_ZUSDDebt track the sums of accumulated liquidation rewards per unit staked. During its lifetime, each stake earns:
     *
-    * An ETH gain of ( stake * [L_ETH - L_ETH(0)] )
+    * An SOV gain of ( stake * [L_SOV - L_SOV(0)] )
     * A ZUSDDebt increase  of ( stake * [L_ZUSDDebt - L_ZUSDDebt(0)] )
     *
-    * Where L_ETH(0) and L_ZUSDDebt(0) are snapshots of L_ETH and L_ZUSDDebt for the active Trove taken at the instant the stake was made
+    * Where L_SOV(0) and L_ZUSDDebt(0) are snapshots of L_SOV and L_ZUSDDebt for the active Trove taken at the instant the stake was made
     */
-    uint public L_ETH;
+    uint public L_SOV;
     uint public L_ZUSDDebt;
 
     // Map addresses with active troves to their RewardSnapshot
     mapping (address => RewardSnapshot) public rewardSnapshots;
 
-    // Object containing the ETH and ZUSD snapshots for a given active trove
-    struct RewardSnapshot { uint ETH; uint ZUSDDebt;}
+    // Object containing the SOV and ZUSD snapshots for a given active trove
+    struct RewardSnapshot { uint SOV; uint ZUSDDebt;}
 
     // Array of all active trove addresses - used to to compute an approximate hint off-chain, for the sorted list insertion
     address[] public TroveOwners;
 
     // Error trackers for the trove redistribution calculation
-    uint public lastETHError_Redistribution;
+    uint public lastSOVError_Redistribution;
     uint public lastZUSDDebtError_Redistribution;
 }

@@ -37,9 +37,10 @@ interface IStabilityPool {
 
     // --- Events ---
     
-    event StabilityPoolETHBalanceUpdated(uint _newBalance);
+    event StabilityPoolSOVBalanceUpdated(uint _newBalance);
     event StabilityPoolZUSDBalanceUpdated(uint _newBalance);
 
+    event SOVTokenAddressChanged(address _sovTokenAddress);
     event BorrowerOperationsAddressChanged(address _newBorrowerOperationsAddress);
     event TroveManagerAddressChanged(address _newTroveManagerAddress);
     event ActivePoolAddressChanged(address _newActivePoolAddress);
@@ -63,16 +64,17 @@ interface IStabilityPool {
     event UserDepositChanged(address indexed _depositor, uint _newDeposit);
     event FrontEndStakeChanged(address indexed _frontEnd, uint _newFrontEndStake, address _depositor);
 
-    event ETHGainWithdrawn(address indexed _depositor, uint _ETH, uint _ZUSDLoss);
+    event SOVGainWithdrawn(address indexed _depositor, uint _ETH, uint _ZUSDLoss);
     event ZEROPaidToDepositor(address indexed _depositor, uint _ZERO);
     event ZEROPaidToFrontEnd(address indexed _frontEnd, uint _ZERO);
-    event EtherSent(address _to, uint _amount);
+    event SOVSent(address _to, uint _amount);
 
     // --- Functions ---
 
     /**
      * @notice Called only once on init, to set addresses of other Liquity contracts. Callable only by owner
      * @dev initializer function, checks addresses are contracts
+     * @param _sovTokenAddress Sov token contract address
      * @param _liquityBaseParamsAddress LiquidityBaseParams contract address
      * @param _borrowerOperationsAddress BorrowerOperations contract address
      * @param _troveManagerAddress TroveManager contract address
@@ -83,6 +85,7 @@ interface IStabilityPool {
      * @param _communityIssuanceAddress CommunityIssuanceAddress
     */
     function setAddresses(
+        address _sovTokenAddress,
         address _liquityBaseParamsAddress,
         address _borrowerOperationsAddress,
         address _troveManagerAddress,
@@ -140,7 +143,7 @@ interface IStabilityPool {
      * @param _upperHint upper trove id hint
      * @param _lowerHint lower trove id hint
      */
-    function withdrawETHGainToTrove(address _upperHint, address _lowerHint) external;
+    function withdrawSOVGainToTrove(address _upperHint, address _lowerHint) external;
 
     /**
      * @notice Initial checks:
@@ -166,10 +169,9 @@ interface IStabilityPool {
     function offset(uint _debt, uint _coll) external;
 
     /**
-     * @return the total amount of ETH held by the pool, accounted in an internal variable instead of `balance`,
-     * to exclude edge cases like ETH received from a self-destruct.
+     * @return the total amount of SOV held by the pool
      */
-    function getETH() external view returns (uint);
+    function getSOV() external view returns (uint);
 
     /**
      * @return ZUSD held in the pool. Changes when users deposit/withdraw, and when Trove debt is offset.
@@ -177,11 +179,11 @@ interface IStabilityPool {
     function getTotalZUSDDeposits() external view returns (uint);
 
     /**
-     * @notice Calculates the ETH gain earned by the deposit since its last snapshots were taken.
+     * @notice Calculates the SOV gain earned by the deposit since its last snapshots were taken.
      * @param _depositor address to calculate ETH gain
      * @return ETH gain from given depositor
      */
-    function getDepositorETHGain(address _depositor) external view returns (uint);
+    function getDepositorSOVGain(address _depositor) external view returns (uint);
 
     /**
      * @notice Calculate the ZERO gain earned by a deposit since its last snapshots were taken.

@@ -7,31 +7,33 @@ interface ICollSurplusPool {
 
     // --- Events ---
     
+    event SOVTokenAddressChanged(address _sovTokenAddress);
     event BorrowerOperationsAddressChanged(address _newBorrowerOperationsAddress);
     event TroveManagerAddressChanged(address _newTroveManagerAddress);
     event ActivePoolAddressChanged(address _newActivePoolAddress);
 
     event CollBalanceUpdated(address indexed _account, uint _newBalance);
-    event EtherSent(address _to, uint _amount);
+    event SOVSent(address _to, uint _amount);
 
     // --- Contract setters ---
 
     /**
      * @notice Called only once on init, to set addresses of other Liquity contracts. Callable only by owner
      * @dev initializer function, checks addresses are contracts
+     * @param _sovTokenAddress SOV token contract address
      * @param _borrowerOperationsAddress BorrowerOperations contract address
      * @param _troveManagerAddress TroveManager contract address
      * @param _activePoolAddress ActivePool contract address
      */
     function setAddresses(
+        address _sovTokenAddress,
         address _borrowerOperationsAddress,
         address _troveManagerAddress,
         address _activePoolAddress
     ) external;
 
-    /// @notice Not necessarily equal to the raw ether balance - ether can be forcibly sent to contracts.
-    /// @return ETH state variable
-    function getETH() external view returns (uint);
+    /// @return SOV balance
+    function getSOV() external view returns (uint);
 
     /// @param _account account to retrieve collateral
     /// @return collateral

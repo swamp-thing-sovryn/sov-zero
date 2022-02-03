@@ -11,6 +11,7 @@ import "./Interfaces/ISortedTroves.sol";
 import "./Interfaces/IZEROStaking.sol";
 import "./Interfaces/IFeeDistributor.sol";
 import "./Dependencies/Ownable.sol";
+import "./Dependencies/IERC20.sol";
 
 interface IMasset {
     function onTokensMinted(
@@ -49,5 +50,7 @@ contract BorrowerOperationsStorage is Ownable {
 
     IMasset public masset;
     IFeeDistributor public feeDistributor;
+
+    IERC20 public sovToken;
 
 }

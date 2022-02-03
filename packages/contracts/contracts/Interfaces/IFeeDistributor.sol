@@ -7,6 +7,7 @@ interface IFeeDistributor {
 
      // --- Events ---
 
+    event SOVTokenAddressChanged(address _sovTokenAddress);
     event SOVFeeCollectorAddressChanged(address _sovFeeCollectorAddress);
     event ZeroStakingAddressChanged(address _zeroStakingAddress);
     event BorrowerOperationsAddressChanged(address _borrowerOperationsAddress);
@@ -17,13 +18,14 @@ interface IFeeDistributor {
 
 
     event ZUSDDistributed(uint256 _zusdDistributedAmount);
-    event RBTCistributed(uint256 _rbtcDistributedAmount);
+    event SOVDistributed(uint256 _rbtcDistributedAmount);
 
     // --- Functions ---
     
     /**
      * @notice Called only once on init, to set addresses of other Liquity contracts. Callable only by owner
      * @dev initializer function, checks addresses are contracts
+     * @param _sovTokenAddress SOV token contract address
      * @param _sovFeeCollectorAddress SOVFeeCollector address
      * @param _zeroStakingAddress ZEROStaking contract address
      * @param _borrowerOperationsAddress borrowerOperations contract address
@@ -33,6 +35,7 @@ interface IFeeDistributor {
      * @param _activePoolAddress ActivePool contract address
      */
     function setAddresses(
+        address _sovTokenAddress,
         address _sovFeeCollectorAddress,
         address _zeroStakingAddress,
         address _borrowerOperationsAddress,

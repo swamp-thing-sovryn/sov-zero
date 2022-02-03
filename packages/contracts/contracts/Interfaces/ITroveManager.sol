@@ -14,6 +14,7 @@ interface ITroveManager is ILiquityBase {
     
     // --- Events ---
     
+    event SOVTokenAddressChanged(address _sovTokenAddress);
     event FeeDistributorAddressChanged(address _feeDistributorAddress);
     event TroveManagerRedeemOpsAddressChanged(address _troveManagerRedeemOps);
     event LiquityBaseParamsAddressChanges(address _borrowerOperationsAddress);
@@ -42,39 +43,30 @@ interface ITroveManager is ILiquityBase {
     event TroveIndexUpdated(address _borrower, uint _newIndex);
 
     // --- Functions ---
+
     /**
      * @notice Called only once on init, to set addresses of other Liquity contracts. Callable only by owner
      * @dev initializer function, checks addresses are contracts
-     * @param _feeDistributorAddress feeDistributor contract address
-     * @param _troveManagerRedeemOps TroveManagerRedeemOps contract address
-     * @param _liquityBaseParamsAddress LiquityBaseParams contract address
-     * @param _borrowerOperationsAddress BorrowerOperations contract address
-     * @param _activePoolAddress ActivePool contract address
-     * @param _defaultPoolAddress DefaultPool contract address
-     * @param _stabilityPoolAddress StabilityPool contract address
-     * @param _gasPoolAddress GasPool contract address
-     * @param _collSurplusPoolAddress CollSurplusPool contract address
-     * @param _priceFeedAddress PriceFeed contract address
-     * @param _zusdTokenAddress ZUSDToken contract address
-     * @param _sortedTrovesAddress SortedTroves contract address
-     * @param _zeroTokenAddress ZEROToken contract address
-     * @param _zeroStakingAddress ZEROStaking contract address
+     *  To avoid stack too deep compile error use an addresses array to pass the addresses.
+     *  _sovTokenAddress SOV token contract address
+     *  _feeDistributorAddress feeDistributor contract address
+     *  _troveManagerRedeemOps TroveManagerRedeemOps contract address
+     *  _liquityBaseParamsAddress LiquityBaseParams contract address
+     *  _borrowerOperationsAddress BorrowerOperations contract address
+     *  _activePoolAddress ActivePool contract address
+     *  _defaultPoolAddress DefaultPool contract address
+     *  _stabilityPoolAddress StabilityPool contract address
+     *  _gasPoolAddress GasPool contract address
+     *  _collSurplusPoolAddress CollSurplusPool contract address
+     *  _priceFeedAddress PriceFeed contract address
+     *  _zusdTokenAddress ZUSDToken contract address
+     *  _sortedTrovesAddress SortedTroves contract address
+     *  _zeroTokenAddress ZEROToken contract address
+     *  _zeroStakingAddress ZEROStaking contract address
+     * @param _setupAddresses array of contract addresses to setup
      */
     function setAddresses(
-        address _feeDistributorAddress,
-        address _troveManagerRedeemOps,
-        address _liquityBaseParamsAddress,
-        address _borrowerOperationsAddress,
-        address _activePoolAddress,
-        address _defaultPoolAddress,
-        address _stabilityPoolAddress,
-        address _gasPoolAddress,
-        address _collSurplusPoolAddress,
-        address _priceFeedAddress,
-        address _zusdTokenAddress,
-        address _sortedTrovesAddress,
-        address _zeroTokenAddress,
-        address _zeroStakingAddress
+        address [15] calldata _setupAddresses
     ) external;
 
     /// @return Trove owners count
@@ -152,7 +144,7 @@ interface ITroveManager is ILiquityBase {
     /// @param _borrower borrower address
     function updateStakeAndTotalStakes(address _borrower) external returns (uint);
 
-    /// @notice Update borrower's snapshots of L_ETH and L_ZUSDDebt to reflect the current values
+    /// @notice Update borrower's snapshots of L_SOV and L_ZUSDDebt to reflect the current values
     /// @param _borrower borrower address
     function updateTroveRewardSnapshots(address _borrower) external;
 
@@ -166,8 +158,8 @@ interface ITroveManager is ILiquityBase {
     function applyPendingRewards(address _borrower) external;
 
     /// @param _borrower borrower address
-    /// @return the borrower's pending accumulated ETH reward, earned by their stake
-    function getPendingETHReward(address _borrower) external view returns (uint);
+    /// @return the borrower's pending accumulated SOV reward, earned by their stake
+    function getPendingSOVReward(address _borrower) external view returns (uint);
 
     /// @param _borrower borrower address
     /// @return the borrower's pending accumulated ZUSD reward, earned by their stake
@@ -206,9 +198,9 @@ interface ITroveManager is ILiquityBase {
     /// @return calculated redemption rate using calculated decayed as base rate
     function getRedemptionRateWithDecay() external view returns (uint);
 
-    /// @notice The redemption fee is taken as a cut of the total ETH drawn from the system in a redemption. It is based on the current redemption rate.
-    /// @param _ETHDrawn ETH drawn
-    function getRedemptionFeeWithDecay(uint _ETHDrawn) external view returns (uint);
+    /// @notice The redemption fee is taken as a cut of the total SOV drawn from the system in a redemption. It is based on the current redemption rate.
+    /// @param _SOVDrawn SOV drawn
+    function getRedemptionFeeWithDecay(uint _SOVDrawn) external view returns (uint);
 
     /// @return borrowing rate
     function getBorrowingRate() external view returns (uint);
@@ -268,7 +260,7 @@ interface ITroveManager is ILiquityBase {
     function decreaseTroveDebt(address _borrower, uint _debtDecrease) external returns (uint); 
 
     /**
-     * @param _price ETH price
+     * @param _price SOV price
      * @return the total collateralization ratio (TCR) of the system. 
      * The TCR is based on the the entire system debt and collateral (including pending rewards).
      */
