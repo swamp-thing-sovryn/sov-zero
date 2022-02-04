@@ -209,7 +209,7 @@ contract BorrowerOperations is LiquityBase, BorrowerOperationsStorage, CheckCont
         emit TroveCreated(_sender, vars.arrayIndex);
 
         // Move the SOV to the Active Pool, and mint the ZUSDAmount to the borrower
-        _activePoolAddColl(contractsCache.activePool, value);
+        _activePoolAddColl(_sender, contractsCache.activePool, value);
         _withdrawZUSD(contractsCache.activePool, contractsCache.zusdToken, _tokensRecipient, _ZUSDAmount, vars.netDebt);
         // Move the ZUSD gas compensation to the Gas Pool
         _withdrawZUSD(contractsCache.activePool, contractsCache.zusdToken, gasPoolAddress, ZUSD_GAS_COMPENSATION, ZUSD_GAS_COMPENSATION);
@@ -475,15 +475,15 @@ contract BorrowerOperations is LiquityBase, BorrowerOperationsStorage, CheckCont
         }
 
         if (_isCollIncrease) {
-            _activePoolAddColl(_activePool, _collChange);
+            _activePoolAddColl(_borrower, _activePool, _collChange);
         } else {
             _activePool.sendSOV(_borrower, _collChange);
         }
     }
 
     /// Send SOV to Active Pool
-    function _activePoolAddColl(IActivePool _activePool, uint _amount) internal {
-        sovToken.transfer(address(_activePool), _amount);
+    function _activePoolAddColl(address _sender, IActivePool _activePool, uint _amount) internal {
+        sovToken.transferFrom(_sender, address(_activePool), _amount);
     }
 
     /// Issue the specified amount of ZUSD to _account and increases the total active debt (_netDebtIncrease potentially includes a ZUSDFee)
