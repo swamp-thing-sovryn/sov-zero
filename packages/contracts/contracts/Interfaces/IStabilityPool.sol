@@ -9,7 +9,7 @@ pragma solidity 0.6.11;
  * ZUSD in the Stability Pool:  that is, the offset debt evaporates, and an equal amount of ZUSD tokens in the Stability Pool is burned.
  *
  * Thus, a liquidation causes each depositor to receive a ZUSD loss, in proportion to their deposit as a share of total deposits.
- * They also receive an ETH gain, as the ETH collateral of the liquidated trove is distributed among Stability depositors,
+ * They also receive an SOV gain, as the SOV collateral of the liquidated trove is distributed among Stability depositors,
  * in the same proportion.
  *
  * When a liquidation occurs, it depletes every deposit by the same fraction: for example, a liquidation that depletes 40%
@@ -18,7 +18,7 @@ pragma solidity 0.6.11;
  * A deposit that has experienced a series of liquidations is termed a "compounded deposit": each liquidation depletes the deposit,
  * multiplying it by some factor in range ]0,1[
  *
- * Please see the implementation spec in the proof document, which closely follows on from the compounded deposit / ETH gain derivations:
+ * Please see the implementation spec in the proof document, which closely follows on from the compounded deposit / SOV gain derivations:
  * https://github.com/liquity/liquity/blob/master/papers/Scalable_Reward_Distribution_with_Compounding_Stakes.pdf
  *
  * --- ZERO ISSUANCE TO STABILITY POOL DEPOSITORS ---
@@ -64,7 +64,7 @@ interface IStabilityPool {
     event UserDepositChanged(address indexed _depositor, uint _newDeposit);
     event FrontEndStakeChanged(address indexed _frontEnd, uint _newFrontEndStake, address _depositor);
 
-    event SOVGainWithdrawn(address indexed _depositor, uint _ETH, uint _ZUSDLoss);
+    event SOVGainWithdrawn(address indexed _depositor, uint _SOV, uint _ZUSDLoss);
     event ZEROPaidToDepositor(address indexed _depositor, uint _ZERO);
     event ZEROPaidToFrontEnd(address indexed _frontEnd, uint _ZERO);
     event SOVSent(address _to, uint _amount);
@@ -104,7 +104,7 @@ interface IStabilityPool {
      *  ---
      *  - Triggers a ZERO issuance, based on time passed since the last issuance. The ZERO issuance is shared between *all* depositors and front ends
      *  - Tags the deposit with the provided front end tag param, if it's a new deposit
-     *  - Sends depositor's accumulated gains (ZERO, ETH) to depositor
+     *  - Sends depositor's accumulated gains (ZERO, SOV) to depositor
      *  - Sends the tagged front end's accumulated ZERO gains to the tagged front end
      *  - Increases deposit and tagged front end's stake, and takes new snapshots for each.
      * @param _amount amount to provide
@@ -119,7 +119,7 @@ interface IStabilityPool {
      *    ---
      *    - Triggers a ZERO issuance, based on time passed since the last issuance. The ZERO issuance is shared between *all* depositors and front ends
      *    - Removes the deposit's front end tag if it is a full withdrawal
-     *    - Sends all depositor's accumulated gains (ZERO, ETH) to depositor
+     *    - Sends all depositor's accumulated gains (ZERO, SOV) to depositor
      *    - Sends the tagged front end's accumulated ZERO gains to the tagged front end
      *    - Decreases deposit and tagged front end's stake, and takes new snapshots for each.
      * 
@@ -132,12 +132,12 @@ interface IStabilityPool {
      * @notice Initial checks:
      *    - User has a non zero deposit
      *    - User has an open trove
-     *    - User has some ETH gain
+     *    - User has some SOV gain
      *    ---
      *    - Triggers a ZERO issuance, based on time passed since the last issuance. The ZERO issuance is shared between *all* depositors and front ends
      *    - Sends all depositor's ZERO gain to  depositor
      *    - Sends all tagged front end's ZERO gain to the tagged front end
-     *    - Transfers the depositor's entire ETH gain from the Stability Pool to the caller's trove
+     *    - Transfers the depositor's entire SOV gain from the Stability Pool to the caller's trove
      *    - Leaves their compounded deposit in the Stability Pool
      *    - Updates snapshots for deposit and tagged front end stake
      * @param _upperHint upper trove id hint
@@ -161,7 +161,7 @@ interface IStabilityPool {
      *    - Caller is TroveManager
      *    ---
      *    Cancels out the specified debt against the ZUSD contained in the Stability Pool (as far as possible)
-     *    and transfers the Trove's ETH collateral from ActivePool to StabilityPool.
+     *    and transfers the Trove's SOV collateral from ActivePool to StabilityPool.
      *    Only called by liquidation functions in the TroveManager.
      * @param _debt debt to cancel
      * @param _coll collateral to transfer
@@ -180,8 +180,8 @@ interface IStabilityPool {
 
     /**
      * @notice Calculates the SOV gain earned by the deposit since its last snapshots were taken.
-     * @param _depositor address to calculate ETH gain
-     * @return ETH gain from given depositor
+     * @param _depositor address to calculate SOV gain
+     * @return SOV gain from given depositor
      */
     function getDepositorSOVGain(address _depositor) external view returns (uint);
 
@@ -190,7 +190,7 @@ interface IStabilityPool {
      *    If not tagged with a front end, the depositor gets a 100% cut of what their deposit earned.
      *    Otherwise, their cut of the deposit's earnings is equal to the kickbackRate, set by the front end through
      *    which they made their deposit.
-     * @param _depositor address to calculate ETH gain
+     * @param _depositor address to calculate SOV gain
      * @return ZERO gain from given depositor
      */
     function getDepositorZEROGain(address _depositor) external view returns (uint);

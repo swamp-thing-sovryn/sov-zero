@@ -172,7 +172,7 @@ interface IBorrowerOperations {
 
     /** 
     * @notice when a borrower’s Trove has been fully redeemed from and closed, or liquidated in Recovery Mode with a collateralization ratio above 110%, 
-    * this function allows the borrower to claim their ETH collateral surplus that remains in the system (collateral - debt upon redemption; collateral - 110% of the debt upon liquidation). 
+    * this function allows the borrower to claim their SOV collateral surplus that remains in the system (collateral - debt upon redemption; collateral - 110% of the debt upon liquidation). 
     */
     function claimCollateral() external;
 
