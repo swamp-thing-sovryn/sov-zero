@@ -669,7 +669,7 @@ class TestHelper {
     ICR,
     extraParams
   }) {
-    let value
+    let value = extraParams.value
     if (!maxFeePercentage) maxFeePercentage = this._100pct
     if (!extraZUSDAmount) extraZUSDAmount = this.toBN(0)
     else if (typeof extraZUSDAmount == 'string') extraZUSDAmount = this.toBN(extraZUSDAmount)
@@ -692,8 +692,8 @@ class TestHelper {
       value = ICR.mul(totalDebt).div(price)
     }
 
-    await contracts.sovTokenTester.approve(contracts.borrowerOperations.address, value, extraParams)
-    const tx = await contracts.borrowerOperations.openTrove(maxFeePercentage, zusdAmount, upperHint, lowerHint, value, extraParams)
+    await contracts.sovTokenTester.approve(contracts.borrowerOperations.address, value, {from: extraParams.from} )
+    const tx = await contracts.borrowerOperations.openTrove(maxFeePercentage, zusdAmount, upperHint, lowerHint, value, {from: extraParams.from} )
     return {
       zusdAmount,
       netDebt,
@@ -712,6 +712,7 @@ class TestHelper {
     ICR,
     extraParams
   }) {
+    let value = extraParams.value
     if (!maxFeePercentage) maxFeePercentage = this._100pct
     if (!extraZUSDAmount) extraZUSDAmount = this.toBN(0)
     else if (typeof extraZUSDAmount == 'string') extraZUSDAmount = this.toBN(extraZUSDAmount)
@@ -731,17 +732,18 @@ class TestHelper {
 
     if (ICR) {
       const price = await contracts.priceFeedTestnet.getPrice()
-      extraParams.value = ICR.mul(totalDebt).div(price)
+      value = ICR.mul(totalDebt).div(price)
     }
 
-    const tx = await contracts.borrowerOperations.openNueTrove(maxFeePercentage, zusdAmount, upperHint, lowerHint, extraParams)
+    await contracts.sovTokenTester.approve(contracts.borrowerOperations.address, value, {from: extraParams.from} )
+    const tx = await contracts.borrowerOperations.openNueTrove(maxFeePercentage, zusdAmount, upperHint, lowerHint, value, {from: extraParams.from} )
 
     return {
       zusdAmount,
       netDebt,
       totalDebt,
       ICR,
-      collateral: extraParams.value,
+      collateral: value,
       tx
     }
   }
