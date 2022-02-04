@@ -31,15 +31,15 @@ interface ITroveManager is ILiquityBase {
     event ZEROStakingAddressChanged(address _zeroStakingAddress);
 
     event Liquidation(uint _liquidatedDebt, uint _liquidatedColl, uint _collGasCompensation, uint _ZUSDGasCompensation);
-    event Redemption(uint _attemptedZUSDAmount, uint _actualZUSDAmount, uint _ETHSent, uint _ETHFee);
+    event Redemption(uint _attemptedZUSDAmount, uint _actualZUSDAmount, uint _SOVSent, uint _SOVFee);
     event TroveUpdated(address indexed _borrower, uint _debt, uint _coll, uint stake, uint8 operation);
     event TroveLiquidated(address indexed _borrower, uint _debt, uint _coll, uint8 operation);
     event BaseRateUpdated(uint _baseRate);
     event LastFeeOpTimeUpdated(uint _lastFeeOpTime);
     event TotalStakesUpdated(uint _newTotalStakes);
     event SystemSnapshotsUpdated(uint _totalStakesSnapshot, uint _totalCollateralSnapshot);
-    event LTermsUpdated(uint _L_ETH, uint _L_ZUSDDebt);
-    event TroveSnapshotsUpdated(uint _L_ETH, uint _L_ZUSDDebt);
+    event LTermsUpdated(uint _L_SOV, uint _L_ZUSDDebt);
+    event TroveSnapshotsUpdated(uint _L_SOV, uint _L_ZUSDDebt);
     event TroveIndexUpdated(address _borrower, uint _newIndex);
 
     // --- Functions ---
@@ -82,7 +82,7 @@ interface ITroveManager is ILiquityBase {
 
     /// @notice computes the user’s individual collateralization ratio (ICR) based on their total collateral and total ZUSD debt. Returns 2^256 -1 if they have 0 debt.
     /// @param _borrower borrower address
-    /// @param _price ETH price
+    /// @param _price SOV price
     /// @return the current collateral ratio (ICR) of a given Trove. Takes a trove's pending coll and debt rewards from redistributions into account.
     function getCurrentICR(address _borrower, uint _price) external view returns (uint);
 
@@ -181,7 +181,7 @@ interface ITroveManager is ILiquityBase {
         uint debt, 
         uint coll, 
         uint pendingZUSDDebtReward, 
-        uint pendingETHReward
+        uint pendingSOVReward
     );
 
     /// @notice Close given trove. Called by BorrowerOperations.

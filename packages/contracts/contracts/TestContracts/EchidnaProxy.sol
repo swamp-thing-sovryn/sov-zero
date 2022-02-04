@@ -6,23 +6,27 @@ import "../TroveManager.sol";
 import "../BorrowerOperations.sol";
 import "../StabilityPool.sol";
 import "../ZUSDToken.sol";
+import "../Dependencies/IERC20.sol";
 
 contract EchidnaProxy {
     TroveManager troveManager;
     BorrowerOperations borrowerOperations;
     StabilityPool stabilityPool;
     ZUSDToken zusdToken;
+    IERC20 sovToken;
 
     constructor(
         TroveManager _troveManager,
         BorrowerOperations _borrowerOperations,
         StabilityPool _stabilityPool,
-        ZUSDToken _zusdToken
+        ZUSDToken _zusdToken,
+        IERC20 _sovToken
     ) public {
         troveManager = _troveManager;
         borrowerOperations = _borrowerOperations;
         stabilityPool = _stabilityPool;
         zusdToken = _zusdToken;
+        sovToken = _sovToken;
     }
 
     receive() external payable {
@@ -56,11 +60,15 @@ contract EchidnaProxy {
     }
 
     // Borrower Operations
-    function openTrovePrx(uint _SOV, uint _ZUSDAmount, address _upperHint, address _lowerHint, uint _maxFee) external payable {
+    function openTrovePrx(uint _SOV, uint _ZUSDAmount, address _upperHint, address _lowerHint, uint _maxFee) external {
+        sovToken.transferFrom(msg.sender, address(this), _SOV);
+        sovToken.approve(address(borrowerOperations), _SOV);
         borrowerOperations.openTrove(_maxFee, _ZUSDAmount, _upperHint, _lowerHint, _SOV);
     }
 
-    function addCollPrx(uint _SOV, address _upperHint, address _lowerHint) external payable {
+    function addCollPrx(uint _SOV, address _upperHint, address _lowerHint) external {
+        sovToken.transferFrom(msg.sender, address(this), _SOV);
+        sovToken.approve(address(borrowerOperations), _SOV);
         borrowerOperations.addColl(_upperHint, _lowerHint, _SOV);
     }
 
@@ -80,7 +88,9 @@ contract EchidnaProxy {
         borrowerOperations.closeTrove();
     }
 
-    function adjustTrovePrx(uint _SOV, uint _collWithdrawal, uint _debtChange, bool _isDebtIncrease, address _upperHint, address _lowerHint, uint _maxFee) external payable {
+    function adjustTrovePrx(uint _SOV, uint _collWithdrawal, uint _debtChange, bool _isDebtIncrease, address _upperHint, address _lowerHint, uint _maxFee) external {
+        sovToken.transferFrom(msg.sender, address(this), _SOV);
+        sovToken.approve(address(borrowerOperations), _SOV);
         borrowerOperations.adjustTrove(_maxFee, _collWithdrawal, _debtChange, _isDebtIncrease, _upperHint, _lowerHint, _SOV);
     }
 

@@ -9,10 +9,10 @@ import "./Dependencies/console.sol";
 import "./DefaultPoolStorage.sol";
 
 /**
- * The Default Pool holds the ETH and ZUSD debt (but not ZUSD tokens) from liquidations that have been redistributed
+ * The Default Pool holds the SOV and ZUSD debt (but not ZUSD tokens) from liquidations that have been redistributed
  * to active troves but not yet "applied", i.e. not yet recorded on a recipient active trove's struct.
  *
- * When a trove makes an operation that applies its pending ETH and ZUSD debt, its pending ETH and ZUSD debt is moved
+ * When a trove makes an operation that applies its pending SOV and ZUSD debt, its pending SOV and ZUSD debt is moved
  * from the Default Pool to the Active Pool.
  */
 contract DefaultPool is DefaultPoolStorage, CheckContract, IDefaultPool {
