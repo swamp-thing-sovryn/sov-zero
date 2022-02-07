@@ -31,6 +31,8 @@ contract('Gas compensation tests', async accounts => {
   let troveManager
   let borrowerOperationsTester
 
+  let sovToken
+
   const getOpenTroveZUSDAmount = async (totalDebt) => th.getOpenTroveZUSDAmount(contracts, totalDebt)
   const openTrove = async (params) => th.openTrove(contracts, params)
 
@@ -64,10 +66,15 @@ contract('Gas compensation tests', async accounts => {
     stabilityPool = contracts.stabilityPool
     defaultPool = contracts.defaultPool
     borrowerOperations = contracts.borrowerOperations
+    sovToken = contracts.sovTokenTester
   
     await deploymentHelper.connectZEROContracts(ZEROContracts)
     await deploymentHelper.connectCoreContracts(contracts, ZEROContracts) 
     await deploymentHelper.connectZEROContractsToCore(ZEROContracts, contracts, owner)
+
+    for (account of accounts.slice(0, 25)) {
+      await sovToken.transfer(account, toBN(dec(10000,30)))
+    }
   })
 
   let revertToSnapshot;
@@ -371,7 +378,7 @@ contract('Gas compensation tests', async accounts => {
     const price_1 = await priceFeed.getPrice()
 
     /* 
-    ETH:USD price = 9.99
+    SOV:USD price = 9.99
     -> Expect 0.5% of collaterall to be sent to liquidator, as gas compensation */
 
     // Check collateral value in USD is < $10
@@ -380,11 +387,11 @@ contract('Gas compensation tests', async accounts => {
     assert.isFalse(await th.checkRecoveryMode(contracts))
 
     // Liquidate A (use 0 gas price to easily check the amount the compensation amount the liquidator receives)
-    const liquidatorBalance_before_A = web3.utils.toBN(await web3.eth.getBalance(liquidator))
+    const liquidatorBalance_before_A = await sovToken.balanceOf(liquidator)
     await troveManager.liquidate(alice, { from: liquidator, gasPrice: 0 })
-    const liquidatorBalance_after_A = web3.utils.toBN(await web3.eth.getBalance(liquidator))
+    const liquidatorBalance_after_A = await sovToken.balanceOf(liquidator)
 
-    // Check liquidator's balance increases by 0.5% of A's coll (1 ETH)
+    // Check liquidator's balance increases by 0.5% of A's coll (1 SOV)
     const compensationReceived_A = (liquidatorBalance_after_A.sub(liquidatorBalance_before_A)).toString()
     const _0pt5percent_aliceColl = aliceColl.div(web3.utils.toBN('200'))
     assert.equal(compensationReceived_A, _0pt5percent_aliceColl)
@@ -393,16 +400,16 @@ contract('Gas compensation tests', async accounts => {
     const ZUSDinSP_A = await stabilityPool.getTotalZUSDDeposits()
     assert.isTrue(ZUSDinSP_A.lte(ZUSDinSP_0))
 
-    // Check ETH in SP has received the liquidation
-    const ETHinSP_A = await stabilityPool.getETH()
-    assert.equal(ETHinSP_A.toString(), aliceColl.sub(_0pt5percent_aliceColl)) // 1 ETH - 0.5%
+    // Check SOV in SP has received the liquidation
+    const SOVinSP_A = await stabilityPool.getSOV()
+    assert.equal(SOVinSP_A.toString(), aliceColl.sub(_0pt5percent_aliceColl)) // 1 SOV - 0.5%
 
     // --- Price drops to 3 ---
     await priceFeed.setPrice(dec(3, 18))
     const price_2 = await priceFeed.getPrice()
 
     /* 
-    ETH:USD price = 3
+    SOV:USD price = 3
     -> Expect 0.5% of collaterall to be sent to liquidator, as gas compensation */
 
     // Check collateral value in USD is < $10
@@ -410,22 +417,22 @@ contract('Gas compensation tests', async accounts => {
 
     assert.isFalse(await th.checkRecoveryMode(contracts))
     // Liquidate B (use 0 gas price to easily check the amount the compensation amount the liquidator receives)
-    const liquidatorBalance_before_B = web3.utils.toBN(await web3.eth.getBalance(liquidator))
+    const liquidatorBalance_before_B = await sovToken.balanceOf(liquidator)
     await troveManager.liquidate(bob, { from: liquidator, gasPrice: 0 })
-    const liquidatorBalance_after_B = web3.utils.toBN(await web3.eth.getBalance(liquidator))
+    const liquidatorBalance_after_B = await sovToken.balanceOf(liquidator)
 
-    // Check liquidator's balance increases by B's 0.5% of coll, 2 ETH
+    // Check liquidator's balance increases by B's 0.5% of coll, 2 SOV
     const compensationReceived_B = (liquidatorBalance_after_B.sub(liquidatorBalance_before_B)).toString()
     const _0pt5percent_bobColl = bobColl.div(web3.utils.toBN('200'))
-    assert.equal(compensationReceived_B, _0pt5percent_bobColl) // 0.5% of 2 ETH
+    assert.equal(compensationReceived_B, _0pt5percent_bobColl) // 0.5% of 2 SOV
 
     // Check SP ZUSD has decreased due to the liquidation of B
     const ZUSDinSP_B = await stabilityPool.getTotalZUSDDeposits()
     assert.isTrue(ZUSDinSP_B.lt(ZUSDinSP_A))
 
-    // Check ETH in SP has received the liquidation
-    const ETHinSP_B = await stabilityPool.getETH()
-    assert.equal(ETHinSP_B.toString(), aliceColl.sub(_0pt5percent_aliceColl).add(bobColl).sub(_0pt5percent_bobColl)) // (1 + 2 ETH) * 0.995
+    // Check SOV in SP has received the liquidation
+    const SOVinSP_B = await stabilityPool.getSOV()
+    assert.equal(SOVinSP_B.toString(), aliceColl.sub(_0pt5percent_aliceColl).add(bobColl).sub(_0pt5percent_bobColl)) // (1 + 2 SOV) * 0.995
 
 
     // --- Price drops to 3 ---
@@ -433,8 +440,8 @@ contract('Gas compensation tests', async accounts => {
     const price_3 = await priceFeed.getPrice()
 
     /* 
-    ETH:USD price = 3.141592653589793238
-    Carol coll = 3 ETH. Value = (3 * 3.141592653589793238) = $6
+    SOV:USD price = 3.141592653589793238
+    Carol coll = 3 SOV. Value = (3 * 3.141592653589793238) = $6
     -> Expect 0.5% of collaterall to be sent to liquidator, as gas compensation */
 
     // Check collateral value in USD is < $10
@@ -442,11 +449,11 @@ contract('Gas compensation tests', async accounts => {
 
     assert.isFalse(await th.checkRecoveryMode(contracts))
     // Liquidate B (use 0 gas price to easily check the amount the compensation amount the liquidator receives)
-    const liquidatorBalance_before_C = web3.utils.toBN(await web3.eth.getBalance(liquidator))
+    const liquidatorBalance_before_C = await sovToken.balanceOf(liquidator)
     await troveManager.liquidate(carol, { from: liquidator, gasPrice: 0 })
-    const liquidatorBalance_after_C = web3.utils.toBN(await web3.eth.getBalance(liquidator))
+    const liquidatorBalance_after_C = await sovToken.balanceOf(liquidator)
 
-    // Check liquidator's balance increases by C's 0.5% of coll, 3 ETH
+    // Check liquidator's balance increases by C's 0.5% of coll, 3 SOV
     const compensationReceived_C = (liquidatorBalance_after_C.sub(liquidatorBalance_before_C)).toString()
     const _0pt5percent_carolColl = carolColl.div(web3.utils.toBN('200'))
     assert.equal(compensationReceived_C, _0pt5percent_carolColl)
@@ -455,9 +462,9 @@ contract('Gas compensation tests', async accounts => {
     const ZUSDinSP_C = await stabilityPool.getTotalZUSDDeposits()
     assert.isTrue(ZUSDinSP_C.lt(ZUSDinSP_B))
 
-    // Check ETH in SP has not changed due to the lquidation of C
-    const ETHinSP_C = await stabilityPool.getETH()
-    assert.equal(ETHinSP_C.toString(), aliceColl.sub(_0pt5percent_aliceColl).add(bobColl).sub(_0pt5percent_bobColl).add(carolColl).sub(_0pt5percent_carolColl)) // (1+2+3 ETH) * 0.995
+    // Check SOV in SP has not changed due to the lquidation of C
+    const SOVinSP_C = await stabilityPool.getSOV()
+    assert.equal(SOVinSP_C.toString(), aliceColl.sub(_0pt5percent_aliceColl).add(bobColl).sub(_0pt5percent_bobColl).add(carolColl).sub(_0pt5percent_carolColl)) // (1+2+3 SOV) * 0.995
   })
 
   it('gas compensation from pool-offset liquidations: 0.5% collateral < $10 in value. Compensates $10 worth of collateral, liquidates the remainder', async () => {
@@ -476,18 +483,18 @@ contract('Gas compensation tests', async accounts => {
     await stabilityPool.provideToSP(dec(1, 23), ZERO_ADDRESS, { from: erin })
 
     const ZUSDinSP_0 = await stabilityPool.getTotalZUSDDeposits()
-    const ETHinSP_0 = await stabilityPool.getETH()
+    const SOVinSP_0 = await stabilityPool.getSOV()
 
     // --- Price drops to 199.999 ---
     await priceFeed.setPrice('199999000000000000000')
     const price_1 = await priceFeed.getPrice()
 
     /* 
-    ETH:USD price = 199.999
-    Alice coll = 1 ETH. Value: $199.999
-    0.5% of coll  = 0.05 ETH. Value: (0.05 * 199.999) = $9.99995
-    Minimum comp = $10 = 0.05000025000125001 ETH.
-    -> Expect 0.05000025000125001 ETH sent to liquidator, 
+    SOV:USD price = 199.999
+    Alice coll = 1 SOV. Value: $199.999
+    0.5% of coll  = 0.05 SOV. Value: (0.05 * 199.999) = $9.99995
+    Minimum comp = $10 = 0.05000025000125001 SOV.
+    -> Expect 0.05000025000125001 SOV sent to liquidator, 
     and (1 - 0.05000025000125001) = 0.94999974999875 ETH remainder liquidated */
 
     // Check collateral value in USD is > $10
@@ -499,9 +506,9 @@ contract('Gas compensation tests', async accounts => {
     assert.isTrue(aliceICR.lt(mv._MCR))
 
     // Liquidate A (use 0 gas price to easily check the amount the compensation amount the liquidator receives)
-    const liquidatorBalance_before_A = web3.utils.toBN(await web3.eth.getBalance(liquidator))
+    const liquidatorBalance_before_A = await sovToken.balanceOf(liquidator)
     await troveManager.liquidate(alice, { from: liquidator, gasPrice: 0 })
-    const liquidatorBalance_after_A = web3.utils.toBN(await web3.eth.getBalance(liquidator))
+    const liquidatorBalance_after_A = await sovToken.balanceOf(liquidator)
 
     // Check liquidator's balance increases by 0.5% of coll
     const compensationReceived_A = (liquidatorBalance_after_A.sub(liquidatorBalance_before_A)).toString()
@@ -512,25 +519,25 @@ contract('Gas compensation tests', async accounts => {
     const ZUSDinSP_A = await stabilityPool.getTotalZUSDDeposits()
     assert.isTrue(ZUSDinSP_A.lt(ZUSDinSP_0))
 
-    // Check ETH in SP has increased by the remainder of B's coll
+    // Check SOV in SP has increased by the remainder of B's coll
     const collRemainder_A = aliceColl.sub(_0pt5percent_aliceColl)
-    const ETHinSP_A = await stabilityPool.getETH()
+    const SOVinSP_A = await stabilityPool.getSOV()
 
-    const SPETHIncrease_A = ETHinSP_A.sub(ETHinSP_0)
+    const SPSOVIncrease_A = SOVinSP_A.sub(SOVinSP_0)
 
-    assert.isAtMost(th.getDifference(SPETHIncrease_A, collRemainder_A), 1000)
+    assert.isAtMost(th.getDifference(SPSOVIncrease_A, collRemainder_A), 1000)
 
     // --- Price drops to 15 ---
     await priceFeed.setPrice(dec(15, 18))
     const price_2 = await priceFeed.getPrice()
 
     /* 
-    ETH:USD price = 15
-    Bob coll = 15 ETH. Value: $165
-    0.5% of coll  = 0.75 ETH. Value: (0.75 * 11) = $8.25
-    Minimum comp = $10 =  0.66666...ETH.
-    -> Expect 0.666666666666666666 ETH sent to liquidator, 
-    and (15 - 0.666666666666666666) ETH remainder liquidated */
+    SOV:USD price = 15
+    Bob coll = 15 SOV. Value: $165
+    0.5% of coll  = 0.75 SOV. Value: (0.75 * 11) = $8.25
+    Minimum comp = $10 =  0.66666...SOV.
+    -> Expect 0.666666666666666666 SOV sent to liquidator, 
+    and (15 - 0.666666666666666666) SOV remainder liquidated */
 
     // Check collateral value in USD is > $10
     const bobColl = (await troveManager.Troves(bob))[1]
@@ -541,9 +548,9 @@ contract('Gas compensation tests', async accounts => {
     assert.isTrue(bobICR.lte(mv._MCR))
 
     // Liquidate B (use 0 gas price to easily check the amount the compensation amount the liquidator receives)
-    const liquidatorBalance_before_B = web3.utils.toBN(await web3.eth.getBalance(liquidator))
+    const liquidatorBalance_before_B = await sovToken.balanceOf(liquidator)
     await troveManager.liquidate(bob, { from: liquidator, gasPrice: 0 })
-    const liquidatorBalance_after_B = web3.utils.toBN(await web3.eth.getBalance(liquidator))
+    const liquidatorBalance_after_B = await sovToken.balanceOf(liquidator)
 
     // Check liquidator's balance increases by $10 worth of coll
     const _0pt5percent_bobColl = bobColl.div(web3.utils.toBN('200'))
@@ -554,13 +561,13 @@ contract('Gas compensation tests', async accounts => {
     const ZUSDinSP_B = await stabilityPool.getTotalZUSDDeposits()
     assert.isTrue(ZUSDinSP_B.lt(ZUSDinSP_A))
 
-    // Check ETH in SP has increased by the remainder of B's coll
+    // Check SOV in SP has increased by the remainder of B's coll
     const collRemainder_B = bobColl.sub(_0pt5percent_bobColl)
-    const ETHinSP_B = await stabilityPool.getETH()
+    const SOVinSP_B = await stabilityPool.getSOV()
 
-    const SPETHIncrease_B = ETHinSP_B.sub(ETHinSP_A)
+    const SPSOVIncrease_B = SOVinSP_B.sub(SOVinSP_A)
 
-    assert.isAtMost(th.getDifference(SPETHIncrease_B, collRemainder_B), 1000)
+    assert.isAtMost(th.getDifference(SPSOVIncrease_B, collRemainder_B), 1000)
   })
 
   it('gas compensation from pool-offset liquidations: 0.5% collateral > $10 in value. Compensates 0.5% of  collateral, liquidates the remainder', async () => {
@@ -580,18 +587,18 @@ contract('Gas compensation tests', async accounts => {
     await stabilityPool.provideToSP(dec(1, 23), ZERO_ADDRESS, { from: erin })
 
     const ZUSDinSP_0 = await stabilityPool.getTotalZUSDDeposits()
-    const ETHinSP_0 = await stabilityPool.getETH()
+    const SOVinSP_0 = await stabilityPool.getSOV()
 
     await priceFeed.setPrice(dec(200, 18))
     const price_1 = await priceFeed.getPrice()
 
     /* 
-    ETH:USD price = 200
-    Alice coll = 10.001 ETH. Value: $2000.2
-    0.5% of coll  = 0.050005 ETH. Value: (0.050005 * 200) = $10.01
-    Minimum comp = $10 = 0.05 ETH.
-    -> Expect  0.050005 ETH sent to liquidator, 
-    and (10.001 - 0.050005) ETH remainder liquidated */
+    SOV:USD price = 200
+    Alice coll = 10.001 SOV. Value: $2000.2
+    0.5% of coll  = 0.050005 SOV. Value: (0.050005 * 200) = $10.01
+    Minimum comp = $10 = 0.05 SOV.
+    -> Expect  0.050005 SOV sent to liquidator, 
+    and (10.001 - 0.050005) SOV remainder liquidated */
 
     // Check value of 0.5% of collateral in USD is > $10
     const aliceColl = (await troveManager.Troves(alice))[1]
@@ -603,9 +610,9 @@ contract('Gas compensation tests', async accounts => {
     assert.isTrue(aliceICR.lt(mv._MCR))
 
     // Liquidate A (use 0 gas price to easily check the amount the compensation amount the liquidator receives)
-    const liquidatorBalance_before_A = web3.utils.toBN(await web3.eth.getBalance(liquidator))
+    const liquidatorBalance_before_A = await sovToken.balanceOf(liquidator)
     await troveManager.liquidate(alice, { from: liquidator, gasPrice: 0 })
-    const liquidatorBalance_after_A = web3.utils.toBN(await web3.eth.getBalance(liquidator))
+    const liquidatorBalance_after_A =  await sovToken.balanceOf(liquidator)
 
     // Check liquidator's balance increases by 0.5% of coll
     const compensationReceived_A = (liquidatorBalance_after_A.sub(liquidatorBalance_before_A)).toString()
@@ -615,22 +622,22 @@ contract('Gas compensation tests', async accounts => {
     const ZUSDinSP_A = await stabilityPool.getTotalZUSDDeposits()
     assert.isTrue(ZUSDinSP_A.lt(ZUSDinSP_0))
 
-    // Check ETH in SP has increased by the remainder of A's coll
+    // Check SOV in SP has increased by the remainder of A's coll
     const collRemainder_A = aliceColl.sub(_0pt5percent_aliceColl)
-    const ETHinSP_A = await stabilityPool.getETH()
+    const SOVinSP_A = await stabilityPool.getSOV()
 
-    const SPETHIncrease_A = ETHinSP_A.sub(ETHinSP_0)
+    const SPSOVIncrease_A = SOVinSP_A.sub(SOVinSP_0)
 
-    assert.isAtMost(th.getDifference(SPETHIncrease_A, collRemainder_A), 1000)
+    assert.isAtMost(th.getDifference(SPSOVIncrease_A, collRemainder_A), 1000)
 
 
     /* 
-   ETH:USD price = 200
-   Bob coll = 37.5 ETH. Value: $7500
-   0.5% of coll  = 0.1875 ETH. Value: (0.1875 * 200) = $37.5
-   Minimum comp = $10 = 0.05 ETH.
-   -> Expect 0.1875 ETH sent to liquidator, 
-   and (37.5 - 0.1875 ETH) ETH remainder liquidated */
+   SOV:USD price = 200
+   Bob coll = 37.5 SOV. Value: $7500
+   0.5% of coll  = 0.1875 SOV. Value: (0.1875 * 200) = $37.5
+   Minimum comp = $10 = 0.05 SOV.
+   -> Expect 0.1875 SOV sent to liquidator, 
+   and (37.5 - 0.1875 SOV) SOV remainder liquidated */
 
     // Check value of 0.5% of collateral in USD is > $10
     const bobColl = (await troveManager.Troves(bob))[1]
@@ -642,9 +649,9 @@ contract('Gas compensation tests', async accounts => {
     assert.isTrue(bobICR.lt(mv._MCR))
 
     // Liquidate B (use 0 gas price to easily check the amount the compensation amount the liquidator receives)
-    const liquidatorBalance_before_B = web3.utils.toBN(await web3.eth.getBalance(liquidator))
+    const liquidatorBalance_before_B =  await sovToken.balanceOf(liquidator)
     await troveManager.liquidate(bob, { from: liquidator, gasPrice: 0 })
-    const liquidatorBalance_after_B = web3.utils.toBN(await web3.eth.getBalance(liquidator))
+    const liquidatorBalance_after_B =  await sovToken.balanceOf(liquidator)
 
     // Check liquidator's balance increases by 0.5% of coll
     const compensationReceived_B = (liquidatorBalance_after_B.sub(liquidatorBalance_before_B)).toString()
@@ -654,13 +661,13 @@ contract('Gas compensation tests', async accounts => {
     const ZUSDinSP_B = await stabilityPool.getTotalZUSDDeposits()
     assert.isTrue(ZUSDinSP_B.lt(ZUSDinSP_A))
 
-    // Check ETH in SP has increased by the remainder of B's coll
+    // Check SOV in SP has increased by the remainder of B's coll
     const collRemainder_B = bobColl.sub(_0pt5percent_bobColl)
-    const ETHinSP_B = await stabilityPool.getETH()
+    const SOVinSP_B = await stabilityPool.getSOV()
 
-    const SPETHIncrease_B = ETHinSP_B.sub(ETHinSP_A)
+    const SPSOVIncrease_B = SOVinSP_B.sub(SOVinSP_A)
 
-    assert.isAtMost(th.getDifference(SPETHIncrease_B, collRemainder_B), 1000)
+    assert.isAtMost(th.getDifference(SPSOVIncrease_B, collRemainder_B), 1000)
 
   })
 
@@ -755,19 +762,19 @@ contract('Gas compensation tests', async accounts => {
     await stabilityPool.provideToSP(dec(1, 23), ZERO_ADDRESS, { from: erin })
 
     const ZUSDinSP_0 = await stabilityPool.getTotalZUSDDeposits()
-    const ETHinSP_0 = await stabilityPool.getETH()
+    const SOVinSP_0 = await stabilityPool.getSOV()
 
     // --- Price drops to 199.999 ---
     await priceFeed.setPrice('199999000000000000000')
     const price_1 = await priceFeed.getPrice()
 
     /* 
-    ETH:USD price = 199.999
-    Alice coll = 1 ETH. Value: $199.999
-    0.5% of coll  = 0.05 ETH. Value: (0.05 * 199.999) = $9.99995
-    Minimum comp = $10 = 0.05000025000125001 ETH.
-    -> Expect 0.05000025000125001 ETH sent to liquidator, 
-    and (1 - 0.05000025000125001) = 0.94999974999875 ETH remainder liquidated */
+    SOV:USD price = 199.999
+    Alice coll = 1 SOV. Value: $199.999
+    0.5% of coll  = 0.05 SOV. Value: (0.05 * 199.999) = $9.99995
+    Minimum comp = $10 = 0.05000025000125001 SOV.
+    -> Expect 0.05000025000125001 SOV sent to liquidator, 
+    and (1 - 0.05000025000125001) = 0.94999974999875 SOV remainder liquidated */
 
     // Check collateral value in USD is > $10
     const aliceColl = (await troveManager.Troves(alice))[1]
@@ -801,12 +808,12 @@ contract('Gas compensation tests', async accounts => {
       const price_2 = await priceFeed.getPrice()
 
     /* 
-    ETH:USD price = 15
-    Bob coll = 15 ETH. Value: $165
-    0.5% of coll  = 0.75 ETH. Value: (0.75 * 11) = $8.25
-    Minimum comp = $10 =  0.66666...ETH.
-    -> Expect 0.666666666666666666 ETH sent to liquidator, 
-    and (15 - 0.666666666666666666) ETH remainder liquidated */
+    SOV:USD price = 15
+    Bob coll = 15 SOV. Value: $165
+    0.5% of coll  = 0.75 SOV. Value: (0.75 * 11) = $8.25
+    Minimum comp = $10 =  0.66666...SOV.
+    -> Expect 0.666666666666666666 SOV sent to liquidator, 
+    and (15 - 0.666666666666666666) SOV remainder liquidated */
 
     // Check collateral value in USD is > $10
     const bobColl = (await troveManager.Troves(bob))[1]
@@ -851,7 +858,7 @@ contract('Gas compensation tests', async accounts => {
     await stabilityPool.provideToSP(dec(1, 23), ZERO_ADDRESS, { from: erin })
 
     const ZUSDinSP_0 = await stabilityPool.getTotalZUSDDeposits()
-    const ETHinSP_0 = await stabilityPool.getETH()
+    const SOVinSP_0 = await stabilityPool.getSOV()
 
     await priceFeed.setPrice(dec(200, 18))
     const price_1 = await priceFeed.getPrice()
@@ -881,12 +888,12 @@ contract('Gas compensation tests', async accounts => {
 
 
     /* 
-   ETH:USD price = 200
-   Bob coll = 37.5 ETH. Value: $7500
-   0.5% of coll  = 0.1875 ETH. Value: (0.1875 * 200) = $37.5
-   Minimum comp = $10 = 0.05 ETH.
-   -> Expect 0.1875 ETH sent to liquidator, 
-   and (37.5 - 0.1875 ETH) ETH remainder liquidated */
+   SOV:USD price = 200
+   Bob coll = 37.5 SOV. Value: $7500
+   0.5% of coll  = 0.1875 SOV. Value: (0.1875 * 200) = $37.5
+   Minimum comp = $10 = 0.05 SOV.
+   -> Expect 0.1875 SOV sent to liquidator, 
+   and (37.5 - 0.1875 SOV) SOV remainder liquidated */
 
     // Check value of 0.5% of collateral in USD is > $10
     const bobColl = (await troveManager.Troves(bob))[1]
@@ -984,9 +991,9 @@ contract('Gas compensation tests', async accounts => {
 
     // Liquidate troves A-D
 
-    const liquidatorBalance_before = web3.utils.toBN(await web3.eth.getBalance(liquidator))
+    const liquidatorBalance_before = await sovToken.balanceOf(liquidator)
     await troveManager.liquidateTroves(4, { from: liquidator, gasPrice: 0 })
-    const liquidatorBalance_after = web3.utils.toBN(await web3.eth.getBalance(liquidator))
+    const liquidatorBalance_after = await sovToken.balanceOf(liquidator)
 
     // Check ZUSD in SP has decreased
     const ZUSDinSP_1 = await stabilityPool.getTotalZUSDDeposits()
@@ -996,9 +1003,9 @@ contract('Gas compensation tests', async accounts => {
     const compensationReceived = (liquidatorBalance_after.sub(liquidatorBalance_before)).toString()
     assert.equal(expectedGasComp, compensationReceived)
 
-    // Check ETH in stability pool now equals the expected liquidated collateral
-    const ETHinSP = (await stabilityPool.getETH()).toString()
-    assert.equal(expectedLiquidatedColl, ETHinSP)
+    // Check SOV in stability pool now equals the expected liquidated collateral
+    const SOVinSP = (await stabilityPool.getSOV()).toString()
+    assert.equal(expectedLiquidatedColl, SOVinSP)
   })
 
   // liquidateTroves - full redistribution
@@ -1060,9 +1067,9 @@ contract('Gas compensation tests', async accounts => {
       .add(dennisColl.sub(_0pt5percent_dennisColl))
 
     // Liquidate troves A-D
-    const liquidatorBalance_before = web3.utils.toBN(await web3.eth.getBalance(liquidator))
+    const liquidatorBalance_before = await sovToken.balanceOf(liquidator)
     await troveManager.liquidateTroves(4, { from: liquidator, gasPrice: 0 })
-    const liquidatorBalance_after = web3.utils.toBN(await web3.eth.getBalance(liquidator))
+    const liquidatorBalance_after = await sovToken.balanceOf(liquidator)
 
     // Check ZUSD in DefaultPool has decreased
     const ZUSDinDefaultPool_1 = await defaultPool.getZUSDDebt()
@@ -1073,9 +1080,9 @@ contract('Gas compensation tests', async accounts => {
 
     assert.isAtMost(th.getDifference(expectedGasComp, compensationReceived), 1000)
 
-    // Check ETH in defaultPool now equals the expected liquidated collateral
-    const ETHinDefaultPool = (await defaultPool.getETH()).toString()
-    assert.isAtMost(th.getDifference(expectedLiquidatedColl, ETHinDefaultPool), 1000)
+    // Check SOV in defaultPool now equals the expected liquidated collateral
+    const SOVinDefaultPool = (await defaultPool.getSOV()).toString()
+    assert.isAtMost(th.getDifference(expectedLiquidatedColl, SOVinDefaultPool), 1000)
   })
 
   //  --- event emission in liquidation sequence ---
