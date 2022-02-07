@@ -26,6 +26,8 @@ contract('HintHelpers', async accounts => {
 
   let numAccounts;
 
+  let sovToken
+
   const getNetBorrowingAmount = async (debtWithFee) => th.getNetBorrowingAmount(contracts, debtWithFee)
 
   /* Open a Trove for each account. ZUSD debt is 200 ZUSD each, with collateral beginning at
@@ -47,7 +49,8 @@ contract('HintHelpers', async accounts => {
  const openTrove = async (account, index) => {
    const amountFinney = 2000 + index * 10
    const coll = web3.utils.toWei((amountFinney.toString()), 'finney')
-   await borrowerOperations.openTrove(th._100pct, 0, account, account, { from: account, value: coll })
+   await sovToken.approve(borrowerOperations.address, coll, {from: account})
+   await borrowerOperations.openTrove(th._100pct, 0, account, account, coll, { from: account })
  }
 
  const withdrawZUSDfromTrove = async (account) => {
@@ -87,12 +90,17 @@ contract('HintHelpers', async accounts => {
     borrowerOperations = contracts.borrowerOperations
     hintHelpers = contracts.hintHelpers
     priceFeed = contracts.priceFeedTestnet
+    sovToken = contracts.sovTokenTester
   
     await deploymentHelper.connectCoreContracts(contracts, ZEROContracts)
     await deploymentHelper.connectZEROContracts(ZEROContracts)
     await deploymentHelper.connectZEROContractsToCore(ZEROContracts, contracts, owner)
 
     numAccounts = 10
+
+    for (account of accounts.slice(0, numAccounts)) {
+      await sovToken.transfer(account, toBN(dec(10000,30)))
+    }
 
     await priceFeed.setPrice(dec(100, 18))
     await makeTrovesInSequence(accounts, numAccounts) 
