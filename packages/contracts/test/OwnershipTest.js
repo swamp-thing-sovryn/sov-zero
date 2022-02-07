@@ -77,38 +77,59 @@ contract('All Liquity functions with onlyOwner modifier', async accounts => {
 
   describe('TroveManager', async accounts => {
     it("setAddresses(): reverts when called by non-owner, with wrong addresses, or twice", async () => {
-      await testSetAddresses(troveManager, 14)
+      const dumbContract = await GasPool.new()
+      const params = Array(15).fill(dumbContract.address)
+
+      // Attempt call from alice
+      await th.assertRevert(troveManager.setAddresses(params, { from: alice }))
+
+      // Attempt to use zero address
+      for (let i = 0; i < params.length; i++) {
+        const newParams = [...params]
+        newParams[i] = th.ZERO_ADDRESS
+        await th.assertRevert(troveManager.setAddresses(newParams, { from: owner }),  'Account cannot be zero address')
+      }
+      // Attempt to use non contract
+      for (let i = 0; i < params.length; i++) {
+        const newParams = [...params]
+        newParams[i] = bob
+        await th.assertRevert(troveManager.setAddresses(newParams, { from: owner }),  'Account cannot be zero address')
+      }
+
+      // Owner can successfully set any address
+      const txOwner = await troveManager.setAddresses(params, { from: owner })
+      assert.isTrue(txOwner.receipt.status)
     })
   })
 
   describe('BorrowerOperations', async accounts => {
     it("setAddresses(): reverts when called by non-owner, with wrong addresses, or twice", async () => {
-      await testSetAddresses(borrowerOperations, 12)
+      await testSetAddresses(borrowerOperations, 13)
     })
   })
 
   describe('FeeDistributor', async accounts => {
     it("setAddresses(): reverts when called by non-owner, with wrong addresses, or twice", async () => {
-      await testSetAddresses(feeDistributor, 7)
+      await testSetAddresses(feeDistributor, 8)
     })
   })
 
 
   describe('DefaultPool', async accounts => {
     it("setAddresses(): reverts when called by non-owner, with wrong addresses, or twice", async () => {
-      await testSetAddresses(defaultPool, 2)
+      await testSetAddresses(defaultPool, 3)
     })
   })
 
   describe('StabilityPool', async accounts => {
     it("setAddresses(): reverts when called by non-owner, with wrong addresses, or twice", async () => {
-      await testSetAddresses(stabilityPool, 8)
+      await testSetAddresses(stabilityPool, 9)
     })
   })
 
   describe('ActivePool', async accounts => {
     it("setAddresses(): reverts when called by non-owner, with wrong addresses, or twice", async () => {
-      await testSetAddresses(activePool, 4)
+      await testSetAddresses(activePool, 5)
     })
   })
 
@@ -157,7 +178,7 @@ contract('All Liquity functions with onlyOwner modifier', async accounts => {
 
   describe('ZEROStaking', async accounts => {
     it("setAddresses(): reverts when called by non-owner, with wrong addresses, or twice", async () => {
-      await testSetAddresses(zeroStaking, 4)
+      await testSetAddresses(zeroStaking, 5)
     })
   })
 })

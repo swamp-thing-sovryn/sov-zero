@@ -45,7 +45,7 @@ contract ZEROStaking is ZEROStakingStorage, IZEROStaking, CheckContract, BaseMat
         onlyOwner 
         override 
     {
-        CheckContract(_sovTokenAddress);
+        checkContract(_sovTokenAddress);
         checkContract(_zeroTokenAddress);
         checkContract(_zusdTokenAddress);
         checkContract(_feeDistributorAddress);

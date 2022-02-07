@@ -38,7 +38,7 @@ contract ActivePool is CheckContract, IActivePool, ActivePoolStorage {
         address _stabilityPoolAddress,
         address _defaultPoolAddress
     ) external onlyOwner {
-        CheckContract(_sovTokenAddress);
+        checkContract(_sovTokenAddress);
         checkContract(_borrowerOperationsAddress);
         checkContract(_troveManagerAddress);
         checkContract(_stabilityPoolAddress);
