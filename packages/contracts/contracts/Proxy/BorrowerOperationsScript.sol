@@ -13,7 +13,7 @@ contract BorrowerOperationsScript is CheckContract {
 
     constructor(IBorrowerOperations _borrowerOperations, IERC20 _sovToken) public {
         checkContract(address(_borrowerOperations));
-        CheckContract(address(_sovToken));
+        checkContract(address(_sovToken));
         borrowerOperations = _borrowerOperations;
         sovToken = _sovToken;
     }

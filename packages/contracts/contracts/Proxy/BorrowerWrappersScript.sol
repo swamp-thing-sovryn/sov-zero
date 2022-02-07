@@ -159,6 +159,11 @@ contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, 
         return netDebt;
     }
 
+    function transferSOV(address _recipient, uint256 _amount) external returns (bool) {
+        (bool success ) = sovToken.transfer(_recipient, _amount);
+        return success;
+    }
+
     function _requireUserHasTrove(address _depositor) internal view {
         require(troveManager.getTroveStatus(_depositor) == 1, "BorrowerWrappersScript: caller must have an active trove");
     }

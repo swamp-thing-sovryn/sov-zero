@@ -358,11 +358,12 @@ class DeploymentHelper {
       contracts.priceFeedTestnet.address,
       contracts.zusdToken.address,
       ZEROContracts.zeroToken.address,
+      contracts.sovTokenTester.address
     )
     contracts.borrowerWrappers = new BorrowerWrappersProxy(owner, proxies, borrowerWrappersScript.address)
 
-    const borrowerOperationsScript = await BorrowerOperationsScript.new(contracts.borrowerOperations.address)
-    contracts.borrowerOperations = new BorrowerOperationsProxy(owner, proxies, borrowerOperationsScript.address, contracts.borrowerOperations)
+    const borrowerOperationsScript = await BorrowerOperationsScript.new(contracts.borrowerOperations.address, contracts.sovTokenTester.address)
+    contracts.borrowerOperations = new BorrowerOperationsProxy(owner, proxies, borrowerOperationsScript.address, contracts.borrowerOperations) 
 
     const troveManagerScript = await TroveManagerScript.new(contracts.troveManager.address)
     contracts.troveManager = new TroveManagerProxy(owner, proxies, troveManagerScript.address, contracts.troveManager)
