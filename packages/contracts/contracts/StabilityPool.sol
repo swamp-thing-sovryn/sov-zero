@@ -379,6 +379,7 @@ contract StabilityPool is LiquityBase, StabilityPoolStorage, CheckContract, ISta
         emit StabilityPoolSOVBalanceUpdated(sovToken.balanceOf(address(this)));
         emit SOVSent(msg.sender, depositorSOVGain);
 
+        sovToken.approve(address(borrowerOperations), depositorSOVGain);
         borrowerOperations.moveSOVGainToTrove(msg.sender, _upperHint, _lowerHint, depositorSOVGain);
     }
 
