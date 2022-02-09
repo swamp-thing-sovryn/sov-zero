@@ -12,10 +12,10 @@ const mv = testHelpers.MoneyValues
 const timeValues = testHelpers.TimeValues
 
 
-/* NOTE: Some tests involving ETH redemption fees do not test for specific fee values.
+/* NOTE: Some tests involving SOV redemption fees do not test for specific fee values.
  * Some only test that the fees are non-zero when they should occur.
  *
- * Specific ETH gain values will depend on the final fee schedule used, and the final choices for
+ * Specific SOV gain values will depend on the final fee schedule used, and the final choices for
  * the parameter BETA in the TroveManager, which is still TBD based on economic modelling.
  * 
  */
@@ -38,6 +38,8 @@ contract('TroveManager', async accounts => {
   let hintHelpers
 
   let contracts
+
+  let sovToken
 
   const getOpenTroveZUSDAmount = async (totalDebt) => th.getOpenTroveZUSDAmount(contracts, totalDebt)
  
@@ -69,6 +71,7 @@ contract('TroveManager', async accounts => {
     collSurplusPool = contracts.collSurplusPool
     borrowerOperations = contracts.borrowerOperations
     hintHelpers = contracts.hintHelpers
+    sovToken = contracts.sovTokenTester
 
     zeroStaking = ZEROContracts.zeroStaking
     zeroToken = ZEROContracts.zeroToken
@@ -77,6 +80,10 @@ contract('TroveManager', async accounts => {
     await deploymentHelper.connectCoreContracts(contracts, ZEROContracts)
     await deploymentHelper.connectZEROContracts(ZEROContracts)
     await deploymentHelper.connectZEROContractsToCore(ZEROContracts, contracts, owner)
+
+    for (account of accounts.slice(0, 30)) {
+      await sovToken.transfer(account, toBN(dec(10000,30)))
+    }
   })
 
   let revertToSnapshot;
@@ -94,19 +101,26 @@ contract('TroveManager', async accounts => {
     await priceFeed.setPrice(dec(100, 18))
   
     // Make 1 mega troves A at ~50% total collateral
-    await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(1, 31)), ZERO_ADDRESS, ZERO_ADDRESS, { from: A, value: dec(2, 29) })
+    await sovToken.approve(borrowerOperations.address, dec(2,29), { from: A })
+    await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(1, 31)), ZERO_ADDRESS, ZERO_ADDRESS, dec(2, 29), { from: A })
     
     // Make 5 large troves B, C, D, E, F at ~10% total collateral
-    await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, { from: B, value: dec(4, 28) })
-    await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, { from: C, value: dec(4, 28) })
-    await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, { from: D, value: dec(4, 28) })
-    await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, { from: E, value: dec(4, 28) })
-    await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, { from: F, value: dec(4, 28) })
+    await sovToken.approve(borrowerOperations.address, dec(4,28), { from: B })
+    await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: B })
+    await sovToken.approve(borrowerOperations.address, dec(4,28), { from: C })
+    await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: C })
+    await sovToken.approve(borrowerOperations.address, dec(4,28), { from: D })
+    await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: D })
+    await sovToken.approve(borrowerOperations.address, dec(4,28), { from: E })
+    await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: E })
+    await sovToken.approve(borrowerOperations.address, dec(4,28), { from: F })
+    await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: F })
   
     // Make 10 tiny troves at relatively negligible collateral (~1e-9 of total)
     const tinyTroves = accounts.slice(10, 20)
     for (account of tinyTroves) {
-      await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(1, 22)), ZERO_ADDRESS, ZERO_ADDRESS, { from: account, value: dec(2, 20) })
+      await sovToken.approve(borrowerOperations.address, dec(2,20), { from: account })
+      await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(1, 22)), ZERO_ADDRESS, ZERO_ADDRESS, dec(2, 20), { from: account })
     }
 
     // liquidate 1 trove at ~50% total system collateral
@@ -117,11 +131,11 @@ contract('TroveManager', async accounts => {
     console.log(`totalStakesSnapshot after L1: ${await troveManager.totalStakesSnapshot()}`)
     console.log(`totalCollateralSnapshot after L1: ${await troveManager.totalCollateralSnapshot()}`)
     console.log(`Snapshots ratio after L1: ${await getSnapshotsRatio()}`)
-    console.log(`B pending ETH reward after L1: ${await troveManager.getPendingETHReward(B)}`)
+    console.log(`B pending SOV reward after L1: ${await troveManager.getPendingSOVReward(B)}`)
     console.log(`B stake after L1: ${(await troveManager.Troves(B))[2]}`)
 
     // adjust trove B 1 wei: apply rewards
-    await borrowerOperations.adjustTrove(th._100pct, 0, 1, false, ZERO_ADDRESS, ZERO_ADDRESS, {from: B})  // B repays 1 wei
+    await borrowerOperations.adjustTrove(th._100pct, 0, 1, false, ZERO_ADDRESS, ZERO_ADDRESS, 0, {from: B})  // B repays 1 wei
     console.log(`B stake after A1: ${(await troveManager.Troves(B))[2]}`)
     console.log(`Snapshots ratio after A1: ${await getSnapshotsRatio()}`)
 
@@ -132,7 +146,7 @@ contract('TroveManager', async accounts => {
       await troveManager.liquidate(trove)
       console.log(`B stake after L${idx + 2}: ${(await troveManager.Troves(B))[2]}`)
       console.log(`Snapshots ratio after L${idx + 2}: ${await getSnapshotsRatio()}`)
-      await borrowerOperations.adjustTrove(th._100pct, 0, 1, false, ZERO_ADDRESS, ZERO_ADDRESS, {from: B})  // A repays 1 wei
+      await borrowerOperations.adjustTrove(th._100pct, 0, 1, false, ZERO_ADDRESS, ZERO_ADDRESS, 0, {from: B})  // A repays 1 wei
       console.log(`B stake after A${idx + 2}: ${(await troveManager.Troves(B))[2]}`)
     }
   })
