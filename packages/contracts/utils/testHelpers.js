@@ -481,9 +481,9 @@ class TestHelper {
     // console.log(`account: ${account}`)
     const rawColl = (await contracts.troveManager.Troves(account))[1]
     const rawDebt = (await contracts.troveManager.Troves(account))[0]
-    const pendingETHReward = await contracts.troveManager.getPendingETHReward(account)
+    const pendingSOVReward = await contracts.troveManager.getPendingSOVReward(account)
     const pendingZUSDDebtReward = await contracts.troveManager.getPendingZUSDDebtReward(account)
-    const entireColl = rawColl.add(pendingETHReward)
+    const entireColl = rawColl.add(pendingSOVReward)
     const entireDebt = rawDebt.add(pendingZUSDDebtReward)
 
     return { entireColl, entireDebt }
