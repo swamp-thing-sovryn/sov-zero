@@ -41,6 +41,7 @@ contract('ZERO community issuance arithmetic tests', async accounts => {
   let communityIssuanceTester
   let zeroToken
   let stabilityPool
+  let sovToken
 
   const [owner, alice, frontEnd_1, sovFeeCollector] = accounts;
 
@@ -54,6 +55,7 @@ contract('ZERO community issuance arithmetic tests', async accounts => {
 
     stabilityPool = contracts.stabilityPool
     borrowerOperations = contracts.borrowerOperations
+    sovToken = contracts.sovTokenTester
 
     zeroToken = ZEROContracts.zeroToken
     communityIssuanceTester = ZEROContracts.communityIssuance
@@ -65,6 +67,10 @@ contract('ZERO community issuance arithmetic tests', async accounts => {
     await zeroToken.unprotectedMint(owner,toBN(dec(30,24)))
     await zeroToken.approve(communityIssuanceTester.address, toBN(dec(30,24)))
     await communityIssuanceTester.receiveZero(owner, toBN(dec(30,24)))
+
+    for (account of accounts.slice(0, 30)) {
+      await sovToken.transfer(account, toBN(dec(10000,30)))
+    }
 
     
   })
@@ -793,7 +799,8 @@ contract('ZERO community issuance arithmetic tests', async accounts => {
     await stabilityPool.registerFrontEnd(dec(1, 18), { from: frontEnd_1 })
 
     // Alice opens trove and deposits to SP
-    await borrowerOperations.openTrove(th._100pct, dec(1, 18), alice, alice, { from: alice, value: dec(1, 'ether') })
+    await sovToken.approve(borrowerOperations.address, dec(1, 'ether'), { from: alice })
+    await borrowerOperations.openTrove(th._100pct, dec(1, 18), alice, alice, dec(1, 'ether'), { from: alice })
     await stabilityPool.provideToSP(dec(1, 18), frontEnd_1, { from: alice })
 
     assert.isTrue(await stabilityPool.isEligibleForZERO(alice))
@@ -828,7 +835,8 @@ contract('ZERO community issuance arithmetic tests', async accounts => {
     await stabilityPool.registerFrontEnd(dec(1, 18), { from: frontEnd_1 })
 
     // Alice opens trove and deposits to SP
-    await borrowerOperations.openTrove(th._100pct, dec(1, 18), alice, alice, { from: alice, value: dec(1, 'ether') })
+    await sovToken.approve(borrowerOperations.address, dec(1, 'ether'), { from: alice })
+    await borrowerOperations.openTrove(th._100pct, dec(1, 18), alice, alice, dec(1, 'ether'), { from: alice })
     await stabilityPool.provideToSP(dec(1, 18), frontEnd_1, { from: alice })
 
     assert.isTrue(await stabilityPool.isEligibleForZERO(alice))
@@ -862,7 +870,8 @@ contract('ZERO community issuance arithmetic tests', async accounts => {
     await stabilityPool.registerFrontEnd(dec(1, 18), { from: frontEnd_1 })
 
     // Alice opens trove and deposits to SP
-    await borrowerOperations.openTrove(th._100pct, dec(1, 18), alice, alice, { from: alice, value: dec(1, 'ether') })
+    await sovToken.approve(borrowerOperations.address, dec(1, 'ether'), { from: alice })
+    await borrowerOperations.openTrove(th._100pct, dec(1, 18), alice, alice, dec(1, 'ether'), { from: alice })
     await stabilityPool.provideToSP(dec(1, 18), frontEnd_1, { from: alice })
 
     assert.isTrue(await stabilityPool.isEligibleForZERO(alice))
@@ -897,7 +906,8 @@ contract('ZERO community issuance arithmetic tests', async accounts => {
     await stabilityPool.registerFrontEnd(dec(1, 18), { from: frontEnd_1 })
 
     // Alice opens trove and deposits to SP
-    await borrowerOperations.openTrove(th._100pct, dec(1, 18), alice, alice, { from: alice, value: dec(1, 'ether') })
+    await sovToken.approve(borrowerOperations.address, dec(1, 'ether'), { from: alice })
+    await borrowerOperations.openTrove(th._100pct, dec(1, 18), alice, alice, dec(1, 'ether'), { from: alice })
     await stabilityPool.provideToSP(dec(1, 18), frontEnd_1, { from: alice })
 
     assert.isTrue(await stabilityPool.isEligibleForZERO(alice))
