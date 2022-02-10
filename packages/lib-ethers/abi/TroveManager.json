@@ -96,7 +96,7 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "_L_ETH",
+        "name": "_L_SOV",
         "type": "uint256"
       },
       {
@@ -216,17 +216,30 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "_ETHSent",
+        "name": "_SOVSent",
         "type": "uint256"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "_ETHFee",
+        "name": "_SOVFee",
         "type": "uint256"
       }
     ],
     "name": "Redemption",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "_sovTokenAddress",
+        "type": "address"
+      }
+    ],
+    "name": "SOVTokenAddressChanged",
     "type": "event"
   },
   {
@@ -356,7 +369,7 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "_L_ETH",
+        "name": "_L_SOV",
         "type": "uint256"
       },
       {
@@ -499,7 +512,7 @@
   },
   {
     "inputs": [],
-    "name": "L_ETH",
+    "name": "L_SOV",
     "outputs": [
       {
         "internalType": "uint256",
@@ -704,7 +717,7 @@
         "type": "address"
       }
     ],
-    "name": "_getPendingETHReward",
+    "name": "_getPendingSOVReward",
     "outputs": [
       {
         "internalType": "uint256",
@@ -1130,7 +1143,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "pendingETHReward",
+        "name": "pendingSOVReward",
         "type": "uint256"
       }
     ],
@@ -1203,7 +1216,7 @@
         "type": "address"
       }
     ],
-    "name": "getPendingETHReward",
+    "name": "getPendingSOVReward",
     "outputs": [
       {
         "internalType": "uint256",
@@ -1237,7 +1250,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_ETHDrawn",
+        "name": "_SOVDrawn",
         "type": "uint256"
       }
     ],
@@ -1474,7 +1487,7 @@
   },
   {
     "inputs": [],
-    "name": "lastETHError_Redistribution",
+    "name": "lastFeeOperationTime",
     "outputs": [
       {
         "internalType": "uint256",
@@ -1487,7 +1500,7 @@
   },
   {
     "inputs": [],
-    "name": "lastFeeOperationTime",
+    "name": "lastSOVError_Redistribution",
     "outputs": [
       {
         "internalType": "uint256",
@@ -1631,7 +1644,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "ETH",
+        "name": "SOV",
         "type": "uint256"
       },
       {
@@ -1646,74 +1659,9 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "_feeDistributorAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_troveManagerRedeemOps",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_liquityBaseParamsAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_borrowerOperationsAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_activePoolAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_defaultPoolAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_stabilityPoolAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_gasPoolAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_collSurplusPoolAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_priceFeedAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_zusdTokenAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_sortedTrovesAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_zeroTokenAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_zeroStakingAddress",
-        "type": "address"
+        "internalType": "address[15]",
+        "name": "_setupAddresses",
+        "type": "address[15]"
       }
     ],
     "name": "setAddresses",
@@ -1758,6 +1706,19 @@
     "outputs": [
       {
         "internalType": "contract ISortedTroves",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "sovToken",
+    "outputs": [
+      {
+        "internalType": "contract IERC20",
         "name": "",
         "type": "address"
       }

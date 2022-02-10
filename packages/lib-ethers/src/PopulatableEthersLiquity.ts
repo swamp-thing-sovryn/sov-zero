@@ -249,11 +249,11 @@ export class PopulatedEthersRedemption
       ({ logs }) =>
         troveManager
           .extractEvents(logs, "Redemption")
-          .map(({ args: { _ETHSent, _ETHFee, _actualZUSDAmount, _attemptedZUSDAmount } }) => ({
+          .map(({ args: { _SOVSent, _SOVFee, _actualZUSDAmount, _attemptedZUSDAmount } }) => ({
             attemptedZUSDAmount: decimalify(_attemptedZUSDAmount),
             actualZUSDAmount: decimalify(_actualZUSDAmount),
-            collateralTaken: decimalify(_ETHSent),
-            fee: decimalify(_ETHFee)
+            collateralTaken: decimalify(_SOVSent),
+            fee: decimalify(_SOVFee)
           }))[0]
     );
 
@@ -357,7 +357,7 @@ export class PopulatableEthersLiquity
           .map(({ args: { value } }) => decimalify(value));
 
         const [withdrawCollateral] = activePool
-          .extractEvents(logs, "EtherSent")
+          .extractEvents(logs, "SOVSent")
           .filter(({ args: { _to } }) => _to === userAddress)
           .map(({ args: { _amount } }) => decimalify(_amount));
 
@@ -412,8 +412,8 @@ export class PopulatableEthersLiquity
       .map(({ args: { _newDeposit } }) => decimalify(_newDeposit));
 
     const [[collateralGain, zusdLoss]] = stabilityPool
-      .extractEvents(logs, "ETHGainWithdrawn")
-      .map(({ args: { _ETH, _ZUSDLoss } }) => [decimalify(_ETH), decimalify(_ZUSDLoss)]);
+      .extractEvents(logs, "SOVGainWithdrawn")
+      .map(({ args: { _SOV, _ZUSDLoss } }) => [decimalify(_SOV), decimalify(_ZUSDLoss)]);
 
     const [zeroReward] = stabilityPool
       .extractEvents(logs, "ZEROPaidToDepositor")
@@ -610,11 +610,12 @@ export class PopulatableEthersLiquity
     return this._wrapTroveChangeWithFees(
       normalized,
       await borrowerOperations.estimateAndPopulate.openTrove(
-        { value: depositCollateral.hex, ...overrides },
+        { ...overrides },
         compose(addGasForPotentialLastFeeOperationTimeUpdate, addGasForPotentialListTraversal),
         maxBorrowingRate.hex,
         borrowZUSD.hex,
-        ...(await this._findHints(newTrove))
+        ...(await this._findHints(newTrove)),
+        depositCollateral.hex,
       )
     );
   }
@@ -642,11 +643,12 @@ export class PopulatableEthersLiquity
     return this._wrapTroveChangeWithFees(
       normalized,
       await borrowerOperations.estimateAndPopulate.openNueTrove(
-        { value: depositCollateral.hex, ...overrides },
+        { ...overrides },
         compose(addGasForPotentialLastFeeOperationTimeUpdate, addGasForPotentialListTraversal),
         maxBorrowingRate.hex,
         borrowZUSD.hex,
-        ...(await this._findHints(newTrove))
+        ...(await this._findHints(newTrove)),
+        depositCollateral.hex,
       )
     );
   }
@@ -734,7 +736,7 @@ export class PopulatableEthersLiquity
     return this._wrapTroveChangeWithFees(
       normalized,
       await borrowerOperations.estimateAndPopulate.adjustTrove(
-        { value: depositCollateral?.hex, ...overrides },
+        { ...overrides },
         compose(
           borrowZUSD ? addGasForPotentialLastFeeOperationTimeUpdate : id,
           addGasForPotentialListTraversal
@@ -743,7 +745,8 @@ export class PopulatableEthersLiquity
         (withdrawCollateral ?? Decimal.ZERO).hex,
         (borrowZUSD ?? repayZUSD ?? Decimal.ZERO).hex,
         !!borrowZUSD,
-        ...(await this._findHints(finalTrove))
+        ...(await this._findHints(finalTrove)),
+        (depositCollateral ?? Decimal.ZERO).hex,
       )
     );
   }
@@ -776,7 +779,7 @@ export class PopulatableEthersLiquity
     return this._wrapTroveChangeWithFees(
       normalized,
       await borrowerOperations.estimateAndPopulate.adjustNueTrove(
-        { value: depositCollateral?.hex, ...overrides },
+        { ...overrides },
         compose(
           borrowZUSD ? addGasForPotentialLastFeeOperationTimeUpdate : id,
           addGasForPotentialListTraversal
@@ -785,7 +788,8 @@ export class PopulatableEthersLiquity
         (withdrawCollateral ?? Decimal.ZERO).hex,
         (borrowZUSD ?? repayZUSD ?? Decimal.ZERO).hex,
         !!borrowZUSD,
-        ...(await this._findHints(finalTrove))
+        ...(await this._findHints(finalTrove)),
+        (depositCollateral ?? Decimal.ZERO).hex,
       )
     );
   }
@@ -925,7 +929,7 @@ export class PopulatableEthersLiquity
     const finalTrove = initialTrove.addCollateral(stabilityDeposit.collateralGain);
 
     return this._wrapCollateralGainTransfer(
-      await stabilityPool.estimateAndPopulate.withdrawETHGainToTrove(
+      await stabilityPool.estimateAndPopulate.withdrawSOVGainToTrove(
         { ...overrides },
         compose(addGasForPotentialListTraversal, addGasForZEROIssuance),
         ...(await this._findHints(finalTrove))

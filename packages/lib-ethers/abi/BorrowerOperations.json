@@ -102,6 +102,19 @@
       {
         "indexed": false,
         "internalType": "address",
+        "name": "_sovTokenAddress",
+        "type": "address"
+      }
+    ],
+    "name": "SOVTokenAddressChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
         "name": "_sortedTrovesAddress",
         "type": "address"
       }
@@ -338,11 +351,16 @@
         "internalType": "address",
         "name": "_lowerHint",
         "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
       }
     ],
     "name": "addColl",
     "outputs": [],
-    "stateMutability": "payable",
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -376,11 +394,16 @@
         "internalType": "address",
         "name": "_lowerHint",
         "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
       }
     ],
     "name": "adjustNueTrove",
     "outputs": [],
-    "stateMutability": "payable",
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -414,11 +437,16 @@
         "internalType": "address",
         "name": "_lowerHint",
         "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
       }
     ],
     "name": "adjustTrove",
     "outputs": [],
-    "stateMutability": "payable",
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -568,11 +596,16 @@
         "internalType": "address",
         "name": "_lowerHint",
         "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
       }
     ],
-    "name": "moveETHGainToTrove",
+    "name": "moveSOVGainToTrove",
     "outputs": [],
-    "stateMutability": "payable",
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -596,11 +629,16 @@
         "internalType": "address",
         "name": "_lowerHint",
         "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
       }
     ],
     "name": "openNueTrove",
     "outputs": [],
-    "stateMutability": "payable",
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -624,11 +662,16 @@
         "internalType": "address",
         "name": "_lowerHint",
         "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
       }
     ],
     "name": "openTrove",
     "outputs": [],
-    "stateMutability": "payable",
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -669,6 +712,11 @@
   },
   {
     "inputs": [
+      {
+        "internalType": "address",
+        "name": "_sovTokenAddress",
+        "type": "address"
+      },
       {
         "internalType": "address",
         "name": "_feeDistributorAddress",
@@ -767,6 +815,19 @@
     "outputs": [
       {
         "internalType": "contract ISortedTroves",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "sovToken",
+    "outputs": [
+      {
+        "internalType": "contract IERC20",
         "name": "",
         "type": "address"
       }

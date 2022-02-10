@@ -82,6 +82,12 @@ const presaleAddresses = {
   dev: ""
 };
 
+const sovTokenAddresses = {
+  mainnet: "0x0000000000000000000000000000000000000001",
+  rsktestnet: "0x0000000000000000000000000000000000000002",
+  dev: ""
+};
+
 const oracleAddresses : Record<string, OracleAddresses> = {
   mainnet: {
     mocOracleAddress: "",
@@ -113,6 +119,9 @@ const hasPresale = (network: string): network is keyof typeof presaleAddresses =
 
 const hasMarketMaker = (network: string): network is keyof typeof marketMakerAddresses =>
   network in marketMakerAddresses;
+
+  const hasSovToken = (network: string): network is keyof typeof sovTokenAddresses =>
+  network in sovTokenAddresses;
 
 const config: HardhatUserConfig = {
   networks: {
@@ -177,6 +186,7 @@ declare module "hardhat/types/runtime" {
       externalPriceFeeds?: OracleAddresses,
       presaleAddress?: string,
       marketMakerAddress?: string,
+      sovTokenAddress?: string,
       overrides?: Overrides
     ) => Promise<_LiquityDeploymentJSON>;
   }
@@ -211,6 +221,7 @@ extendEnvironment(env => {
     externalPriceFeeds,
     presaleAddress,
     marketMakerAddress,
+    sovTokenAddress,
     overrides?: Overrides
   ) => {
     const deployment = await deployAndSetupContracts(
@@ -223,6 +234,7 @@ extendEnvironment(env => {
       wrbtcAddress,
       presaleAddress,
       marketMakerAddress,
+      sovTokenAddress,
       overrides
     );
 
@@ -317,6 +329,7 @@ type DeployParams = {
   wrbtcAddress?: string;
   presaleAddress?: string;
   marketMakerAddress?: string;
+  sovTokenAddress?: string;
 };
 
 task("deploy", "Deploys the contracts to the network")
@@ -351,6 +364,7 @@ task("deploy", "Deploys the contracts to the network")
         wrbtcAddress,
         presaleAddress,
         marketMakerAddress,
+        sovTokenAddress,
       }: DeployParams,
       env
     ) => {
@@ -379,6 +393,9 @@ task("deploy", "Deploys the contracts to the network")
       marketMakerAddress ??= hasMarketMaker(env.network.name)
         ? marketMakerAddresses[env.network.name]
         : undefined;
+      sovTokenAddress ??= hasSovToken(env.network.name)
+        ? sovTokenAddresses[env.network.name]
+        : undefined;
 
       const deployment = await env.deployLiquity(
         deployer,
@@ -388,6 +405,7 @@ task("deploy", "Deploys the contracts to the network")
         useRealPriceFeed ? oracleAddresses[env.network.name] : undefined,
         presaleAddress,
         marketMakerAddress,
+        sovTokenAddress,
         overrides
       );
 

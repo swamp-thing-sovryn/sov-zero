@@ -18,19 +18,6 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "_ETH",
-        "type": "uint256"
-      }
-    ],
-    "name": "ActivePoolETHBalanceUpdated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
         "name": "_ZUSDDebt",
         "type": "uint256"
       }
@@ -68,13 +55,19 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "_newBalance",
-        "type": "uint256"
+        "indexed": true,
+        "internalType": "address",
+        "name": "previousOwner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
       }
     ],
-    "name": "ETHBalanceUpdated",
+    "name": "OwnershipTransferred",
     "type": "event"
   },
   {
@@ -93,26 +86,20 @@
         "type": "uint256"
       }
     ],
-    "name": "EtherSent",
+    "name": "SOVSent",
     "type": "event"
   },
   {
     "anonymous": false,
     "inputs": [
       {
-        "indexed": true,
+        "indexed": false,
         "internalType": "address",
-        "name": "previousOwner",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "newOwner",
+        "name": "_sovTokenAddress",
         "type": "address"
       }
     ],
-    "name": "OwnershipTransferred",
+    "name": "SOVTokenAddressChanged",
     "type": "event"
   },
   {
@@ -208,12 +195,12 @@
   },
   {
     "inputs": [],
-    "name": "getETH",
+    "name": "getOwner",
     "outputs": [
       {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
+        "internalType": "address",
+        "name": "_owner",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -221,12 +208,12 @@
   },
   {
     "inputs": [],
-    "name": "getOwner",
+    "name": "getSOV",
     "outputs": [
       {
-        "internalType": "address",
-        "name": "_owner",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -271,13 +258,18 @@
         "type": "uint256"
       }
     ],
-    "name": "sendETH",
+    "name": "sendSOV",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [
+      {
+        "internalType": "address",
+        "name": "_sovTokenAddress",
+        "type": "address"
+      },
       {
         "internalType": "address",
         "name": "_borrowerOperationsAddress",
@@ -319,6 +311,19 @@
   },
   {
     "inputs": [],
+    "name": "sovToken",
+    "outputs": [
+      {
+        "internalType": "contract IERC20",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "stabilityPoolAddress",
     "outputs": [
       {
@@ -342,9 +347,5 @@
     ],
     "stateMutability": "view",
     "type": "function"
-  },
-  {
-    "stateMutability": "payable",
-    "type": "receive"
   }
 ]

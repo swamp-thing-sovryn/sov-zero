@@ -5,7 +5,8 @@ import { AddressZero } from "@ethersproject/constants";
 import { BigNumber } from "@ethersproject/bignumber";
 import { Signer } from "@ethersproject/abstract-signer";
 import { ethers, network, deployLiquity } from "hardhat";
-
+import { Contract } from "ethers";
+ 
 import {
   Decimal,
   Decimalish,
@@ -93,6 +94,8 @@ describe("EthersLiquity", () => {
   let liquity: EthersLiquity;
   let otherLiquities: EthersLiquity[];
 
+  let sovToken: Contract;
+
   const connectUsers = (users: Signer[]) =>
     Promise.all(users.map(user => connectToDeployment(deployment, user)));
 
@@ -129,6 +132,13 @@ describe("EthersLiquity", () => {
 
     liquity = await connectToDeployment(deployment, user);
     expect(liquity).to.be.an.instanceOf(EthersLiquity);
+
+    const sovTokenAddress = deployment.sovTokenAddress as string
+    sovToken = await ethers.getContractAt('SOVTokenTester', sovTokenAddress, user);
+
+    await sovToken.connect(deployer).transfer(await funder.getAddress(), BigNumber.from(Decimal.from(100).hex));
+    await sovToken.connect(deployer).transfer(await user.getAddress(), BigNumber.from(Decimal.from(100).hex));
+    await sovToken.connect(funder).approve(deployment.addresses.borrowerOperations, BigNumber.from(Decimal.from(100).hex));
   });
 
   // Always setup same initial balance for user
@@ -137,25 +147,33 @@ describe("EthersLiquity", () => {
     const balance = await user.getBalance();
     const gasPrice = 0;
 
-    if (balance.eq(targetBalance)) {
-      return;
-    }
-
     if (balance.gt(targetBalance)) {
-      await user.sendTransaction({
-        to: funder.getAddress(),
-        value: balance.sub(targetBalance),
-        gasPrice
-      });
+        await user.sendTransaction({
+          to: funder.getAddress(),
+          value: balance.sub(targetBalance),
+          gasPrice
+        });
+      } else {
+        await funder.sendTransaction({
+          to: user.getAddress(),
+          value: targetBalance.sub(balance),
+          gasPrice
+        });
+      }
+
+
+    const sovBalance = await sovToken.balanceOf(user.getAddress());
+
+    if (sovBalance.gt(targetBalance)) {
+      await sovToken.connect(user).transfer(await funder.getAddress(), sovBalance.sub(targetBalance))
     } else {
-      await funder.sendTransaction({
-        to: user.getAddress(),
-        value: targetBalance.sub(balance),
-        gasPrice
-      });
+      await sovToken.connect(funder).transfer(await user.getAddress(), targetBalance.sub(sovBalance))
     }
 
-    expect(`${await user.getBalance()}`).to.equal(`${targetBalance}`);
+    //expect(`${await user.getBalance()}`).to.equal(`${targetBalance}`);
+    //expect(`${sovBalance}`).to.equal(`${targetBalance}`);
+
+    await sovToken.connect(user).approve(deployment.addresses.borrowerOperations, BigNumber.from(Decimal.from(100).hex));
   });
 
   it("should get the price", async () => {
@@ -293,7 +311,7 @@ describe("EthersLiquity", () => {
     const repayAndWithdraw = { repayZUSD: 60, withdrawCollateral: 0.5 };
 
     it("should repay some debt and withdraw some collateral at the same time", async () => {
-      const { newTrove } = await liquity.adjustTrove(repayAndWithdraw, undefined, { gasPrice: 0 });
+      const { newTrove } = await liquity.adjustTrove(repayAndWithdraw);
 
       expect(newTrove).to.deep.equal(
         Trove.create(withSomeBorrowing)
@@ -303,16 +321,14 @@ describe("EthersLiquity", () => {
           .adjust(repayAndWithdraw)
       );
 
-      const ethBalance = Decimal.fromBigNumberString(`${await user.getBalance()}`);
+      const ethBalance = Decimal.fromBigNumberString(`${await sovToken.balanceOf(await user.getAddress())}`);
       expect(`${ethBalance}`).to.equal("100.5");
     });
 
     const borrowAndDeposit = { borrowZUSD: 60, depositCollateral: 0.5 };
 
     it("should borrow more and deposit some collateral at the same time", async () => {
-      const { newTrove, fee } = await liquity.adjustTrove(borrowAndDeposit, undefined, {
-        gasPrice: 0
-      });
+      const { newTrove, fee } = await liquity.adjustTrove(borrowAndDeposit);
 
       expect(newTrove).to.deep.equal(
         Trove.create(withSomeBorrowing)
@@ -325,7 +341,7 @@ describe("EthersLiquity", () => {
 
       expect(`${fee}`).to.equal(`${MINIMUM_BORROWING_RATE.mul(borrowAndDeposit.borrowZUSD)}`);
 
-      const ethBalance = Decimal.fromBigNumberString(`${await user.getBalance()}`);
+      const ethBalance = Decimal.fromBigNumberString(`${await sovToken.balanceOf(await user.getAddress())}`);
       expect(`${ethBalance}`).to.equal("99.5");
     });
 
@@ -389,11 +405,12 @@ describe("EthersLiquity", () => {
 
     it("other user's deposit should be tagged with the frontend's address", async () => {
       const frontendTag = await user.getAddress();
-
       await funder.sendTransaction({
         to: otherUsers[0].getAddress(),
         value: Decimal.from(20.1).hex
       });
+      await sovToken.connect(deployer).transfer(otherUsers[0].getAddress(), Decimal.from(20.1).hex)
+      await sovToken.connect(otherUsers[0]).approve(deployment.addresses.borrowerOperations, Decimal.from(20.1).hex)
 
       const otherLiquity = await connectToDeployment(deployment, otherUsers[0], frontendTag);
       await otherLiquity.openTrove({ depositCollateral: 20, borrowZUSD: ZUSD_MINIMUM_DEBT });
@@ -423,12 +440,22 @@ describe("EthersLiquity", () => {
         to: otherUsers[0].getAddress(),
         value: ZUSD_MINIMUM_DEBT.div(170).hex
       });
+
+      const sovTokenAddress = deployment.sovTokenAddress as string
+      sovToken = await ethers.getContractAt('SOVTokenTester', sovTokenAddress, user);
+
+      await sovToken.connect(deployer).transfer(await otherUsers[0].getAddress(), Decimal.from(20000).hex)
+      await sovToken.connect(otherUsers[0]).approve(deployment.addresses.borrowerOperations, Decimal.from(20000).hex)
+      await sovToken.connect(deployer).transfer(await user.getAddress(), Decimal.from(20000).hex)
+      await sovToken.connect(user).approve(deployment.addresses.borrowerOperations, Decimal.from(20000).hex)
+
     });
 
     const initialTroveOfDepositor = Trove.create({
       depositCollateral: ZUSD_MINIMUM_DEBT.div(100),
       borrowZUSD: ZUSD_MINIMUM_NET_DEBT
     });
+
 
     const smallStabilityDeposit = Decimal.from(10);
 
@@ -594,6 +621,17 @@ describe("EthersLiquity", () => {
         }
         await sendToEach(otherUsersSubset, 21.1);
 
+        const sovTokenAddress = deployment.sovTokenAddress as string
+        sovToken = await ethers.getContractAt('SOVTokenTester', sovTokenAddress, user);
+
+        for (const userSubset of otherUsersSubset) {
+          await sovToken.connect(deployer).transfer(await userSubset.getAddress(), Decimal.from(20000).hex)
+          await sovToken.connect(userSubset).approve(deployment.addresses.borrowerOperations, Decimal.from(20000).hex)
+        }
+
+        await sovToken.connect(deployer).transfer(await user.getAddress(), Decimal.from(20000).hex)
+        await sovToken.connect(user).approve(deployment.addresses.borrowerOperations, Decimal.from(20000).hex)
+
         let price = Decimal.from(200);
         await deployerLiquity.setPrice(price);
 
@@ -667,6 +705,17 @@ describe("EthersLiquity", () => {
       ]);
 
       await sendToEach(otherUsersSubset, 20.1);
+
+      const sovTokenAddress = deployment.sovTokenAddress as string
+      sovToken = await ethers.getContractAt('SOVTokenTester', sovTokenAddress, user);
+
+      for (const userSubset of otherUsersSubset) {
+        await sovToken.connect(deployer).transfer(await userSubset.getAddress(), Decimal.from(20000).hex)
+        await sovToken.connect(userSubset).approve(deployment.addresses.borrowerOperations, Decimal.from(20000).hex)
+      }
+
+      await sovToken.connect(deployer).transfer(await user.getAddress(), Decimal.from(20000).hex)
+      await sovToken.connect(user).approve(deployment.addresses.borrowerOperations, Decimal.from(20000).hex)
     });
 
     it("should fail to redeem during the bootstrap phase", async () => {
@@ -707,7 +756,7 @@ describe("EthersLiquity", () => {
       const details = await liquity.redeemZUSD(someZUSD, undefined, { gasPrice: 0 });
       expect(details).to.deep.equal(expectedDetails);
 
-      const balance = Decimal.fromBigNumberString(`${await provider.getBalance(user.getAddress())}`);
+      const balance = Decimal.fromBigNumberString(`${await sovToken.balanceOf(await user.getAddress())}`);
       expect(`${balance}`).to.equal(
         `${expectedDetails.collateralTaken.sub(expectedDetails.fee).add(100)}`
       );
@@ -727,8 +776,8 @@ describe("EthersLiquity", () => {
     });
 
     it("should claim the collateral surplus after redemption", async () => {
-      const balanceBefore1 = await provider.getBalance(otherUsers[1].getAddress());
-      const balanceBefore2 = await provider.getBalance(otherUsers[2].getAddress());
+      const balanceBefore1 = await sovToken.balanceOf(await otherUsers[1].getAddress());
+      const balanceBefore2 = await sovToken.balanceOf(await otherUsers[2].getAddress());
 
       expect(`${await otherLiquities[0].getCollateralSurplusBalance()}`).to.equal("0");
 
@@ -747,8 +796,8 @@ describe("EthersLiquity", () => {
       expect(`${await otherLiquities[1].getCollateralSurplusBalance()}`).to.equal("0");
       expect(`${await otherLiquities[2].getCollateralSurplusBalance()}`).to.equal("0");
 
-      const balanceAfter1 = await provider.getBalance(otherUsers[1].getAddress());
-      const balanceAfter2 = await provider.getBalance(otherUsers[2].getAddress());
+      const balanceAfter1 = await sovToken.balanceOf(await otherUsers[1].getAddress());
+      const balanceAfter2 = await sovToken.balanceOf(await otherUsers[2].getAddress());
       expect(`${balanceAfter1}`).to.equal(`${balanceBefore1.add(surplus1.hex)}`);
       expect(`${balanceAfter2}`).to.equal(`${balanceBefore2.add(surplus2.hex)}`);
     });
@@ -792,6 +841,17 @@ describe("EthersLiquity", () => {
       ]);
 
       await sendToEach(otherUsersSubset, 20.1);
+
+      const sovTokenAddress = deployment.sovTokenAddress as string
+      sovToken = await ethers.getContractAt('SOVTokenTester', sovTokenAddress, user);
+
+      for (const userSubset of otherUsersSubset) {
+        await sovToken.connect(deployer).transfer(await userSubset.getAddress(), Decimal.from(20000).hex)
+        await sovToken.connect(userSubset).approve(deployment.addresses.borrowerOperations, Decimal.from(20000).hex)
+      }
+
+      await sovToken.connect(deployer).transfer(await user.getAddress(), Decimal.from(20000).hex)
+      await sovToken.connect(user).approve(deployment.addresses.borrowerOperations, Decimal.from(20000).hex)
 
       await liquity.openTrove({ depositCollateral: 99, borrowZUSD: 5000 });
       await otherLiquities[0].openTrove(troveCreationParams);
@@ -872,7 +932,18 @@ describe("EthersLiquity", () => {
       ]);
 
       await deployerLiquity.setPrice(massivePrice);
-      await sendToEach(otherUsersSubset, collateralPerTrove);
+      await sendToEach(otherUsersSubset, 20.1);
+
+      const sovTokenAddress = deployment.sovTokenAddress as string
+      sovToken = await ethers.getContractAt('SOVTokenTester', sovTokenAddress, user);
+
+      for (const userSubset of otherUsersSubset) {
+        await sovToken.connect(deployer).transfer(await userSubset.getAddress(), Decimal.from(20000).hex)
+        await sovToken.connect(userSubset).approve(deployment.addresses.borrowerOperations, Decimal.from(20000).hex)
+      }
+
+      await sovToken.connect(deployer).transfer(await user.getAddress(), Decimal.from(20000).hex)
+      await sovToken.connect(user).approve(deployment.addresses.borrowerOperations, Decimal.from(20000).hex)
 
       for (const otherLiquity of otherLiquities) {
         await otherLiquity.openTrove(
@@ -927,6 +998,23 @@ describe("EthersLiquity", () => {
         rudeUser,
         ...fiveOtherUsers
       ]);
+
+      await sendToEach(fiveOtherUsers, 20.1);
+      await sendToEach([rudeUser], 20.1);
+
+      const sovTokenAddress = deployment.sovTokenAddress as string
+      sovToken = await ethers.getContractAt('SOVTokenTester', sovTokenAddress, user);
+
+      for (const userSubset of fiveOtherUsers) {
+        await sovToken.connect(deployer).transfer(await userSubset.getAddress(), Decimal.from(20000).hex)
+        await sovToken.connect(userSubset).approve(deployment.addresses.borrowerOperations, Decimal.from(20000).hex)
+      }
+
+      await sovToken.connect(deployer).transfer(await user.getAddress(), Decimal.from(20000).hex)
+      await sovToken.connect(user).approve(deployment.addresses.borrowerOperations, Decimal.from(20000).hex)
+
+      await sovToken.connect(deployer).transfer(await rudeUser.getAddress(), Decimal.from(20000).hex)
+      await sovToken.connect(rudeUser).approve(deployment.addresses.borrowerOperations, Decimal.from(20000).hex)
 
       await openTroves(fiveOtherUsers, [
         { depositCollateral: 20, borrowZUSD: 2040 },
@@ -1032,6 +1120,14 @@ describe("EthersLiquity", () => {
 
       deployment = await deployLiquity(deployer);
       [deployerLiquity, liquity] = await connectUsers([deployer, user]);
+
+      const sovTokenAddress = deployment.sovTokenAddress as string
+      sovToken = await ethers.getContractAt('SOVTokenTester', sovTokenAddress, user);
+
+      await sovToken.connect(deployer).transfer(await user.getAddress(), Decimal.from(20000).hex)
+      await sovToken.connect(deployer).approve(deployment.addresses.borrowerOperations, Decimal.from(20000).hex)
+      await sovToken.connect(user).approve(deployment.addresses.borrowerOperations, Decimal.from(20000).hex)
+
     });
 
     it("should include enough gas for issuing ZERO", async function () {

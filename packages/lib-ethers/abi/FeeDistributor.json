@@ -54,7 +54,7 @@
         "type": "uint256"
       }
     ],
-    "name": "RBTCistributed",
+    "name": "SOVDistributed",
     "type": "event"
   },
   {
@@ -68,6 +68,19 @@
       }
     ],
     "name": "SOVFeeCollectorAddressChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "_sovTokenAddress",
+        "type": "address"
+      }
+    ],
+    "name": "SOVTokenAddressChanged",
     "type": "event"
   },
   {
@@ -211,6 +224,11 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "_sovTokenAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
         "name": "_sovFeeCollectorAddress",
         "type": "address"
       },
@@ -291,6 +309,19 @@
   },
   {
     "inputs": [],
+    "name": "sovToken",
+    "outputs": [
+      {
+        "internalType": "contract IERC20",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "troveManager",
     "outputs": [
       {
@@ -340,9 +371,5 @@
     ],
     "stateMutability": "view",
     "type": "function"
-  },
-  {
-    "stateMutability": "payable",
-    "type": "receive"
   }
 ]
