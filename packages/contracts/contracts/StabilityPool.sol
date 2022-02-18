@@ -259,18 +259,12 @@ contract StabilityPool is LiquityBase, StabilityPoolStorage, CheckContract, ISta
 
         uint initialDeposit = deposits[msg.sender].initialValue;
 
-        ICommunityIssuance communityIssuanceCached = communityIssuance;
-
-        _triggerZEROIssuance(communityIssuanceCached);
-
         if (initialDeposit == 0) {_setFrontEndTag(msg.sender, _frontEndTag);}
         uint depositorSOVGain = getDepositorSOVGain(msg.sender);
         uint compoundedZUSDDeposit = getCompoundedZUSDDeposit(msg.sender);
         uint ZUSDLoss = initialDeposit.sub(compoundedZUSDDeposit); // Needed only for event log
 
-        // First pay out any ZERO gains
         address frontEnd = deposits[msg.sender].frontEndTag;
-        _payOutZEROGains(communityIssuanceCached, msg.sender, frontEnd);
 
         // Update front end stake
         uint compoundedFrontEndStake = getCompoundedFrontEndStake(frontEnd);
@@ -304,9 +298,6 @@ contract StabilityPool is LiquityBase, StabilityPoolStorage, CheckContract, ISta
         uint initialDeposit = deposits[msg.sender].initialValue;
         _requireUserHasDeposit(initialDeposit);
 
-        ICommunityIssuance communityIssuanceCached = communityIssuance;
-
-        _triggerZEROIssuance(communityIssuanceCached);
 
         uint depositorSOVGain = getDepositorSOVGain(msg.sender);
 
@@ -314,9 +305,7 @@ contract StabilityPool is LiquityBase, StabilityPoolStorage, CheckContract, ISta
         uint ZUSDtoWithdraw = LiquityMath._min(_amount, compoundedZUSDDeposit);
         uint ZUSDLoss = initialDeposit.sub(compoundedZUSDDeposit); // Needed only for event log
 
-        // First pay out any ZERO gains
         address frontEnd = deposits[msg.sender].frontEndTag;
-        _payOutZEROGains(communityIssuanceCached, msg.sender, frontEnd);
         
         // Update front end stake
         uint compoundedFrontEndStake = getCompoundedFrontEndStake(frontEnd);
@@ -349,18 +338,12 @@ contract StabilityPool is LiquityBase, StabilityPoolStorage, CheckContract, ISta
         _requireUserHasTrove(msg.sender);
         _requireUserHasSOVGain(msg.sender);
 
-        ICommunityIssuance communityIssuanceCached = communityIssuance;
-
-        _triggerZEROIssuance(communityIssuanceCached);
-
         uint depositorSOVGain = getDepositorSOVGain(msg.sender);
 
         uint compoundedZUSDDeposit = getCompoundedZUSDDeposit(msg.sender);
         uint ZUSDLoss = initialDeposit.sub(compoundedZUSDDeposit); // Needed only for event log
 
-        // First pay out any ZERO gains
         address frontEnd = deposits[msg.sender].frontEndTag;
-        _payOutZEROGains(communityIssuanceCached, msg.sender, frontEnd);
 
         // Update front end stake
         uint compoundedFrontEndStake = getCompoundedFrontEndStake(frontEnd);
@@ -383,51 +366,6 @@ contract StabilityPool is LiquityBase, StabilityPoolStorage, CheckContract, ISta
         borrowerOperations.moveSOVGainToTrove(msg.sender, _upperHint, _lowerHint, depositorSOVGain);
     }
 
-    // --- ZERO issuance functions ---
-
-    function _triggerZEROIssuance(ICommunityIssuance _communityIssuance) internal {
-        uint ZEROIssuance = _communityIssuance.issueZERO();
-       _updateG(ZEROIssuance);
-    }
-
-    function _updateG(uint _ZEROIssuance) internal {
-        uint totalZUSD = totalZUSDDeposits; // cached to save an SLOAD
-        /*
-        * When total deposits is 0, G is not updated. In this case, the ZERO issued can not be obtained by later
-        * depositors - it is missed out on, and remains in the balanceof the CommunityIssuance contract.
-        *
-        */
-        if (totalZUSD == 0 || _ZEROIssuance == 0) {return;}
-
-        uint ZEROPerUnitStaked;
-        ZEROPerUnitStaked =_computeZEROPerUnitStaked(_ZEROIssuance, totalZUSD);
-
-        uint marginalZEROGain = ZEROPerUnitStaked.mul(P);
-        epochToScaleToG[currentEpoch][currentScale] = epochToScaleToG[currentEpoch][currentScale].add(marginalZEROGain);
-
-        emit G_Updated(epochToScaleToG[currentEpoch][currentScale], currentEpoch, currentScale);
-    }
-
-    function _computeZEROPerUnitStaked(uint _ZEROIssuance, uint _totalZUSDDeposits) internal returns (uint) {
-        /*  
-        * Calculate the ZERO-per-unit staked.  Division uses a "feedback" error correction, to keep the 
-        * cumulative error low in the running total G:
-        *
-        * 1) Form a numerator which compensates for the floor division error that occurred the last time this 
-        * function was called.  
-        * 2) Calculate "per-unit-staked" ratio.
-        * 3) Multiply the ratio back by its denominator, to reveal the current floor division error.
-        * 4) Store this error for use in the next correction when this function is called.
-        * 5) Note: static analysis tools complain about this "division before multiplication", however, it is intended.
-        */
-        uint ZERONumerator = _ZEROIssuance.mul(DECIMAL_PRECISION).add(lastZEROError);
-
-        uint ZEROPerUnitStaked = ZERONumerator.div(_totalZUSDDeposits);
-        lastZEROError = ZERONumerator.sub(ZEROPerUnitStaked.mul(_totalZUSDDeposits));
-
-        return ZEROPerUnitStaked;
-    }
-
     // --- Liquidation functions ---
 
     /**
@@ -439,8 +377,6 @@ contract StabilityPool is LiquityBase, StabilityPoolStorage, CheckContract, ISta
         _requireCallerIsTroveManager();
         uint totalZUSD = totalZUSDDeposits; // cached to save an SLOAD
         if (totalZUSD == 0 || _debtToOffset == 0) { return; }
-
-        _triggerZEROIssuance(communityIssuance);
 
         (uint SOVGainPerUnitStaked,
             uint ZUSDLossPerUnitStaked) = _computeRewardsPerUnitStaked(_collToAdd, _debtToOffset, totalZUSD);
@@ -598,70 +534,6 @@ contract StabilityPool is LiquityBase, StabilityPoolStorage, CheckContract, ISta
         uint SOVGain = initialDeposit.mul(firstPortion.add(secondPortion)).div(P_Snapshot).div(DECIMAL_PRECISION);
 
         return SOVGain;
-    }
-
-    /**
-    * Calculate the ZERO gain earned by a deposit since its last snapshots were taken.
-    * Given by the formula:  ZERO = d0 * (G - G(0))/P(0)
-    * where G(0) and P(0) are the depositor's snapshots of the sum G and product P, respectively.
-    * d0 is the last recorded deposit value.
-    */
-    function getDepositorZEROGain(address _depositor) public view override returns (uint) {
-        uint initialDeposit = deposits[_depositor].initialValue;
-        if (initialDeposit == 0) {return 0;}
-
-        address frontEndTag = deposits[_depositor].frontEndTag;
-
-        /*
-        * If not tagged with a front end, the depositor gets a 100% cut of what their deposit earned.
-        * Otherwise, their cut of the deposit's earnings is equal to the kickbackRate, set by the front end through
-        * which they made their deposit.
-        */
-        uint kickbackRate = frontEndTag == address(0) ? DECIMAL_PRECISION : frontEnds[frontEndTag].kickbackRate;
-
-        Snapshots memory snapshots = depositSnapshots[_depositor];
-
-        uint ZEROGain = kickbackRate.mul(_getZEROGainFromSnapshots(initialDeposit, snapshots)).div(DECIMAL_PRECISION);
-
-        return ZEROGain;
-    }
-
-    /**
-    * Return the ZERO gain earned by the front end. Given by the formula:  E = D0 * (G - G(0))/P(0)
-    * where G(0) and P(0) are the depositor's snapshots of the sum G and product P, respectively.
-    *
-    * D0 is the last recorded value of the front end's total tagged deposits.
-    */
-    function getFrontEndZEROGain(address _frontEnd) public view override returns (uint) {
-        uint frontEndStake = frontEndStakes[_frontEnd];
-        if (frontEndStake == 0) { return 0; }
-
-        uint kickbackRate = frontEnds[_frontEnd].kickbackRate;
-        uint frontEndShare = uint(DECIMAL_PRECISION).sub(kickbackRate);
-
-        Snapshots memory snapshots = frontEndSnapshots[_frontEnd];
-
-        uint ZEROGain = frontEndShare.mul(_getZEROGainFromSnapshots(frontEndStake, snapshots)).div(DECIMAL_PRECISION);
-        return ZEROGain;
-    }
-
-    function _getZEROGainFromSnapshots(uint initialStake, Snapshots memory snapshots) internal view returns (uint) {
-       /*
-        * Grab the sum 'G' from the epoch at which the stake was made. The ZERO gain may span up to one scale change.
-        * If it does, the second portion of the ZERO gain is scaled by 1e9.
-        * If the gain spans no scale change, the second portion will be 0.
-        */
-        uint128 epochSnapshot = snapshots.epoch;
-        uint128 scaleSnapshot = snapshots.scale;
-        uint G_Snapshot = snapshots.G;
-        uint P_Snapshot = snapshots.P;
-
-        uint firstPortion = epochToScaleToG[epochSnapshot][scaleSnapshot].sub(G_Snapshot);
-        uint secondPortion = epochToScaleToG[epochSnapshot][scaleSnapshot.add(1)].div(SCALE_FACTOR);
-
-        uint ZEROGain = initialStake.mul(firstPortion.add(secondPortion)).div(P_Snapshot).div(DECIMAL_PRECISION);
-
-        return ZEROGain;
     }
 
     // --- Compounded deposit and compounded front end stake ---
@@ -841,20 +713,6 @@ contract StabilityPool is LiquityBase, StabilityPoolStorage, CheckContract, ISta
         frontEndSnapshots[_frontEnd].epoch = currentEpochCached;
 
         emit FrontEndSnapshotUpdated(_frontEnd, currentP, currentG);
-    }
-
-    function _payOutZEROGains(ICommunityIssuance _communityIssuance, address _depositor, address _frontEnd) internal {
-        // Pay out front end's ZERO gain
-        if (_frontEnd != address(0)) {
-            uint frontEndZEROGain = getFrontEndZEROGain(_frontEnd);
-            _communityIssuance.sendZERO(_frontEnd, frontEndZEROGain);
-            emit ZEROPaidToFrontEnd(_frontEnd, frontEndZEROGain);
-        }
-
-        // Pay out depositor's ZERO gain
-        uint depositorZEROGain = getDepositorZEROGain(_depositor);
-        _communityIssuance.sendZERO(_depositor, depositorZEROGain);
-        emit ZEROPaidToDepositor(_depositor, depositorZEROGain);
     }
 
     // --- 'require' functions ---

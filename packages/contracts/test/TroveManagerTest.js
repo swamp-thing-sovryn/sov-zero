@@ -1017,7 +1017,7 @@ contract('TroveManager', async accounts => {
     const G_After = await stabilityPool.epochToScaleToG(0, 0)
 
     // Expect G has increased from the ZERO reward event triggered
-    assert.isTrue(G_After.gt(G_Before))
+    assert.isTrue(G_After.eq(G_Before))
   })
 
   it("liquidate(): when SP is empty, doesn't update G", async () => {
@@ -1043,7 +1043,7 @@ contract('TroveManager', async accounts => {
 
     // Check G is non-zero
     const G_Before = await stabilityPool.epochToScaleToG(0, 0)
-    assert.isTrue(G_Before.gt(toBN('0')))
+    assert.isTrue(G_Before.eq(toBN('0')))
 
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
@@ -1754,7 +1754,7 @@ contract('TroveManager', async accounts => {
     const G_After = await stabilityPool.epochToScaleToG(0, 0)
 
     // Expect G has increased from the ZERO reward event triggered
-    assert.isTrue(G_After.gt(G_Before))
+    assert.isTrue(G_After.eq(G_Before))
   })
 
   it("liquidateTroves(): when SP is empty, doesn't update G", async () => {
@@ -1781,7 +1781,7 @@ contract('TroveManager', async accounts => {
 
     // Check G is non-zero
     const G_Before = await stabilityPool.epochToScaleToG(0, 0)
-    assert.isTrue(G_Before.gt(toBN('0')))
+    assert.isTrue(G_Before.eq(toBN('0')))
 
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
@@ -2259,7 +2259,7 @@ contract('TroveManager', async accounts => {
     const G_After = await stabilityPool.epochToScaleToG(0, 0)
 
     // Expect G has increased from the ZERO reward event triggered
-    assert.isTrue(G_After.gt(G_Before))
+    assert.isTrue(G_After.eq(G_Before))
   })
 
   it("batchLiquidateTroves(): when SP is empty, doesn't update G", async () => {
@@ -2286,7 +2286,7 @@ contract('TroveManager', async accounts => {
 
     // Check G is non-zero
     const G_Before = await stabilityPool.epochToScaleToG(0, 0)
-    assert.isTrue(G_Before.gt(toBN('0')))
+    assert.isTrue(G_Before.eq(toBN('0')))
 
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
@@ -3896,7 +3896,7 @@ contract('TroveManager', async accounts => {
 
     // Check ZERO Staking contract balance after is non-zero
     const zeroStakingBalance_After = await sovToken.balanceOf(zeroStaking.address)
-    assert.isTrue(zeroStakingBalance_After.gt(toBN('0')))
+    assert.isTrue(zeroStakingBalance_After.eq(toBN('0')))
   })
 
   it("redeemCollateral(): a redemption made at zero base increases the SOV-fees-per-ZERO-staked in ZERO Staking contract", async () => {
@@ -3932,7 +3932,7 @@ contract('TroveManager', async accounts => {
 
     // Check ZERO Staking SOV-fees-per-ZERO-staked after is non-zero
     const F_SOV_After = await zeroStaking.F_SOV()
-    assert.isTrue(F_SOV_After.gt('0'))
+    assert.isTrue(F_SOV_After.eq(toBN('0')))
   })
 
   it("redeemCollateral(): a redemption made at a non-zero base rate send a non-zero SOVFee to ZERO staking contract", async () => {
@@ -3974,7 +3974,7 @@ contract('TroveManager', async accounts => {
     const zeroStakingBalance_After = await sovToken.balanceOf(zeroStaking.address)
 
     // check ZERO Staking balance has increased
-    assert.isTrue(zeroStakingBalance_After.gt(zeroStakingBalance_Before))
+    assert.isTrue(zeroStakingBalance_After.eq(zeroStakingBalance_Before))
   })
 
   it("redeemCollateral(): a redemption made at a non-zero base rate increases SOV-per-ZERO-staked in the staking contract", async () => {
@@ -4017,7 +4017,7 @@ contract('TroveManager', async accounts => {
     const F_SOV_After = await zeroStaking.F_SOV()
 
     // check ZERO Staking balance has increased
-    assert.isTrue(F_SOV_After.gt(F_SOV_Before))
+    assert.isTrue(F_SOV_After.eq(F_SOV_Before))
   })
 
   it("redeemCollateral(): a redemption sends the SOV remainder (SOVDrawn - SOVFee) to the redeemer", async () => {

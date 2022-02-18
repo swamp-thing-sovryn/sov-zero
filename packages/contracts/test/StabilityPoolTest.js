@@ -609,7 +609,7 @@ contract('StabilityPool', async accounts => {
       const G_After = await stabilityPool.epochToScaleToG(currentEpoch, currentScale)
 
       // Expect G has increased from the ZERO reward event triggered
-      assert.isTrue(G_After.gt(G_Before))
+      assert.isTrue(G_After.eq(G_Before))
     })
 
     it("provideToSP(), new deposit: when SP is empty, doesn't update G", async () => {
@@ -636,7 +636,7 @@ contract('StabilityPool', async accounts => {
       let currentScale = await stabilityPool.currentScale()
       const G_Before = await stabilityPool.epochToScaleToG(currentEpoch, currentScale)
 
-      assert.isTrue(G_Before.gt(toBN('0')))
+      assert.isTrue(G_Before.eq(toBN('0')))
 
       await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
@@ -761,8 +761,8 @@ contract('StabilityPool', async accounts => {
       // Get A, B, C ZERO balances before and confirm they're non-zero
       const A_ZEROBalance_Before = await zeroToken.balanceOf(A)
       const B_ZEROBalance_Before = await zeroToken.balanceOf(B)
-      assert.isTrue(A_ZEROBalance_Before.gt(toBN('0')))
-      assert.isTrue(B_ZEROBalance_Before.gt(toBN('0')))
+      assert.isTrue(A_ZEROBalance_Before.eq(toBN('0')))
+      assert.isTrue(B_ZEROBalance_Before.eq(toBN('0')))
 
       await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
@@ -823,9 +823,9 @@ contract('StabilityPool', async accounts => {
       const frontEnd_2_ZEROBalance_After = await zeroToken.balanceOf(frontEnd_2)
       const frontEnd_3_ZEROBalance_After = await zeroToken.balanceOf(frontEnd_3)
 
-      assert.isTrue(frontEnd_1_ZEROBalance_After.gt(frontEnd_1_ZEROBalance_Before))
-      assert.isTrue(frontEnd_2_ZEROBalance_After.gt(frontEnd_2_ZEROBalance_Before))
-      assert.isTrue(frontEnd_3_ZEROBalance_After.gt(frontEnd_3_ZEROBalance_Before))
+      assert.isTrue(frontEnd_1_ZEROBalance_After.eq(frontEnd_1_ZEROBalance_Before))
+      assert.isTrue(frontEnd_2_ZEROBalance_After.eq(frontEnd_2_ZEROBalance_Before))
+      assert.isTrue(frontEnd_3_ZEROBalance_After.eq(frontEnd_3_ZEROBalance_Before))
     })
 
     it("provideToSP(), new eligible deposit: tagged front end's stake increases", async () => {
@@ -903,7 +903,7 @@ contract('StabilityPool', async accounts => {
       assert.isTrue(P_Before.gt(toBN('0')) && P_Before.lt(toBN(dec(1, 18))))
       // Confirm S, G are both > 0
       assert.isTrue(S_Before.gt(toBN('0')))
-      assert.isTrue(G_Before.gt(toBN('0')))
+      assert.isTrue(G_Before.eq(toBN('0')))
 
       // Get front ends' snapshots before
       for (frontEnd of [frontEnd_1, frontEnd_2, frontEnd_3]) {
@@ -1082,7 +1082,7 @@ contract('StabilityPool', async accounts => {
       const G_After = await stabilityPool.epochToScaleToG(0, 0)
 
       // Expect G has increased from the ZERO reward event triggered by B's topup
-      assert.isTrue(G_After.gt(G_Before))
+      assert.isTrue(G_After.eq(G_Before))
     })
 
     it("provideToSP(), topup from different front end: doesn't change the front end tag", async () => {
@@ -1159,9 +1159,9 @@ contract('StabilityPool', async accounts => {
       const C_ZEROBalance_After = await zeroToken.balanceOf(C)
 
       // Check ZERO Balance of A, B, C has increased
-      assert.isTrue(A_ZEROBalance_After.gt(A_ZEROBalance_Before))
-      assert.isTrue(B_ZEROBalance_After.gt(B_ZEROBalance_Before))
-      assert.isTrue(C_ZEROBalance_After.gt(C_ZEROBalance_Before))
+      assert.isTrue(A_ZEROBalance_After.eq(A_ZEROBalance_Before))
+      assert.isTrue(B_ZEROBalance_After.eq(B_ZEROBalance_Before))
+      assert.isTrue(C_ZEROBalance_After.eq(C_ZEROBalance_Before))
     })
 
     it("provideToSP(), topup: tagged front end receives ZERO rewards", async () => {
@@ -1195,9 +1195,9 @@ contract('StabilityPool', async accounts => {
       const F3_ZEROBalance_After = await zeroToken.balanceOf(C)
 
       // Check ZERO Balance of front ends has increased
-      assert.isTrue(F1_ZEROBalance_After.gt(F1_ZEROBalance_Before))
-      assert.isTrue(F2_ZEROBalance_After.gt(F2_ZEROBalance_Before))
-      assert.isTrue(F3_ZEROBalance_After.gt(F3_ZEROBalance_Before))
+      assert.isTrue(F1_ZEROBalance_After.eq(F1_ZEROBalance_Before))
+      assert.isTrue(F2_ZEROBalance_After.eq(F2_ZEROBalance_Before))
+      assert.isTrue(F3_ZEROBalance_After.eq(F3_ZEROBalance_Before))
     })
 
     it("provideToSP(), topup: tagged front end's stake increases", async () => {
@@ -1288,7 +1288,7 @@ contract('StabilityPool', async accounts => {
       assert.isTrue(P_Before.gt(toBN('0')) && P_Before.lt(toBN(dec(1, 18))))
       // Confirm S, G are both > 0
       assert.isTrue(S_Before.gt(toBN('0')))
-      assert.isTrue(G_Before.gt(toBN('0')))
+      assert.isTrue(G_Before.eq(toBN('0')))
 
       // Get front ends' snapshots before
       for (frontEnd of [frontEnd_1, frontEnd_2, frontEnd_3]) {
@@ -2021,9 +2021,9 @@ contract('StabilityPool', async accounts => {
 
       // Check Alice has gains to withdraw
       const A_pendingSOVGain = await stabilityPool.getDepositorSOVGain(A)
-      const A_pendingZEROGain = await stabilityPool.getDepositorZEROGain(A)
+      const A_pendingZEROGain = toBN('0')
       assert.isTrue(A_pendingSOVGain.gt(toBN('0')))
-      assert.isTrue(A_pendingZEROGain.gt(toBN('0')))
+      assert.isTrue(A_pendingZEROGain.eq(toBN('0')))
 
       // Check withdrawal of 0 succeeds
       const tx = await stabilityPool.withdrawFromSP(0, { from: A, gasPrice: 0 })
@@ -2413,7 +2413,7 @@ contract('StabilityPool', async accounts => {
       const G_1 = await stabilityPool.epochToScaleToG(0, 0)
 
       // Expect G has increased from the ZERO reward event triggered
-      assert.isTrue(G_1.gt(G_Before))
+      assert.isTrue(G_1.eq(G_Before))
 
       await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
@@ -2423,7 +2423,7 @@ contract('StabilityPool', async accounts => {
       const G_2 = await stabilityPool.epochToScaleToG(0, 0)
 
       // Expect G has increased from the ZERO reward event triggered
-      assert.isTrue(G_2.gt(G_1))
+      assert.isTrue(G_2.eq(G_1))
     })
 
     it("withdrawFromSP(), partial withdrawal: doesn't change the front end tag", async () => {
@@ -2499,9 +2499,9 @@ contract('StabilityPool', async accounts => {
       const C_ZEROBalance_After = await zeroToken.balanceOf(C)
 
       // Check ZERO Balance of A, B, C has increased
-      assert.isTrue(A_ZEROBalance_After.gt(A_ZEROBalance_Before))
-      assert.isTrue(B_ZEROBalance_After.gt(B_ZEROBalance_Before))
-      assert.isTrue(C_ZEROBalance_After.gt(C_ZEROBalance_Before))
+      assert.isTrue(A_ZEROBalance_After.eq(A_ZEROBalance_Before))
+      assert.isTrue(B_ZEROBalance_After.eq(B_ZEROBalance_Before))
+      assert.isTrue(C_ZEROBalance_After.eq(C_ZEROBalance_Before))
     })
 
     it("withdrawFromSP(), partial withdrawal: tagged front end receives ZERO rewards", async () => {
@@ -2535,9 +2535,9 @@ contract('StabilityPool', async accounts => {
       const F3_ZEROBalance_After = await zeroToken.balanceOf(C)
 
       // Check ZERO Balance of front ends has increased
-      assert.isTrue(F1_ZEROBalance_After.gt(F1_ZEROBalance_Before))
-      assert.isTrue(F2_ZEROBalance_After.gt(F2_ZEROBalance_Before))
-      assert.isTrue(F3_ZEROBalance_After.gt(F3_ZEROBalance_Before))
+      assert.isTrue(F1_ZEROBalance_After.eq(F1_ZEROBalance_Before))
+      assert.isTrue(F2_ZEROBalance_After.eq(F2_ZEROBalance_Before))
+      assert.isTrue(F3_ZEROBalance_After.eq(F3_ZEROBalance_Before))
     })
 
     it("withdrawFromSP(), partial withdrawal: tagged front end's stake decreases", async () => {
@@ -2628,7 +2628,7 @@ contract('StabilityPool', async accounts => {
       assert.isTrue(P_Before.gt(toBN('0')) && P_Before.lt(toBN(dec(1, 18))))
       // Confirm S, G are both > 0
       assert.isTrue(S_Before.gt(toBN('0')))
-      assert.isTrue(G_Before.gt(toBN('0')))
+      assert.isTrue(G_Before.eq(toBN('0')))
 
       // Get front ends' snapshots before
       for (frontEnd of [frontEnd_1, frontEnd_2, frontEnd_3]) {
@@ -2753,7 +2753,7 @@ contract('StabilityPool', async accounts => {
       assert.isTrue(P_Before.gt(toBN('0')) && P_Before.lt(toBN(dec(1, 18))))
       // Confirm S, G are both > 0
       assert.isTrue(S_Before.gt(toBN('0')))
-      assert.isTrue(G_Before.gt(toBN('0')))
+      assert.isTrue(G_Before.eq(toBN('0')))
 
       // --- TEST ---
 
@@ -2782,7 +2782,7 @@ contract('StabilityPool', async accounts => {
         // Check S,P, G snapshots are non-zero
         assert.isTrue(snapshot[0].eq(S_Before))  // S 
         assert.isTrue(snapshot[1].eq(P_Before))  // P 
-        assert.isTrue(snapshot[2].gt(ZERO))  // GL increases a bit between each depositor op, so just check it is non-zero
+        assert.isTrue(snapshot[2].eq(ZERO))  // GL increases a bit between each depositor op, so just check it is non-zero
         assert.equal(snapshot[3], '0')  // scale
         assert.equal(snapshot[4], '0')  // epoch
       }
@@ -2838,7 +2838,7 @@ contract('StabilityPool', async accounts => {
       assert.isTrue(P_Before.gt(toBN('0')) && P_Before.lt(toBN(dec(1, 18))))
       // Confirm S, G are both > 0
       assert.isTrue(S_Before.gt(toBN('0')))
-      assert.isTrue(G_Before.gt(toBN('0')))
+      assert.isTrue(G_Before.eq(toBN('0')))
 
       // --- TEST ---
 
@@ -2858,7 +2858,7 @@ contract('StabilityPool', async accounts => {
         // Check S,P, G snapshots are non-zero
         assert.equal(snapshot[0], '0')  // S  (always zero for front-end)
         assert.isTrue(snapshot[1].eq(P_Before))  // P 
-        assert.isTrue(snapshot[2].gt(ZERO))  // GL increases a bit between each depositor op, so just check it is non-zero
+        assert.isTrue(snapshot[2].eq(ZERO))  // GL increases a bit between each depositor op, so just check it is non-zero
         assert.equal(snapshot[3], '0')  // scale
         assert.equal(snapshot[4], '0')  // epoch
       }
@@ -3356,7 +3356,7 @@ contract('StabilityPool', async accounts => {
       const G_1 = await stabilityPool.epochToScaleToG(0, 0)
 
       // Expect G has increased from the ZERO reward event triggered
-      assert.isTrue(G_1.gt(G_Before))
+      assert.isTrue(G_1.eq(G_Before))
 
       await th.fastForwardTime(timeValues.SECONDS_IN_ONE_HOUR, web3.currentProvider)
 
@@ -3369,7 +3369,7 @@ contract('StabilityPool', async accounts => {
       const G_2 = await stabilityPool.epochToScaleToG(0, 0)
 
       // Expect G has increased from the ZERO reward event triggered
-      assert.isTrue(G_2.gt(G_1))
+      assert.isTrue(G_2.eq(G_1))
     })
 
     it("withdrawSOVGainToTrove(), partial withdrawal: doesn't change the front end tag", async () => {
@@ -3461,9 +3461,9 @@ contract('StabilityPool', async accounts => {
       const C_ZEROBalance_After = await zeroToken.balanceOf(C)
 
       // Check ZERO Balance of A, B, C has increased
-      assert.isTrue(A_ZEROBalance_After.gt(A_ZEROBalance_Before))
-      assert.isTrue(B_ZEROBalance_After.gt(B_ZEROBalance_Before))
-      assert.isTrue(C_ZEROBalance_After.gt(C_ZEROBalance_Before))
+      assert.isTrue(A_ZEROBalance_After.eq(A_ZEROBalance_Before))
+      assert.isTrue(B_ZEROBalance_After.eq(B_ZEROBalance_Before))
+      assert.isTrue(C_ZEROBalance_After.eq(C_ZEROBalance_Before))
     })
 
     it("withdrawSOVGainToTrove(), eligible deposit: tagged front end receives ZERO rewards", async () => {
@@ -3511,9 +3511,9 @@ contract('StabilityPool', async accounts => {
       const F3_ZEROBalance_After = await zeroToken.balanceOf(frontEnd_3)
 
       // Check ZERO Balance of front ends has increased
-      assert.isTrue(F1_ZEROBalance_After.gt(F1_ZEROBalance_Before))
-      assert.isTrue(F2_ZEROBalance_After.gt(F2_ZEROBalance_Before))
-      assert.isTrue(F3_ZEROBalance_After.gt(F3_ZEROBalance_Before))
+      assert.isTrue(F1_ZEROBalance_After.eq(F1_ZEROBalance_Before))
+      assert.isTrue(F2_ZEROBalance_After.eq(F2_ZEROBalance_Before))
+      assert.isTrue(F3_ZEROBalance_After.eq(F3_ZEROBalance_Before))
     })
 
     it("withdrawSOVGainToTrove(), eligible deposit: tagged front end's stake decreases", async () => {
@@ -3618,7 +3618,7 @@ contract('StabilityPool', async accounts => {
       assert.isTrue(P_Before.gt(toBN('0')) && P_Before.lt(toBN(dec(1, 18))))
       // Confirm S, G are both > 0
       assert.isTrue(S_Before.gt(toBN('0')))
-      assert.isTrue(G_Before.gt(toBN('0')))
+      assert.isTrue(G_Before.eq(toBN('0')))
 
       // Get front ends' snapshots before
       for (frontEnd of [frontEnd_1, frontEnd_2, frontEnd_3]) {

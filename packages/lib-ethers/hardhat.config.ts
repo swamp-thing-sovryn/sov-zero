@@ -91,11 +91,11 @@ const sovTokenAddresses = {
 const oracleAddresses : Record<string, OracleAddresses> = {
   mainnet: {
     mocOracleAddress: "",
-    rskOracleAddress: ""
+    rskOracleAddress: "0xA266aA67e2a25B0CCa460DEAfcacC81D17341a0D"
   },
   rsktestnet: {
-    mocOracleAddress: "0x26a00aF444928d689DDEC7b4D17c0E4a8c9D407d",
-    rskOracleAddress: "0xE00243Bc6912BF148302e8478996c98c22fE8739"
+    mocOracleAddress: "",
+    rskOracleAddress: "0x0945E4d65Ad9AD7FB3d695c036CAdA63769079C7"
   },
   dev: {
     mocOracleAddress: "",

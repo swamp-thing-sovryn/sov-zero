@@ -143,8 +143,8 @@ contract('ZEROStaking revenue share tests', async accounts => {
     const F_SOV_After = await zeroStaking.F_SOV()
 
     // Expect fee per unit staked = fee/100, since there is 100 ZUSD totalStaked
-    // 20% sent to SovFeeCollector address
-    const ethFeeToSovCollector = emittedSOVFee.mul(toBN(dec(20, 16))).div(mv._1e18BN)
+    // 100% sent to SovFeeCollector address
+    const ethFeeToSovCollector = emittedSOVFee
     const ethFeeToZeroStalking = emittedSOVFee.sub(ethFeeToSovCollector)
     const expected_F_SOV_After = ethFeeToZeroStalking.div(toBN('100')) 
 
@@ -227,8 +227,8 @@ contract('ZEROStaking revenue share tests', async accounts => {
     const F_ZUSD_After = await zeroStaking.F_ZUSD()
 
     // Expect fee per unit staked = fee/100, since there is 100 ZUSD totalStaked
-    // 20% sent to SovFeeCollector address
-    const zusdFeeToSovCollector = emittedZUSDFee.mul(toBN(dec(20, 16))).div(mv._1e18BN)
+    // 100% sent to SovFeeCollector address
+    const zusdFeeToSovCollector = emittedZUSDFee
     const zusdFeeToZeroStalking = emittedZUSDFee.sub(zusdFeeToSovCollector)
     const expected_F_ZUSD_After = zusdFeeToZeroStalking.div(toBN('100')) 
 
@@ -328,17 +328,17 @@ contract('ZEROStaking revenue share tests', async accounts => {
     const emittedZUSDFee_2 = toBN(th.getZUSDFeeFromZUSDBorrowingEvent(borrowingTx_2))
     assert.isTrue(emittedZUSDFee_2.gt(toBN('0')))
 
-    // 20% sent to SovFeeCollector address
-    const ethFeeToSovCollector_1 = emittedSOVFee_1.mul(toBN(dec(20, 16))).div(mv._1e18BN)
+    // 100% sent to SovFeeCollector address
+    const ethFeeToSovCollector_1 = emittedSOVFee_1
     const ethFeeToZeroStalking_1 = emittedSOVFee_1.sub(ethFeeToSovCollector_1)
-    const ethFeeToSovCollector_2 = emittedSOVFee_2.mul(toBN(dec(20, 16))).div(mv._1e18BN)
+    const ethFeeToSovCollector_2 = emittedSOVFee_2
     const rethFeeToZeroStalking_2 = emittedSOVFee_2.sub(ethFeeToSovCollector_2)
     const expectedTotalSOVGain = ethFeeToZeroStalking_1.add(rethFeeToZeroStalking_2)
 
-    // 20% sent to SovFeeCollector address
-    const zusdFeeToSovCollector_1 = emittedZUSDFee_1.mul(toBN(dec(20, 16))).div(mv._1e18BN)
+    // 100% sent to SovFeeCollector address
+    const zusdFeeToSovCollector_1 = emittedZUSDFee_1
     const zusdFeeToZeroStalking_1 = emittedZUSDFee_1.sub(zusdFeeToSovCollector_1)
-    const zusdFeeToSovCollector_2 = emittedZUSDFee_2.mul(toBN(dec(20, 16))).div(mv._1e18BN)
+    const zusdFeeToSovCollector_2 = emittedZUSDFee_2
     const zusdFeeToZeroStalking_2 = emittedZUSDFee_2.sub(zusdFeeToSovCollector_2)
     const expectedTotalZUSDGain = zusdFeeToZeroStalking_1.add(zusdFeeToZeroStalking_2)
 
@@ -413,17 +413,17 @@ contract('ZEROStaking revenue share tests', async accounts => {
     assert.isTrue(emittedZUSDFee_2.gt(toBN('0')))
 
 
-    // 20% sent to SovFeeCollector address
-    const ethFeeToSovCollector_1 = emittedSOVFee_1.mul(toBN(dec(20, 16))).div(mv._1e18BN)
+    // 100% sent to SovFeeCollector address
+    const ethFeeToSovCollector_1 = emittedSOVFee_1
     const ethFeeToZeroStalking_1 = emittedSOVFee_1.sub(ethFeeToSovCollector_1)
-    const ethFeeToSovCollector_2 = emittedSOVFee_2.mul(toBN(dec(20, 16))).div(mv._1e18BN)
+    const ethFeeToSovCollector_2 = emittedSOVFee_2
     const ethFeeToZeroStalking_2 = emittedSOVFee_2.sub(ethFeeToSovCollector_2)
     const expectedTotalSOVGain = ethFeeToZeroStalking_1.add(ethFeeToZeroStalking_2)
 
-    // 20% sent to SovFeeCollector address
-    const zusdFeeToSovCollector_1 = emittedZUSDFee_1.mul(toBN(dec(20, 16))).div(mv._1e18BN)
+    // 100% sent to SovFeeCollector address
+    const zusdFeeToSovCollector_1 = emittedZUSDFee_1
     const zusdFeeToZeroStalking_1 = emittedZUSDFee_1.sub(zusdFeeToSovCollector_1)
-    const zusdDFeeToSovCollector_2 = emittedZUSDFee_2.mul(toBN(dec(20, 16))).div(mv._1e18BN)
+    const zusdDFeeToSovCollector_2 = emittedZUSDFee_2
     const zusdFeeToZeroStalking_2 = emittedZUSDFee_2.sub(zusdDFeeToSovCollector_2)
     const expectedTotalZUSDGain = zusdFeeToZeroStalking_1.add(zusdFeeToZeroStalking_2)
 
@@ -482,10 +482,10 @@ contract('ZEROStaking revenue share tests', async accounts => {
      const emittedSOVFee_2 = toBN((await th.getEmittedRedemptionValues(redemptionTx_2))[3])
      assert.isTrue(emittedSOVFee_2.gt(toBN('0')))
 
-    // 20% sent to SovFeeCollector address
-    const ethFeeToSovCollector_1 = emittedSOVFee_1.mul(toBN(dec(20, 16))).div(mv._1e18BN)
+    // 100% sent to SovFeeCollector address
+    const ethFeeToSovCollector_1 = emittedSOVFee_1
     const ethFeeToZeroStalking_1 = emittedSOVFee_1.sub(ethFeeToSovCollector_1)
-    const ethFeeToSovCollector_2 = emittedSOVFee_2.mul(toBN(dec(20, 16))).div(mv._1e18BN)
+    const ethFeeToSovCollector_2 = emittedSOVFee_2
     const ethFeeToZeroStalking_2 = emittedSOVFee_2.sub(ethFeeToSovCollector_2)
     const expectedTotalSOVGain = ethFeeToZeroStalking_1.add(ethFeeToZeroStalking_2)
 
@@ -547,10 +547,10 @@ contract('ZEROStaking revenue share tests', async accounts => {
     const emittedZUSDFee_2 = toBN(th.getZUSDFeeFromZUSDBorrowingEvent(borrowingTx_2))
     assert.isTrue(emittedZUSDFee_2.gt(toBN('0')))
 
-    // 20% sent to SovFeeCollector address
-    const zusdFeeToSovCollector_1 = emittedZUSDFee_1.mul(toBN(dec(20, 16))).div(mv._1e18BN)
+    // 100% sent to SovFeeCollector address
+    const zusdFeeToSovCollector_1 = emittedZUSDFee_1
     const zusdFeeToZeroStalking_1 = emittedZUSDFee_1.sub(zusdFeeToSovCollector_1)
-    const zusdDFeeToSovCollector_2 = emittedZUSDFee_2.mul(toBN(dec(20, 16))).div(mv._1e18BN)
+    const zusdDFeeToSovCollector_2 = emittedZUSDFee_2
     const zusdFeeToZeroStalking_2 = emittedZUSDFee_2.sub(zusdDFeeToSovCollector_2)
     const expectedTotalZUSDGain = zusdFeeToZeroStalking_1.add(zusdFeeToZeroStalking_2)
     const A_ZUSDGain = await zeroStaking.getPendingZUSDGain(A)
@@ -645,12 +645,12 @@ contract('ZEROStaking revenue share tests', async accounts => {
 
     // Expected SOV gains
 
-    // 20% sent to SovFeeCollector address
-    const ethFeeToSovCollector_1 = emittedSOVFee_1.mul(toBN(dec(20, 16))).div(mv._1e18BN)
+    // 100% sent to SovFeeCollector address
+    const ethFeeToSovCollector_1 = emittedSOVFee_1
     const ethFeeToZeroStalking_1 = emittedSOVFee_1.sub(ethFeeToSovCollector_1)
-    const ethFeeToSovCollector_2 = emittedSOVFee_2.mul(toBN(dec(20, 16))).div(mv._1e18BN)
+    const ethFeeToSovCollector_2 = emittedSOVFee_2
     const ethFeeToZeroStalking_2 = emittedSOVFee_2.sub(ethFeeToSovCollector_2)
-    const ethFeeToSovCollector_3 = emittedSOVFee_3.mul(toBN(dec(20, 16))).div(mv._1e18BN)
+    const ethFeeToSovCollector_3 = emittedSOVFee_3
     const ethFeeToZeroStalking_3 = emittedSOVFee_3.sub(ethFeeToSovCollector_3)
     const expectedSOVGain_A = toBN('100').mul(ethFeeToZeroStalking_1).div( toBN('600'))
                             .add(toBN('100').mul(ethFeeToZeroStalking_2).div( toBN('600')))
@@ -668,12 +668,12 @@ contract('ZEROStaking revenue share tests', async accounts => {
 
     // Expected ZUSD gains:
 
-    // 20% sent to SovFeeCollector address
-    const zusdFeeToSovCollector_1 = emittedZUSDFee_1.mul(toBN(dec(20, 16))).div(mv._1e18BN)
+    // 100% sent to SovFeeCollector address
+    const zusdFeeToSovCollector_1 = emittedZUSDFee_1
     const zusdFeeToZeroStalking_1 = emittedZUSDFee_1.sub(zusdFeeToSovCollector_1)
-    const zusdFeeToSovCollector_2 = emittedZUSDFee_2.mul(toBN(dec(20, 16))).div(mv._1e18BN)
+    const zusdFeeToSovCollector_2 = emittedZUSDFee_2
     const zusdFeeToZeroStalking_2 = emittedZUSDFee_2.sub(zusdFeeToSovCollector_2)
-    const zusdFeeToSovCollector_3 = emittedZUSDFee_3.mul(toBN(dec(20, 16))).div(mv._1e18BN)
+    const zusdFeeToSovCollector_3 = emittedZUSDFee_3
     const zusdFeeToZeroStalking_3 = emittedZUSDFee_3.sub(zusdFeeToSovCollector_3)
     const expectedZUSDGain_A = toBN('100').mul(zusdFeeToZeroStalking_1).div( toBN('600'))
                             .add(toBN('100').mul(zusdFeeToZeroStalking_2).div( toBN('600')))

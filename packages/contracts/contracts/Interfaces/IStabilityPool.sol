@@ -186,22 +186,6 @@ interface IStabilityPool {
     function getDepositorSOVGain(address _depositor) external view returns (uint);
 
     /**
-     * @notice Calculate the ZERO gain earned by a deposit since its last snapshots were taken.
-     *    If not tagged with a front end, the depositor gets a 100% cut of what their deposit earned.
-     *    Otherwise, their cut of the deposit's earnings is equal to the kickbackRate, set by the front end through
-     *    which they made their deposit.
-     * @param _depositor address to calculate SOV gain
-     * @return ZERO gain from given depositor
-     */
-    function getDepositorZEROGain(address _depositor) external view returns (uint);
-
-    /**
-     * @param _frontEnd front end address
-     * @return the ZERO gain earned by the front end.
-     */
-    function getFrontEndZEROGain(address _frontEnd) external view returns (uint);
-
-    /**
      * @param _depositor depositor address
      * @return the user's compounded deposit.
      */

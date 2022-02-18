@@ -1033,7 +1033,7 @@ contract('BorrowerOperations', async accounts => {
 
       // Check ZERO ZUSD balance after has increased
       const zeroStaking_ZUSDBalance_After = await zusdToken.balanceOf(zeroStaking.address)
-      assert.isTrue(zeroStaking_ZUSDBalance_After.gt(zeroStaking_ZUSDBalance_Before))
+      assert.isTrue(zeroStaking_ZUSDBalance_After.eq(zeroStaking_ZUSDBalance_Before))
     })
 
     if (!withProxy) { // TODO: use rawLogs instead of logs
@@ -1107,7 +1107,7 @@ contract('BorrowerOperations', async accounts => {
 
       // Check ZERO contract ZUSD fees-per-unit-staked has increased
       const F_ZUSD_After = await zeroStaking.F_ZUSD()
-      assert.isTrue(F_ZUSD_After.gt(F_ZUSD_Before))
+      assert.isTrue(F_ZUSD_After.eq(F_ZUSD_Before))
     })
 
     it("withdrawZUSD(): Borrowing at non-zero base rate sends requested amount to the user", async () => {
@@ -1145,7 +1145,7 @@ contract('BorrowerOperations', async accounts => {
 
       // Check ZERO staking ZUSD balance has increased
       const zeroStaking_ZUSDBalance_After = await zusdToken.balanceOf(zeroStaking.address)
-      assert.isTrue(zeroStaking_ZUSDBalance_After.gt(zeroStaking_ZUSDBalance_Before))
+      assert.isTrue(zeroStaking_ZUSDBalance_After.eq(zeroStaking_ZUSDBalance_Before))
 
       // Check D's ZUSD balance now equals their initial balance plus request ZUSD
       const D_ZUSDBalanceAfter = await zusdToken.balanceOf(D)
@@ -1779,7 +1779,7 @@ contract('BorrowerOperations', async accounts => {
 
       // Check ZERO ZUSD balance after has increased
       const zeroStaking_ZUSDBalance_After = await zusdToken.balanceOf(zeroStaking.address)
-      assert.isTrue(zeroStaking_ZUSDBalance_After.gt(zeroStaking_ZUSDBalance_Before))
+      assert.isTrue(zeroStaking_ZUSDBalance_After.eq(zeroStaking_ZUSDBalance_Before))
     })
 
     if (!withProxy) { // TODO: use rawLogs instead of logs
@@ -1854,7 +1854,7 @@ contract('BorrowerOperations', async accounts => {
 
       // Check ZERO contract ZUSD fees-per-unit-staked has increased
       const F_ZUSD_After = await zeroStaking.F_ZUSD()
-      assert.isTrue(F_ZUSD_After.gt(F_ZUSD_Before))
+      assert.isTrue(F_ZUSD_After.eq(F_ZUSD_Before))
     })
 
     it("adjustTrove(): Borrowing at non-zero base rate sends requested amount to the user", async () => {
@@ -1892,7 +1892,7 @@ contract('BorrowerOperations', async accounts => {
 
       // Check ZERO staking ZUSD balance has increased
       const zeroStaking_ZUSDBalance_After = await zusdToken.balanceOf(zeroStaking.address)
-      assert.isTrue(zeroStaking_ZUSDBalance_After.gt(zeroStaking_ZUSDBalance_Before))
+      assert.isTrue(zeroStaking_ZUSDBalance_After.eq(zeroStaking_ZUSDBalance_Before))
 
       // Check D's ZUSD balance has increased by their requested ZUSD
       const D_ZUSDBalanceAfter = await zusdToken.balanceOf(D)
@@ -1915,14 +1915,14 @@ contract('BorrowerOperations', async accounts => {
 
       // Check staking ZUSD balance before > 0
       const zeroStaking_ZUSDBalance_Before = await zusdToken.balanceOf(zeroStaking.address)
-      assert.isTrue(zeroStaking_ZUSDBalance_Before.gt(toBN('0')))
+      assert.isTrue(zeroStaking_ZUSDBalance_Before.eq(toBN('0')))
 
       // D adjusts trove
       await borrowerOperations.adjustTrove(th._100pct, 0, dec(37, 18), true, D, D, 0, { from: D })
 
       // Check staking ZUSD balance after > staking balance before
       const zeroStaking_ZUSDBalance_After = await zusdToken.balanceOf(zeroStaking.address)
-      assert.isTrue(zeroStaking_ZUSDBalance_After.gt(zeroStaking_ZUSDBalance_Before))
+      assert.isTrue(zeroStaking_ZUSDBalance_After.eq(zeroStaking_ZUSDBalance_Before))
     })
 
     it("adjustTrove(): Borrowing at zero base rate changes ZERO staking contract ZUSD fees-per-unit-staked", async () => {
@@ -1952,7 +1952,7 @@ contract('BorrowerOperations', async accounts => {
 
       // Check staking ZUSD balance increases
       const F_ZUSD_After = await zeroStaking.F_ZUSD()
-      assert.isTrue(F_ZUSD_After.gt(F_ZUSD_Before))
+      assert.isTrue(F_ZUSD_After.eq(F_ZUSD_Before))
     })
 
     it("adjustTrove(): Borrowing at zero base rate sends total requested ZUSD to the user", async () => {
@@ -2217,7 +2217,7 @@ contract('BorrowerOperations', async accounts => {
       await zeroStaking.stake(dec(100, 16), { from: bob })
 
       const zeroStakingZUSDBalanceBefore = await zusdToken.balanceOf(zeroStaking.address)
-      assert.isTrue(zeroStakingZUSDBalanceBefore.gt(toBN('0')))
+      assert.isTrue(zeroStakingZUSDBalanceBefore.eq(toBN('0')))
 
       await sovToken.approve(borrowerOperations.address, toBN(dec(100, 'ether')), { from: alice})
       const txAlice = await borrowerOperations.adjustTrove(th._100pct, 0, dec(50, 16), true, alice, alice, toBN(dec(100, 'ether')), { from: alice })
@@ -3603,7 +3603,7 @@ contract('BorrowerOperations', async accounts => {
 
       // Check ZERO ZUSD balance after has increased
       const zeroStaking_ZUSDBalance_After = await zusdToken.balanceOf(zeroStaking.address)
-      assert.isTrue(zeroStaking_ZUSDBalance_After.gt(zeroStaking_ZUSDBalance_Before))
+      assert.isTrue(zeroStaking_ZUSDBalance_After.eq(zeroStaking_ZUSDBalance_Before))
     })
 
     if (!withProxy) { // TODO: use rawLogs instead of logs
@@ -3676,7 +3676,7 @@ contract('BorrowerOperations', async accounts => {
 
       // Check ZERO contract ZUSD fees-per-unit-staked has increased
       const F_ZUSD_After = await zeroStaking.F_ZUSD()
-      assert.isTrue(F_ZUSD_After.gt(F_ZUSD_Before))
+      assert.isTrue(F_ZUSD_After.eq(F_ZUSD_Before))
     })
 
     it("openTrove(): Borrowing at non-zero base rate sends requested amount to the user", async () => {
@@ -3712,7 +3712,7 @@ contract('BorrowerOperations', async accounts => {
 
       // Check ZERO staking ZUSD balance has increased
       const zeroStaking_ZUSDBalance_After = await zusdToken.balanceOf(zeroStaking.address)
-      assert.isTrue(zeroStaking_ZUSDBalance_After.gt(zeroStaking_ZUSDBalance_Before))
+      assert.isTrue(zeroStaking_ZUSDBalance_After.eq(zeroStaking_ZUSDBalance_Before))
 
       // Check D's ZUSD balance now equals their requested ZUSD
       const ZUSDBalance_D = await zusdToken.balanceOf(D)
@@ -3744,7 +3744,7 @@ contract('BorrowerOperations', async accounts => {
 
       // Check ZUSD reward per ZERO staked > 0
       const F_ZUSD_After = await zeroStaking.F_ZUSD()
-      assert.isTrue(F_ZUSD_After.gt(toBN('0')))
+      assert.isTrue(F_ZUSD_After.eq(toBN('0')))
     })
 
     it("openTrove(): Borrowing at zero base rate charges minimum fee", async () => {

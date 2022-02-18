@@ -342,11 +342,7 @@ contract('BorrowerWrappers', async accounts => {
 
     // to force ZERO issuance
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_WEEK * 2, web3.currentProvider)
-
-    // Alice has staked 150 ZUSD and the whale 2350 therefore she gets 6% of the ZERO gains
-    // 30,000,000 * (1–0.5^ (SECONDS_IN_A_WEEK * 2 / SECONDS_IN_A_YEAR) )
-    // ie. 0.06 * 787,084.753044 = 47,225.0851826
-    const expectedZEROGain_A = toBN('47225085182600000000000')
+    const expectedZEROGain_A = toBN('0')
 
     await priceFeed.setPrice(price.mul(toBN(2)));
 
@@ -424,83 +420,6 @@ contract('BorrowerWrappers', async accounts => {
     await assertRevert(proxy.methods["execute(address,bytes)"](borrowerWrappers.scriptAddress, calldata, { from: bob }), 'ds-auth-unauthorized')
   })
 
-  it('claimStakingGainsAndRecycle(): reverts if user has no trove', async () => {
-    const price = toBN(dec(200, 18))
-
-    // Whale opens Trove
-    await sovToken.approve(borrowerOperations.getProxyAddressFromUser(whale), toBN(dec(10000, 30)), { from: whale })
-    await openTrove({ extraZUSDAmount: toBN(dec(1850, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: whale } })
-    // Whale deposits 1850 ZUSD in StabilityPool
-    await stabilityPool.provideToSP(dec(1850, 18), ZERO_ADDRESS, { from: whale })
-
-    // alice opens trove and provides 150 ZUSD to StabilityPool
-    //await openTrove({ extraZUSDAmount: toBN(dec(150, 18)), extraParams: { from: alice } })
-    //await stabilityPool.provideToSP(dec(150, 18), ZERO_ADDRESS, { from: alice })
-
-    // mint some ZERO
-    await zeroTokenOriginal.unprotectedMint(borrowerOperations.getProxyAddressFromUser(whale), dec(1850, 18))
-    await zeroTokenOriginal.unprotectedMint(borrowerOperations.getProxyAddressFromUser(alice), dec(150, 18))
-
-    // stake ZERO
-    await zeroStaking.stake(dec(1850, 18), { from: whale })
-    await zeroStaking.stake(dec(150, 18), { from: alice })
-
-    // Defaulter Trove opened
-    await sovToken.approve(borrowerOperations.getProxyAddressFromUser(defaulter_1), toBN(dec(10000, 30)), { from: defaulter_1 })
-    const { zusdAmount, netDebt, totalDebt, collateral } = await openTrove({ ICR: toBN(dec(210, 16)), extraParams: { from: defaulter_1 } })
-    const borrowingFee = netDebt.sub(zusdAmount)
-
-    // Alice ZUSD gain is ((150/2000) * borrowingFee)
-    const expectedZUSDGain_A = borrowingFee.mul(toBN(dec(150, 18))).div(toBN(dec(2000, 18)))
-
-    // skip bootstrapping phase
-    await th.fastForwardTime(timeValues.SECONDS_IN_ONE_WEEK * 2, web3.currentProvider)
-
-    // whale redeems 100 ZUSD
-    const redeemedAmount = toBN(dec(100, 18))
-    await th.redeemCollateral(whale, contracts, redeemedAmount)
-
-    const sovBalanceBefore = await sovToken.balanceOf(borrowerOperations.getProxyAddressFromUser(alice))
-    const troveCollBefore = await troveManager.getTroveColl(alice)
-    const zusdBalanceBefore = await zusdToken.balanceOf(alice)
-    const troveDebtBefore = await troveManager.getTroveDebt(alice)
-    const zeroBalanceBefore = await zeroToken.balanceOf(alice)
-    const ICRBefore = await troveManager.getCurrentICR(alice, price)
-    const depositBefore = (await stabilityPool.deposits(alice))[0]
-    const stakeBefore = await zeroStaking.stakes(alice)
-
-    // Alice claims staking rewards and puts them back in the system through the proxy
-    await assertRevert(
-      borrowerWrappers.claimStakingGainsAndRecycle(th._100pct, alice, alice, { from: alice }),
-      'BorrowerWrappersScript: caller must have an active trove'
-    )
-
-    const sovBalanceAfter = await sovToken.balanceOf(borrowerOperations.getProxyAddressFromUser(alice))
-    const troveCollAfter = await troveManager.getTroveColl(alice)
-    const zusdBalanceAfter = await zusdToken.balanceOf(alice)
-    const troveDebtAfter = await troveManager.getTroveDebt(alice)
-    const zeroBalanceAfter = await zeroToken.balanceOf(alice)
-    const ICRAfter = await troveManager.getCurrentICR(alice, price)
-    const depositAfter = (await stabilityPool.deposits(alice))[0]
-    const stakeAfter = await zeroStaking.stakes(alice)
-
-    // check everything remains the same
-    assert.equal(sovBalanceAfter.toString(), sovBalanceBefore.toString())
-    assert.equal(zusdBalanceAfter.toString(), zusdBalanceBefore.toString())
-    assert.equal(zeroBalanceAfter.toString(), zeroBalanceBefore.toString())
-    th.assertIsApproximatelyEqual(troveDebtAfter, troveDebtBefore, 10000)
-    th.assertIsApproximatelyEqual(troveCollAfter, troveCollBefore)
-    th.assertIsApproximatelyEqual(ICRAfter, ICRBefore)
-    th.assertIsApproximatelyEqual(depositAfter, depositBefore, 10000)
-    th.assertIsApproximatelyEqual(zeroBalanceBefore, zeroBalanceAfter)
-    // ZERO staking
-    th.assertIsApproximatelyEqual(stakeAfter, stakeBefore)
-
-    // Expect Alice has withdrawn all SOV gain
-    const alice_pendingSOVGain = await stabilityPool.getDepositorSOVGain(alice)
-    assert.equal(alice_pendingSOVGain, 0)
-  })
-
   it('claimStakingGainsAndRecycle(): with only SOV gain', async () => {
     const price = toBN(dec(200, 18))
   
@@ -514,8 +433,8 @@ contract('BorrowerWrappers', async accounts => {
     await sovToken.approve(borrowerOperations.getProxyAddressFromUser(defaulter_1), toBN(dec(10000, 30)), { from: defaulter_1 })
     const { zusdAmount, netDebt, collateral } = await openTrove({ ICR: toBN(dec(210, 16)), extraParams: { from: defaulter_1 } })
     const borrowingFee = netDebt.sub(zusdAmount)
-    // 20% sent to SovFeeCollector address
-    const borrowingFeeToSovCollector = borrowingFee.mul(toBN(dec(20, 16))).div(mv._1e18BN)
+    // 100% sent to SovFeeCollector address
+    const borrowingFeeToSovCollector = borrowingFee
     const sovFeeCollectorZUSDBalanceAfter = await zusdToken.balanceOf(sovFeeCollector)
   
     // alice opens trove and provides 150 ZUSD to StabilityPool
@@ -542,8 +461,8 @@ contract('BorrowerWrappers', async accounts => {
  
     // Alice SOV gain is ((150/2000) * (redemption fee over redeemedAmount) / price)
     const redemptionFee = await troveManager.getRedemptionFeeWithDecay(redeemedAmount)
-    // 20% sent to SovFeeCollector address
-    const redemptionFeeToSovCollector = redemptionFee.mul(toBN(dec(20, 16))).div(mv._1e18BN)
+    // 100% sent to SovFeeCollector address
+    const redemptionFeeToSovCollector = redemptionFee
     const expectedSOVGainSovCollector = redemptionFeeToSovCollector.mul(mv._1e18BN).div(price)
 
     const redemptionFeeToZeroStalking = redemptionFee.sub(redemptionFeeToSovCollector)
@@ -562,7 +481,7 @@ contract('BorrowerWrappers', async accounts => {
     const borrowingRate = await troveManagerOriginal.getBorrowingRateWithDecay()
     const netDebtChange = proportionalZUSD.mul(toBN(dec(1, 18))).div(toBN(dec(1, 18)).add(borrowingRate))
 
-    const expectedZEROGain_A = toBN('787084753044000000000000')
+    const expectedZEROGain_A = toBN('0')
 
     const proxyAddress = borrowerWrappers.getProxyAddressFromUser(alice)
     // Alice claims staking rewards and puts them back in the system through the proxy
@@ -570,8 +489,8 @@ contract('BorrowerWrappers', async accounts => {
 
     // Alice new ZUSD gain due to her own Trove adjustment: ((150/2000) * (borrowing fee over netDebtChange))
     const newBorrowingFee = await troveManagerOriginal.getBorrowingFeeWithDecay(netDebtChange)
-    // 20% sent to SovFeeCollector address
-    const newBorrowingFeeToSovCollector = newBorrowingFee.mul(toBN(dec(20, 16))).div(mv._1e18BN)
+    // 100% sent to SovFeeCollector address
+    const newBorrowingFeeToSovCollector = newBorrowingFee
     const newBorrowingFeeToZeroStalking = newBorrowingFee.sub(newBorrowingFeeToSovCollector)
     const expectedNewZUSDGain_A = newBorrowingFeeToZeroStalking.mul(toBN(dec(150, 18))).div(toBN(dec(2000, 18)))
 
@@ -640,8 +559,8 @@ contract('BorrowerWrappers', async accounts => {
     const { zusdAmount, netDebt, collateral } = await openTrove({ ICR: toBN(dec(210, 16)), extraParams: { from: defaulter_1 } })
     const borrowingFee = netDebt.sub(zusdAmount)
 
-    // 20% sent to SovFeeCollector address
-    const borrowingFeeToSovCollector = borrowingFee.mul(toBN(dec(20, 16))).div(mv._1e18BN)
+    // 100% sent to SovFeeCollector address
+    const borrowingFeeToSovCollector = borrowingFee
     const sovFeeCollectorZUSDBalanceAfter = await zusdToken.balanceOf(sovFeeCollector)
     const borrowingFeeToZeroStalking = borrowingFee.sub(borrowingFeeToSovCollector)
 
@@ -721,8 +640,8 @@ contract('BorrowerWrappers', async accounts => {
     const { zusdAmount, netDebt, collateral } = await openTrove({ ICR: toBN(dec(210, 16)), extraParams: { from: defaulter_1 } })
     const borrowingFee = netDebt.sub(zusdAmount)
 
-    // 20% sent to SovFeeCollector address
-    const borrowingFeeToSovCollector = borrowingFee.mul(toBN(dec(20, 16))).div(mv._1e18BN)
+    // 100% sent to SovFeeCollector address
+    const borrowingFeeToSovCollector = borrowingFee
     const sovFeeCollectorZUSDBalanceAfter = await zusdToken.balanceOf(sovFeeCollector)
     const borrowingFeeToZeroStalking = borrowingFee.sub(borrowingFeeToSovCollector)
 
@@ -740,8 +659,8 @@ contract('BorrowerWrappers', async accounts => {
 
     // Alice ETH gain is ((150/2000) * (redemption fee over redeemedAmount) / price)
     const redemptionFee = await troveManager.getRedemptionFeeWithDecay(redeemedAmount)
-    // 20% sent to SovFeeCollector address
-    const redemptionFeeToSovCollector = redemptionFee.mul(toBN(dec(20, 16))).div(mv._1e18BN)
+    // 100% sent to SovFeeCollector address
+    const redemptionFeeToSovCollector = redemptionFee
     const expectedSOVGainSovCollector = redemptionFeeToSovCollector.mul(mv._1e18BN).div(price)
 
     const redemptionFeeToZeroStalking = redemptionFee.sub(redemptionFeeToSovCollector)
@@ -761,15 +680,15 @@ contract('BorrowerWrappers', async accounts => {
     const netDebtChange = proportionalZUSD.mul(toBN(dec(1, 18))).div(toBN(dec(1, 18)).add(borrowingRate))
     const expectedTotalZUSD = expectedZUSDGain_A.add(netDebtChange)
 
-    const expectedZEROGain_A = toBN('787084753044000000000000')
+    const expectedZEROGain_A = toBN('0')
 
     // Alice claims staking rewards and puts them back in the system through the proxy
     await borrowerWrappers.claimStakingGainsAndRecycle(th._100pct, alice, alice, { from: alice })
 
     // Alice new ZUSD gain due to her own Trove adjustment: ((150/2000) * (borrowing fee over netDebtChange))
     const newBorrowingFee = await troveManagerOriginal.getBorrowingFeeWithDecay(netDebtChange)
-    // 20% sent to SovFeeCollector address
-    const newBorrowingFeeToSovCollector = newBorrowingFee.mul(toBN(dec(20, 16))).div(mv._1e18BN)
+    // 100% sent to SovFeeCollector address
+    const newBorrowingFeeToSovCollector = newBorrowingFee
     const newBorrowingFeeToZeroStalking = newBorrowingFee.sub(newBorrowingFeeToSovCollector)
     const expectedNewZUSDGain_A = newBorrowingFeeToZeroStalking.mul(toBN(dec(150, 18))).div(toBN(dec(2000, 18)))
 

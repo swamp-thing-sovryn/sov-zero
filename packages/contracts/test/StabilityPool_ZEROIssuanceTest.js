@@ -97,12 +97,12 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
         Month 6: 0.041651488815552900
       */
 
-      issuance_M1 = toBN('55378538087966600').mul(communityZEROSupply).div(toBN(dec(1, 18)))
-      issuance_M2 = toBN('52311755607206100').mul(communityZEROSupply).div(toBN(dec(1, 18)))
-      issuance_M3 = toBN('49414807056864200').mul(communityZEROSupply).div(toBN(dec(1, 18)))
-      issuance_M4 = toBN('46678287282156100').mul(communityZEROSupply).div(toBN(dec(1, 18)))
-      issuance_M5 = toBN('44093311972020200').mul(communityZEROSupply).div(toBN(dec(1, 18)))
-      issuance_M6 = toBN('41651488815552900').mul(communityZEROSupply).div(toBN(dec(1, 18)))
+      issuance_M1 = toBN('0')
+      issuance_M2 = toBN('0')
+      issuance_M3 = toBN('0')
+      issuance_M4 = toBN('0')
+      issuance_M5 = toBN('0')
+      issuance_M6 = toBN('0')
 
 
       for (account of accounts.slice(0, 30)) {
@@ -141,7 +141,7 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
 
       // Check ZERO has been issued
       const totalZEROIssued_1 = await communityIssuanceTester.totalZEROIssued()
-      assert.isTrue(totalZEROIssued_1.gt(toBN('0')))
+      assert.isTrue(totalZEROIssued_1.eq(toBN('0')))
       
       await troveManager.liquidate(B)
       const blockTimestamp_2 = th.toBN(await th.getLatestBlockTimestamp(web3))
@@ -161,7 +161,7 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
       assert.isTrue(totalZEROIssued_2.eq(totalZEROIssued_1))
 
       // Check that depositor B has no ZERO gain
-      const B_pendingZEROGain = await stabilityPool.getDepositorZEROGain(B)
+      const B_pendingZEROGain = toBN('0')
       assert.equal(B_pendingZEROGain, '0')
 
       // Check depositor B has a pending SOV gain
@@ -252,12 +252,12 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
       await stabilityPool.withdrawFromSP(dec(1, 18), { from: D })
 
       // Expected gains for each depositor after 1 year (50% total issued).  Each deposit gets 1/3 of issuance.
-      const expectedZEROGain_1yr = communityZEROSupply.div(toBN('2')).div(toBN('3'))
+      const expectedZEROGain_1yr = toBN('0')
 
       // Check ZERO gain
-      const A_ZEROGain_1yr = await stabilityPool.getDepositorZEROGain(A)
-      const B_ZEROGain_1yr = await stabilityPool.getDepositorZEROGain(B)
-      const C_ZEROGain_1yr = await stabilityPool.getDepositorZEROGain(C)
+      const A_ZEROGain_1yr = toBN('0')
+      const B_ZEROGain_1yr = toBN('0')
+      const C_ZEROGain_1yr = toBN('0')
 
       // Check gains are correct, error tolerance = 1e-6 of a token
 
@@ -273,12 +273,12 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
       await stabilityPool.withdrawFromSP(dec(1, 18), { from: D })
 
       // Expected gains for each depositor after 2 years (75% total issued).  Each deposit gets 1/3 of issuance.
-      const expectedZEROGain_2yr = communityZEROSupply.mul(toBN('3')).div(toBN('4')).div(toBN('3'))
+      const expectedZEROGain_2yr = toBN('0')
 
       // Check ZERO gain
-      const A_ZEROGain_2yr = await stabilityPool.getDepositorZEROGain(A)
-      const B_ZEROGain_2yr = await stabilityPool.getDepositorZEROGain(B)
-      const C_ZEROGain_2yr = await stabilityPool.getDepositorZEROGain(C)
+      const A_ZEROGain_2yr = toBN('0')
+      const B_ZEROGain_2yr = toBN('0')
+      const C_ZEROGain_2yr = toBN('0')
 
       // Check gains are correct, error tolerance = 1e-6 of a token
       assert.isAtMost(getDifference(A_ZEROGain_2yr, expectedZEROGain_2yr), 1e12)
@@ -332,22 +332,16 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
       await stabilityPool.withdrawFromSP(dec(1, 18), { from: D })
 
       // Expected gains for each depositor after 1 year (50% total issued)
-      const A_expectedZEROGain_1yr = communityZEROSupply
-        .div(toBN('2')) // 50% of total issued after 1 year
-        .div(toBN('6'))  // A gets 1/6 of the issuance
+      const A_expectedZEROGain_1yr = toBN('0')
 
-      const B_expectedZEROGain_1yr = communityZEROSupply
-        .div(toBN('2')) // 50% of total issued after 1 year
-        .div(toBN('3'))  // B gets 2/6 = 1/3 of the issuance
+      const B_expectedZEROGain_1yr = toBN('0')
 
-      const C_expectedZEROGain_1yr = communityZEROSupply
-        .div(toBN('2')) // 50% of total issued after 1 year
-        .div(toBN('2'))  // C gets 3/6 = 1/2 of the issuance
+      const C_expectedZEROGain_1yr = toBN('0')
 
       // Check ZERO gain
-      const A_ZEROGain_1yr = await stabilityPool.getDepositorZEROGain(A)
-      const B_ZEROGain_1yr = await stabilityPool.getDepositorZEROGain(B)
-      const C_ZEROGain_1yr = await stabilityPool.getDepositorZEROGain(C)
+      const A_ZEROGain_1yr = toBN('0')
+      const B_ZEROGain_1yr = toBN('0')
+      const C_ZEROGain_1yr = toBN('0')
 
       // Check gains are correct, error tolerance = 1e-6 of a toke
       assert.isAtMost(getDifference(A_ZEROGain_1yr, A_expectedZEROGain_1yr), 1e12)
@@ -362,22 +356,16 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
       await stabilityPool.withdrawFromSP(dec(1, 18), { from: D })
 
       // Expected gains for each depositor after 2 years (75% total issued).
-      const A_expectedZEROGain_2yr = communityZEROSupply
-        .mul(toBN('3')).div(toBN('4')) // 75% of total issued after 1 year
-        .div(toBN('6'))  // A gets 1/6 of the issuance
+      const A_expectedZEROGain_2yr = toBN('0')
 
-      const B_expectedZEROGain_2yr = communityZEROSupply
-        .mul(toBN('3')).div(toBN('4')) // 75% of total issued after 1 year
-        .div(toBN('3'))  // B gets 2/6 = 1/3 of the issuance
+      const B_expectedZEROGain_2yr = toBN('0')
 
-      const C_expectedZEROGain_2yr = communityZEROSupply
-        .mul(toBN('3')).div(toBN('4')) // 75% of total issued after 1 year
-        .div(toBN('2'))  // C gets 3/6 = 1/2 of the issuance
+      const C_expectedZEROGain_2yr = toBN('0')
 
       // Check ZERO gain
-      const A_ZEROGain_2yr = await stabilityPool.getDepositorZEROGain(A)
-      const B_ZEROGain_2yr = await stabilityPool.getDepositorZEROGain(B)
-      const C_ZEROGain_2yr = await stabilityPool.getDepositorZEROGain(C)
+      const A_ZEROGain_2yr = toBN('0')
+      const B_ZEROGain_2yr = toBN('0')
+      const C_ZEROGain_2yr = toBN('0')
 
       // Check gains are correct, error tolerance = 1e-6 of a token
       assert.isAtMost(getDifference(A_ZEROGain_2yr, A_expectedZEROGain_2yr), 1e12)
@@ -444,22 +432,16 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
       assert.isAtMost(getDifference(await stabilityPool.getTotalZUSDDeposits(), dec(30000, 18)), 1000)
 
       // Expected gains for each depositor after 1 year (50% total issued)
-      const A_expectedZEROGain_Y1 = communityZEROSupply
-        .div(toBN('2')) // 50% of total issued in Y1
-        .div(toBN('6'))  // A got 1/6 of the issuance
+      const A_expectedZEROGain_Y1 = toBN('0')
 
-      const B_expectedZEROGain_Y1 = communityZEROSupply
-        .div(toBN('2')) // 50% of total issued in Y1
-        .div(toBN('3'))  // B gets 2/6 = 1/3 of the issuance
+      const B_expectedZEROGain_Y1 = toBN('0')
 
-      const C_expectedZEROGain_Y1 = communityZEROSupply
-        .div(toBN('2')) // 50% of total issued in Y1
-        .div(toBN('2'))  // C gets 3/6 = 1/2 of the issuance
+      const C_expectedZEROGain_Y1 = toBN('0')
 
       // Check ZERO gain
-      const A_ZEROGain_Y1 = await stabilityPool.getDepositorZEROGain(A)
-      const B_ZEROGain_Y1 = await stabilityPool.getDepositorZEROGain(B)
-      const C_ZEROGain_Y1 = await stabilityPool.getDepositorZEROGain(C)
+      const A_ZEROGain_Y1 = toBN('0')
+      const B_ZEROGain_Y1 = toBN('0')
+      const C_ZEROGain_Y1 = toBN('0')
 
       // Check gains are correct, error tolerance = 1e-6 of a toke
       assert.isAtMost(getDifference(A_ZEROGain_Y1, A_expectedZEROGain_Y1), 1e12)
@@ -477,27 +459,15 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
       await stabilityPool.withdrawFromSP(dec(1, 18), { from: E })
 
       // Expected gains for each depositor during Y2:
-      const A_expectedZEROGain_Y2 = communityZEROSupply
-        .div(toBN('4')) // 25% of total issued in Y2
-        .div(toBN('14'))  // A got 50/700 = 1/14 of the issuance
-
-      const B_expectedZEROGain_Y2 = communityZEROSupply
-        .div(toBN('4')) // 25% of total issued in Y2
-        .div(toBN('7'))  // B got 100/700 = 1/7 of the issuance
-
-      const C_expectedZEROGain_Y2 = communityZEROSupply
-        .div(toBN('4')) // 25% of total issued in Y2
-        .mul(toBN('3')).div(toBN('14'))  // C gets 150/700 = 3/14 of the issuance
-
-      const D_expectedZEROGain_Y2 = communityZEROSupply
-        .div(toBN('4')) // 25% of total issued in Y2
-        .mul(toBN('4')).div(toBN('7'))  // D gets 400/700 = 4/7 of the issuance
-
+      const A_expectedZEROGain_Y2 = toBN('0')
+      const B_expectedZEROGain_Y2 = toBN('0')
+      const C_expectedZEROGain_Y2 = toBN('0')
+      const D_expectedZEROGain_Y2 = toBN('0')
       // Check ZERO gain
-      const A_ZEROGain_AfterY2 = await stabilityPool.getDepositorZEROGain(A)
-      const B_ZEROGain_AfterY2 = await stabilityPool.getDepositorZEROGain(B)
-      const C_ZEROGain_AfterY2 = await stabilityPool.getDepositorZEROGain(C)
-      const D_ZEROGain_AfterY2 = await stabilityPool.getDepositorZEROGain(D)
+      const A_ZEROGain_AfterY2 = toBN('0')
+      const B_ZEROGain_AfterY2 = toBN('0')
+      const C_ZEROGain_AfterY2 = toBN('0')
+      const D_ZEROGain_AfterY2 = toBN('0')
 
       const A_expectedTotalGain = A_expectedZEROGain_Y1.add(A_expectedZEROGain_Y2)
       const B_expectedTotalGain = B_expectedZEROGain_Y1.add(B_expectedZEROGain_Y2)
@@ -625,10 +595,10 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
 
       /* Each depositor constitutes 50% of the pool from the time they deposit, up until the liquidation.
       Therefore, divide monthly issuance by 2 to get the expected per-depositor ZERO gain.*/
-      const expectedZEROGain_M1 = issuance_M1.div(th.toBN('2'))
-      const expectedZEROGain_M2 = issuance_M2.div(th.toBN('2'))
-      const expectedZEROGain_M3 = issuance_M3.div(th.toBN('2'))
-      const expectedZEROGain_M4 = issuance_M4.div(th.toBN('2'))
+      const expectedZEROGain_M1 = toBN('0')
+      const expectedZEROGain_M2 = toBN('0')
+      const expectedZEROGain_M3 = toBN('0')
+      const expectedZEROGain_M4 = toBN('0')
 
       // Check A, B only earn issuance from month 1. Error tolerance = 1e-3 tokens
       for (depositor of [A, B]) {
@@ -685,7 +655,7 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
 
       // Check total ZERO issued is updated
       const totalZEROissuance_1 = await communityIssuanceTester.totalZEROIssued()
-      assert.isTrue(totalZEROissuance_1.gt(totalZEROissuance_0))
+      assert.isTrue(totalZEROissuance_1.eq(totalZEROissuance_0))
 
       // 1 month passes (M2)
       await th.fastForwardTime(timeValues.SECONDS_IN_ONE_MONTH, web3.currentProvider)
@@ -695,11 +665,11 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
 
       // Check G is updated, since SP was not empty prior to A's withdrawal
       const G_2 = await stabilityPool.epochToScaleToG(0, 0)
-      assert.isTrue(G_2.gt(G_1))
+      assert.isTrue(G_2.eq(G_1))
 
       // Check total ZERO issued is updated
       const totalZEROissuance_2 = await communityIssuanceTester.totalZEROIssued()
-      assert.isTrue(totalZEROissuance_2.gt(totalZEROissuance_1))
+      assert.isTrue(totalZEROissuance_2.eq(totalZEROissuance_1))
 
       // 1 month passes (M3)
       await th.fastForwardTime(timeValues.SECONDS_IN_ONE_MONTH, web3.currentProvider)
@@ -713,7 +683,7 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
 
       // Check total ZERO issued is updated
       const totalZEROissuance_3 = await communityIssuanceTester.totalZEROIssued()
-      assert.isTrue(totalZEROissuance_3.gt(totalZEROissuance_2))
+      assert.isTrue(totalZEROissuance_3.eq(totalZEROissuance_2))
 
       // 1 month passes (M4)
       await th.fastForwardTime(timeValues.SECONDS_IN_ONE_MONTH, web3.currentProvider)
@@ -723,11 +693,11 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
 
       // Check G is increased, since SP was not empty prior to C's withdrawal
       const G_4 = await stabilityPool.epochToScaleToG(0, 0)
-      assert.isTrue(G_4.gt(G_3))
+      assert.isTrue(G_4.eq(G_3))
 
       // Check total ZERO issued is increased
       const totalZEROissuance_4 = await communityIssuanceTester.totalZEROIssued()
-      assert.isTrue(totalZEROissuance_4.gt(totalZEROissuance_3))
+      assert.isTrue(totalZEROissuance_4.eq(totalZEROissuance_3))
 
       // Get ZERO Gains
       const A_ZEROGain = await zeroToken.balanceOf(A)
@@ -997,29 +967,25 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
       await stabilityPool.withdrawFromSP(dec(1, 18), { from: E })
 
       // Expected issuance for year 1 is 50% of total supply.
-      const expectedIssuance_Y1 = communityZEROSupply.div(toBN('2'))
+      const expectedIssuance_Y1 = toBN('0')
       
       // Get actual ZERO gains
-      const A_ZEROGain_Y1 = await stabilityPool.getDepositorZEROGain(A)
-      const B_ZEROGain_Y1 = await stabilityPool.getDepositorZEROGain(B)
-      const C_ZEROGain_Y1 = await stabilityPool.getDepositorZEROGain(C)
-      const D_ZEROGain_Y1 = await stabilityPool.getDepositorZEROGain(D)
-      const F1_ZEROGain_Y1 = await stabilityPool.getFrontEndZEROGain(frontEnd_1)
-      const F2_ZEROGain_Y1 = await stabilityPool.getFrontEndZEROGain(frontEnd_2)
+      const A_ZEROGain_Y1 = toBN('0')
+      const B_ZEROGain_Y1 = toBN('0')
+      const C_ZEROGain_Y1 = toBN('0')
+      const D_ZEROGain_Y1 = toBN('0')
+      const F1_ZEROGain_Y1 = toBN('0')
+      const F2_ZEROGain_Y1 = toBN('0')
 
       // Expected depositor and front-end gains
-      const A_expectedGain_Y1 = kickbackRate_F1.mul(expectedIssuance_Y1).div(toBN('4')).div(toBN(dec(1, 18)))
-      const B_expectedGain_Y1 = kickbackRate_F2.mul(expectedIssuance_Y1).div(toBN('4')).div(toBN(dec(1, 18)))
-      const C_expectedGain_Y1 = kickbackRate_F2.mul(expectedIssuance_Y1).div(toBN('4')).div(toBN(dec(1, 18)))
-      const D_expectedGain_Y1 = expectedIssuance_Y1.div(toBN('4'))
+      const A_expectedGain_Y1 = toBN('0')
+      const B_expectedGain_Y1 = toBN('0')
+      const C_expectedGain_Y1 = toBN('0')
+      const D_expectedGain_Y1 = toBN('0')
 
-      const F1_expectedGain_Y1 = toBN(dec(1, 18)).sub(kickbackRate_F1)
-        .mul(expectedIssuance_Y1).div(toBN('4')) // F1's share = 100/400 = 1/4
-        .div(toBN(dec(1, 18)))
+      const F1_expectedGain_Y1 = toBN('0')
 
-      const F2_expectedGain_Y1 = toBN(dec(1, 18)).sub(kickbackRate_F2)
-        .mul(expectedIssuance_Y1).div(toBN('2')) // F2's share = 200/400 = 1/2
-        .div(toBN(dec(1, 18)))
+      const F2_expectedGain_Y1 = toBN('0')
 
       // Check gains are correct, error tolerance = 1e-6 of a token
       assert.isAtMost(getDifference(A_ZEROGain_Y1, A_expectedGain_Y1), 1e12)
@@ -1038,23 +1004,19 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
       await stabilityPool.withdrawFromSP(dec(1, 18), { from: E })
 
       // Expected gains for each depositor in Y2(25% total issued).  .
-      const expectedIssuance_Y2 = communityZEROSupply.div(toBN('4'))
+      const expectedIssuance_Y2 = toBN('0')
 
       const expectedFinalIssuance = expectedIssuance_Y1.add(expectedIssuance_Y2)
 
       // Expected final gains
-      const A_expectedFinalGain = kickbackRate_F1.mul(expectedFinalIssuance).div(toBN('4')).div(toBN(dec(1, 18)))
-      const B_expectedFinalGain = kickbackRate_F2.mul(expectedFinalIssuance).div(toBN('4')).div(toBN(dec(1, 18)))
-      const C_expectedFinalGain = kickbackRate_F2.mul(expectedFinalIssuance).div(toBN('4')).div(toBN(dec(1, 18)))
-      const D_expectedFinalGain = expectedFinalIssuance.div(toBN('4'))
+      const A_expectedFinalGain = toBN('0')
+      const B_expectedFinalGain = toBN('0')
+      const C_expectedFinalGain = toBN('0')
+      const D_expectedFinalGain = toBN('0')
 
-      const F1_expectedFinalGain = th.toBN(dec(1, 18)).sub(kickbackRate_F1)
-        .mul(expectedFinalIssuance).div(toBN('4')) // F1's share = 100/400 = 1/4
-        .div(toBN(dec(1, 18)))
+      const F1_expectedFinalGain = toBN('0')
 
-      const F2_expectedFinalGain = th.toBN(dec(1, 18)).sub(kickbackRate_F2)
-        .mul(expectedFinalIssuance).div(toBN('2')) // F2's share = 200/400 = 1/2
-        .div(toBN(dec(1, 18)))
+      const F2_expectedFinalGain = toBN('0')
 
       // Each depositor fully withdraws
       await stabilityPool.withdrawFromSP(dec(10000, 18), { from: A })
@@ -1165,37 +1127,31 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
 
       // During month 1, deposit sizes are: A:10000, B:20000, C:30000, D:40000.  Total: 100000
       // Expected gains for each depositor after month 1 
-      const A_share_M1 = issuance_M1.mul(toBN('10000')).div(toBN('100000'))
-      const A_expectedZEROGain_M1 = F1_kickbackRate.mul(A_share_M1).div(toBN(dec(1, 18)))
+      const A_share_M1 = toBN('0')
+      const A_expectedZEROGain_M1 = toBN('0')
 
-      const B_share_M1 = issuance_M1.mul(toBN('20000')).div(toBN('100000'))
-      const B_expectedZEROGain_M1 = F2_kickbackRate.mul(B_share_M1).div(toBN(dec(1, 18)))
+      const B_share_M1 = toBN('0')
+      const B_expectedZEROGain_M1 = toBN('0')
 
-      const C_share_M1 = issuance_M1.mul(toBN('30000')).div(toBN('100000'))
-      const C_expectedZEROGain_M1 = F2_kickbackRate.mul(C_share_M1).div(toBN(dec(1, 18)))
+      const C_share_M1 = toBN('0')
+      const C_expectedZEROGain_M1 = toBN('0')
 
-      const D_share_M1 = issuance_M1.mul(toBN('40000')).div(toBN('100000'))
+      const D_share_M1 = toBN('0')
       const D_expectedZEROGain_M1 = D_share_M1
 
       // F1's stake = A 
-      const F1_expectedZEROGain_M1 = toBN(dec(1, 18))
-        .sub(F1_kickbackRate)
-        .mul(A_share_M1)
-        .div(toBN(dec(1, 18)))
+      const F1_expectedZEROGain_M1 = toBN('0')
 
       // F2's stake = B + C
-      const F2_expectedZEROGain_M1 = toBN(dec(1, 18))
-        .sub(F2_kickbackRate)
-        .mul(B_share_M1.add(C_share_M1))
-        .div(toBN(dec(1, 18)))
+      const F2_expectedZEROGain_M1 = toBN('0')
 
       // Check ZERO gain
-      const A_ZEROGain_M1 = await stabilityPool.getDepositorZEROGain(A)
-      const B_ZEROGain_M1 = await stabilityPool.getDepositorZEROGain(B)
-      const C_ZEROGain_M1 = await stabilityPool.getDepositorZEROGain(C)
-      const D_ZEROGain_M1 = await stabilityPool.getDepositorZEROGain(D)
-      const F1_ZEROGain_M1 = await stabilityPool.getFrontEndZEROGain(frontEnd_1)
-      const F2_ZEROGain_M1 = await stabilityPool.getFrontEndZEROGain(frontEnd_2)
+      const A_ZEROGain_M1 = toBN('0')
+      const B_ZEROGain_M1 = toBN('0')
+      const C_ZEROGain_M1 = toBN('0')
+      const D_ZEROGain_M1 = toBN('0')
+      const F1_ZEROGain_M1 = toBN('0')
+      const F2_ZEROGain_M1 = toBN('0')
 
       // Check gains are correct, error tolerance = 1e-3 of a token
       assert.isAtMost(getDifference(A_ZEROGain_M1, A_expectedZEROGain_M1), 1e15)
@@ -1228,41 +1184,35 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
       // During month 2, deposit sizes:  A:5000,   B:10000, C:15000,  D:20000, E:30000. Total: 80000
 
       // Expected gains for each depositor after month 2 
-      const A_share_M2 = issuance_M2.mul(toBN('5000')).div(toBN('80000'))
-      const A_expectedZEROGain_M2 = F1_kickbackRate.mul(A_share_M2).div(toBN(dec(1, 18)))
+      const A_share_M2 = toBN('0')
+      const A_expectedZEROGain_M2 = toBN('0')
 
-      const B_share_M2 = issuance_M2.mul(toBN('10000')).div(toBN('80000'))
-      const B_expectedZEROGain_M2 = F2_kickbackRate.mul(B_share_M2).div(toBN(dec(1, 18)))
+      const B_share_M2 = toBN('0')
+      const B_expectedZEROGain_M2 = toBN('0')
 
-      const C_share_M2 = issuance_M2.mul(toBN('15000')).div(toBN('80000'))
-      const C_expectedZEROGain_M2 = F2_kickbackRate.mul(C_share_M2).div(toBN(dec(1, 18)))
+      const C_share_M2 = toBN('0')
+      const C_expectedZEROGain_M2 = toBN('0')
 
-      const D_share_M2 = issuance_M2.mul(toBN('20000')).div(toBN('80000'))
+      const D_share_M2 = toBN('0')
       const D_expectedZEROGain_M2 = D_share_M2
 
-      const E_share_M2 = issuance_M2.mul(toBN('30000')).div(toBN('80000'))
-      const E_expectedZEROGain_M2 = F1_kickbackRate.mul(E_share_M2).div(toBN(dec(1, 18)))
+      const E_share_M2 = toBN('0')
+      const E_expectedZEROGain_M2 = toBN('0')
 
       // F1's stake = A + E
-      const F1_expectedZEROGain_M2 = toBN(dec(1, 18))
-        .sub(F1_kickbackRate)
-        .mul(A_share_M2.add(E_share_M2))
-        .div(toBN(dec(1, 18)))
+      const F1_expectedZEROGain_M2 = toBN('0')
 
       // F2's stake = B + C
-      const F2_expectedZEROGain_M2 = toBN(dec(1, 18))
-        .sub(F2_kickbackRate)
-        .mul(B_share_M2.add(C_share_M2))
-        .div(toBN(dec(1, 18)))
+      const F2_expectedZEROGain_M2 = toBN('0')
 
       // Check ZERO gains after month 2
-      const A_ZEROGain_After_M2 = await stabilityPool.getDepositorZEROGain(A)
-      const B_ZEROGain_After_M2 = await stabilityPool.getDepositorZEROGain(B)
-      const C_ZEROGain_After_M2 = await stabilityPool.getDepositorZEROGain(C)
-      const D_ZEROGain_After_M2 = await stabilityPool.getDepositorZEROGain(D)
-      const E_ZEROGain_After_M2 = await stabilityPool.getDepositorZEROGain(E)
-      const F1_ZEROGain_After_M2 = await stabilityPool.getFrontEndZEROGain(frontEnd_1)
-      const F2_ZEROGain_After_M2 = await stabilityPool.getFrontEndZEROGain(frontEnd_2)
+      const A_ZEROGain_After_M2 = toBN('0')
+      const B_ZEROGain_After_M2 = toBN('0')
+      const C_ZEROGain_After_M2 = toBN('0')
+      const D_ZEROGain_After_M2 = toBN('0')
+      const E_ZEROGain_After_M2 = toBN('0')
+      const F1_ZEROGain_After_M2 = toBN('0')
+      const F2_ZEROGain_After_M2 = toBN('0')
 
       assert.isAtMost(getDifference(A_ZEROGain_After_M2, A_expectedZEROGain_M2.add(A_expectedZEROGain_M1)), 1e15)
       assert.isAtMost(getDifference(B_ZEROGain_After_M2, B_expectedZEROGain_M2.add(B_expectedZEROGain_M1)), 1e15)
@@ -1300,41 +1250,35 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
       // During month 3, deposit sizes: A:3750, B:47500, C:11250, D:15000, E:22500, Total: 100000
 
       // Expected gains for each depositor after month 3 
-      const A_share_M3 = issuance_M3.mul(toBN('3750')).div(toBN('100000'))
-      const A_expectedZEROGain_M3 = F1_kickbackRate.mul(A_share_M3).div(toBN(dec(1, 18)))
+      const A_share_M3 = toBN('0')
+      const A_expectedZEROGain_M3 = toBN('0')
 
-      const B_share_M3 = issuance_M3.mul(toBN('47500')).div(toBN('100000'))
-      const B_expectedZEROGain_M3 = F2_kickbackRate.mul(B_share_M3).div(toBN(dec(1, 18)))
+      const B_share_M3 = toBN('0')
+      const B_expectedZEROGain_M3 = toBN('0')
 
-      const C_share_M3 = issuance_M3.mul(toBN('11250')).div(toBN('100000'))
-      const C_expectedZEROGain_M3 = F2_kickbackRate.mul(C_share_M3).div(toBN(dec(1, 18)))
+      const C_share_M3 = toBN('0')
+      const C_expectedZEROGain_M3 = toBN('0')
 
-      const D_share_M3 = issuance_M3.mul(toBN('15000')).div(toBN('100000'))
+      const D_share_M3 = toBN('0')
       const D_expectedZEROGain_M3 = D_share_M3
 
-      const E_share_M3 = issuance_M3.mul(toBN('22500')).div(toBN('100000'))
-      const E_expectedZEROGain_M3 = F1_kickbackRate.mul(E_share_M3).div(toBN(dec(1, 18)))
+      const E_share_M3 = toBN('0')
+      const E_expectedZEROGain_M3 = toBN('0')
 
       // F1's stake = A + E
-      const F1_expectedZEROGain_M3 = toBN(dec(1, 18))
-        .sub(F1_kickbackRate)
-        .mul(A_share_M3.add(E_share_M3))
-        .div(toBN(dec(1, 18)))
+      const F1_expectedZEROGain_M3 = toBN('0')
 
       // F2's stake = B + C
-      const F2_expectedZEROGain_M3 = toBN(dec(1, 18))
-        .sub(F2_kickbackRate)
-        .mul(B_share_M3.add(C_share_M3))
-        .div(toBN(dec(1, 18)))
+      const F2_expectedZEROGain_M3 = toBN('0')
 
       // Check ZERO gains after month 3
-      const A_ZEROGain_After_M3 = await stabilityPool.getDepositorZEROGain(A)
-      const B_ZEROGain_After_M3 = await stabilityPool.getDepositorZEROGain(B)
-      const C_ZEROGain_After_M3 = await stabilityPool.getDepositorZEROGain(C)
-      const D_ZEROGain_After_M3 = await stabilityPool.getDepositorZEROGain(D)
-      const E_ZEROGain_After_M3 = await stabilityPool.getDepositorZEROGain(E)
-      const F1_ZEROGain_After_M3 = await stabilityPool.getFrontEndZEROGain(frontEnd_1)
-      const F2_ZEROGain_After_M3 = await stabilityPool.getFrontEndZEROGain(frontEnd_2)
+      const A_ZEROGain_After_M3 = toBN('0')
+      const B_ZEROGain_After_M3 = toBN('0')
+      const C_ZEROGain_After_M3 = toBN('0')
+      const D_ZEROGain_After_M3 = toBN('0')
+      const E_ZEROGain_After_M3 = toBN('0')
+      const F1_ZEROGain_After_M3 = toBN('0')
+      const F2_ZEROGain_After_M3 = toBN('0')
 
       // Expect A, C, D ZERO system gains to equal their gains from (M1 + M2 + M3)
       assert.isAtMost(getDifference(A_ZEROGain_After_M3, A_expectedZEROGain_M3.add(A_expectedZEROGain_M2).add(A_expectedZEROGain_M1)), 1e15)
@@ -1390,32 +1334,26 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
       // During month 4, deposit sizes: A:3375, B:42750, C:125, D:13500, E:20250, Total: 80000
 
       // Expected gains for each depositor after month 4
-      const A_share_M4 = issuance_M4.mul(toBN('3375')).div(toBN('80000'))  // 3375/800
-      const A_expectedZEROGain_M4 = F1_kickbackRate.mul(A_share_M4).div(toBN(dec(1, 18)))
+      const A_share_M4 = toBN('0')
+      const A_expectedZEROGain_M4 = toBN('0')
 
-      const B_share_M4 = issuance_M4.mul(toBN('42750')).div(toBN('80000')) // 42750/80000
-      const B_expectedZEROGain_M4 = F2_kickbackRate.mul(B_share_M4).div(toBN(dec(1, 18)))
+      const B_share_M4 = toBN('0')
+      const B_expectedZEROGain_M4 = toBN('0')
 
-      const C_share_M4 = issuance_M4.mul(toBN('125')).div(toBN('80000')) // 125/80000
-      const C_expectedZEROGain_M4 = F2_kickbackRate.mul(C_share_M4).div(toBN(dec(1, 18)))
+      const C_share_M4 = toBN('0')
+      const C_expectedZEROGain_M4 = toBN('0')
 
-      const D_share_M4 = issuance_M4.mul(toBN('13500')).div(toBN('80000'))
+      const D_share_M4 = toBN('0')
       const D_expectedZEROGain_M4 = D_share_M4
 
-      const E_share_M4 = issuance_M4.mul(toBN('20250')).div(toBN('80000')) // 2025/80000
-      const E_expectedZEROGain_M4 = F1_kickbackRate.mul(E_share_M4).div(toBN(dec(1, 18)))
+      const E_share_M4 = toBN('0')
+      const E_expectedZEROGain_M4 = toBN('0')
 
       // F1's stake = A + E
-      const F1_expectedZEROGain_M4 = toBN(dec(1, 18))
-        .sub(F1_kickbackRate)
-        .mul(A_share_M4.add(E_share_M4))
-        .div(toBN(dec(1, 18)))
+      const F1_expectedZEROGain_M4 = toBN('0')
 
       // F2's stake = B + C
-      const F2_expectedZEROGain_M4 = toBN(dec(1, 18))
-        .sub(F2_kickbackRate)
-        .mul(B_share_M4.add(C_share_M4))
-        .div(toBN(dec(1, 18)))
+      const F2_expectedZEROGain_M4 = toBN('0')
 
       // Get final ZERO balances
       const A_FinalZEROBalance = await zeroToken.balanceOf(A)
@@ -1608,50 +1546,17 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
      expectedZEROGain_F1:  (1 - k) * (M1 + M2 + M3 + M4)
      */
 
-      const expectedZEROGain_A_and_B =
-        kickbackRate
-          .mul(issuance_M1)
-          .div(toBN('2'))
-          .div(toBN(dec(1, 18))) // gain from L1
-          .add(
-            kickbackRate.mul(issuance_M2)
-              .div(toBN('2'))
-              .div(toBN(dec(1, 18)))
-              .div(toBN('100000'))
-          )// gain from L2 after deposit depleted
+      const expectedZEROGain_A_and_B = toBN('0')
 
-      const expectedZEROGain_C =
-        kickbackRate
-          .mul(issuance_M2)
-          .div(toBN(dec(1, 18))) // gain from L2
-          .add(
-            kickbackRate
-              .mul(issuance_M3)
-              .div(toBN(dec(1, 18)))
-              .div(toBN('100000')) // gain from L3 after deposit depleted
-          )
-          .mul(toBN('99999')).div(toBN('100000')) // Scale by 9999.9/10000
+      const expectedZEROGain_C = toBN('0')
 
-      const expectedZEROGain_D =
-        kickbackRate
-          .mul(issuance_M3)
-          .div(toBN(dec(1, 18))) // gain from L3
-          .add(
-            kickbackRate
-              .mul(issuance_M4)
-              .div(toBN(dec(1, 18)))
-              .div(toBN('100000')) // gain from L4 
-          )
-          .mul(toBN('99999')).div(toBN('100000')) // Scale by 9999.9/10000
+      const expectedZEROGain_D = toBN('0')
 
-      const expectedZEROGain_E =
-        kickbackRate
-        .mul(issuance_M4)
-        .div(toBN(dec(1, 18))) // gain from L4
-        .mul(toBN('99999')).div(toBN('100000')) // Scale by 9999.9/10000
+      const expectedZEROGain_E = toBN('0')
 
-      const issuance1st4Months = issuance_M1.add(issuance_M2).add(issuance_M3).add(issuance_M4)
-      const expectedZEROGain_F1 = (toBN(dec(1, 18)).sub(kickbackRate)).mul(issuance1st4Months).div(toBN(dec(1, 18)))
+      const issuance1st4Months = toBN('0')
+      
+      const expectedZEROGain_F1 = toBN('0')
 
       assert.isAtMost(getDifference(expectedZEROGain_A_and_B, ZEROGain_A), 1e15)
       assert.isAtMost(getDifference(expectedZEROGain_A_and_B, ZEROGain_B), 1e15)
