@@ -626,10 +626,8 @@ interface StabilityPoolCalls {
   getCompoundedFrontEndStake(_frontEnd: string, _overrides?: CallOverrides): Promise<BigNumber>;
   getCompoundedZUSDDeposit(_depositor: string, _overrides?: CallOverrides): Promise<BigNumber>;
   getDepositorSOVGain(_depositor: string, _overrides?: CallOverrides): Promise<BigNumber>;
-  getDepositorZEROGain(_depositor: string, _overrides?: CallOverrides): Promise<BigNumber>;
   getEntireSystemColl(_overrides?: CallOverrides): Promise<BigNumber>;
   getEntireSystemDebt(_overrides?: CallOverrides): Promise<BigNumber>;
-  getFrontEndZEROGain(_frontEnd: string, _overrides?: CallOverrides): Promise<BigNumber>;
   getOwner(_overrides?: CallOverrides): Promise<string>;
   getSOV(_overrides?: CallOverrides): Promise<BigNumber>;
   getTotalZUSDDeposits(_overrides?: CallOverrides): Promise<BigNumber>;

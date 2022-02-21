@@ -890,25 +890,6 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_depositor",
-        "type": "address"
-      }
-    ],
-    "name": "getDepositorZEROGain",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "getEntireSystemColl",
     "outputs": [
@@ -928,25 +909,6 @@
       {
         "internalType": "uint256",
         "name": "entireSystemDebt",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_frontEnd",
-        "type": "address"
-      }
-    ],
-    "name": "getFrontEndZEROGain",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
         "type": "uint256"
       }
     ],

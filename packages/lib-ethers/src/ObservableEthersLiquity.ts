@@ -48,7 +48,7 @@ export class ObservableEthersLiquity implements ObservableLiquity {
     onTotalRedistributedChanged: (totalRedistributed: Trove) => void
   ): () => void {
     const { activePool, defaultPool } = _getContracts(this._readable.connection);
-    const etherSent = activePool.filters.EtherSent();
+    const SOVSent = activePool.filters.SOVSent();
 
     const redistributionListener = debounce((blockTag: number) => {
       this._readable.getTotalRedistributed({ blockTag }).then(onTotalRedistributedChanged);
@@ -60,10 +60,10 @@ export class ObservableEthersLiquity implements ObservableLiquity {
       }
     };
 
-    activePool.on(etherSent, etherSentListener);
+    activePool.on(SOVSent, etherSentListener);
 
     return () => {
-      activePool.removeListener(etherSent, etherSentListener);
+      activePool.removeListener(SOVSent, etherSentListener);
     };
   }
 
@@ -138,10 +138,10 @@ export class ObservableEthersLiquity implements ObservableLiquity {
 
     const { activePool, stabilityPool } = _getContracts(this._readable.connection);
     const { UserDepositChanged } = stabilityPool.filters;
-    const { EtherSent } = activePool.filters;
+    const { SOVSent } = activePool.filters;
 
     const userDepositChanged = UserDepositChanged(address);
-    const etherSent = EtherSent();
+    const etherSent = SOVSent();
 
     const depositListener = debounce((blockTag: number) => {
       this._readable.getStabilityDeposit(address, { blockTag }).then(onStabilityDepositChanged);
