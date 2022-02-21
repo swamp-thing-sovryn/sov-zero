@@ -266,19 +266,18 @@ export class ReadableEthersLiquity implements ReadableLiquity {
       { frontEndTag, initialValue },
       currentZUSD,
       collateralGain,
-      zeroReward
     ] = await Promise.all([
       stabilityPool.deposits(address, { ...overrides }),
       stabilityPool.getCompoundedZUSDDeposit(address, { ...overrides }),
       stabilityPool.getDepositorSOVGain(address, { ...overrides }),
-      stabilityPool.getDepositorZEROGain(address, { ...overrides })
+      //stabilityPool.getDepositorZEROGain(address, { ...overrides })
     ]);
 
     return new StabilityDeposit(
       decimalify(initialValue),
       decimalify(currentZUSD),
       decimalify(collateralGain),
-      decimalify(zeroReward),
+      Decimal.from(0),
       frontEndTag
     );
   }
