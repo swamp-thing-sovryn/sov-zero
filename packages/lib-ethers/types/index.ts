@@ -85,14 +85,14 @@ interface BorrowerOperationsCalls {
 
 interface BorrowerOperationsTransactions {
   addColl(_upperHint: string, _lowerHint: string, _amount: BigNumberish, _overrides?: Overrides): Promise<void>;
-  adjustNueTrove(_maxFeePercentage: BigNumberish, _collWithdrawal: BigNumberish, _ZUSDChange: BigNumberish, _isDebtIncrease: boolean, _upperHint: string, _lowerHint: string, _amount: BigNumberish, _overrides?: Overrides): Promise<void>;
+  addCollFrom(_troveOwner: string, _upperHint: string, _lowerHint: string, _amount: BigNumberish, _overrides?: Overrides): Promise<void>;
   adjustTrove(_maxFeePercentage: BigNumberish, _collWithdrawal: BigNumberish, _ZUSDChange: BigNumberish, _isDebtIncrease: boolean, _upperHint: string, _lowerHint: string, _amount: BigNumberish, _overrides?: Overrides): Promise<void>;
   claimCollateral(_overrides?: Overrides): Promise<void>;
-  closeNueTrove(_overrides?: Overrides): Promise<void>;
   closeTrove(_overrides?: Overrides): Promise<void>;
   moveSOVGainToTrove(_borrower: string, _upperHint: string, _lowerHint: string, _amount: BigNumberish, _overrides?: Overrides): Promise<void>;
-  openNueTrove(_maxFeePercentage: BigNumberish, _ZUSDAmount: BigNumberish, _upperHint: string, _lowerHint: string, _amount: BigNumberish, _overrides?: Overrides): Promise<void>;
   openTrove(_maxFeePercentage: BigNumberish, _ZUSDAmount: BigNumberish, _upperHint: string, _lowerHint: string, _amount: BigNumberish, _overrides?: Overrides): Promise<void>;
+  openTroveFrom(_owner: string, _maxFeePercentage: BigNumberish, _ZUSDAmount: BigNumberish, _upperHint: string, _lowerHint: string, _amount: BigNumberish, _overrides?: Overrides): Promise<void>;
+  receiveApproval(_sender: string, _amount: BigNumberish, _token: string, _data: BytesLike, _overrides?: Overrides): Promise<void>;
   repayZUSD(_ZUSDAmount: BigNumberish, _upperHint: string, _lowerHint: string, _overrides?: Overrides): Promise<void>;
   setAddresses(_sovTokenAddress: string, _feeDistributorAddress: string, _liquityBaseParamsAddress: string, _troveManagerAddress: string, _activePoolAddress: string, _defaultPoolAddress: string, _stabilityPoolAddress: string, _gasPoolAddress: string, _collSurplusPoolAddress: string, _priceFeedAddress: string, _sortedTrovesAddress: string, _zusdTokenAddress: string, _zeroStakingAddress: string, _overrides?: Overrides): Promise<void>;
   setMassetAddress(_massetAddress: string, _overrides?: Overrides): Promise<void>;

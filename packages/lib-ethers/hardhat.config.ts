@@ -242,48 +242,7 @@ extendEnvironment(env => {
   };
 });
 
-type SetAddressParams = {
-  address: string;
-  nuetokenaddress: string;
-  channel: string;
-}
-
 const defaultChannel = process.env.CHANNEL || "default";
-
-task("setMassetAddress", "Sets address of masset contract in order to support NUE troves")
-  .addParam("address", "address of deployed MassetProxy contract")
-  .addParam("nuetokenaddress", "address of NUE token")
-  .addOptionalParam("channel", "Deployment channel to deploy into", defaultChannel, types.string)
-  .setAction(async (
-    {
-      address,
-      channel,
-      nuetokenaddress,
-    }: SetAddressParams,
-    hre
-  ) => {
-    const [deployer] = await hre.ethers.getSigners();
-    const deployment = getDeploymentData(hre.network.name, channel)
-    const { borrowerOperations: borrowerOperationsAddress } = deployment.addresses
-
-    const borrowerOperations = await hre.ethers.getContractAt("BorrowerOperations", borrowerOperationsAddress, deployer) as unknown as  BorrowerOperations
-
-    const currentMassetAddress = await borrowerOperations.masset()
-    console.log("Current masset address: ", currentMassetAddress)
-
-    const tx = await borrowerOperations.setMassetAddress(address) 
-    await tx.wait()
-
-    const newMassetAddress = await borrowerOperations.masset()
-    console.log("New masset address: ", newMassetAddress)
-
-    deployment.addresses.nueToken = nuetokenaddress
-
-    fs.writeFileSync(
-      path.join("deployments", channel, `${hre.network.name}.json`),
-      JSON.stringify(deployment, undefined, 2)
-    );
-  })
 
 type FundCommunityIssuance = {
   channel: string;

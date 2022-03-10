@@ -622,39 +622,6 @@ export class PopulatableEthersLiquity
     );
   }
 
-  /** {@inheritDoc @liquity/lib-base#PopulatableLiquity.openNueTrove} */
-  async openNueTrove(
-    params: TroveCreationParams<Decimalish>,
-    maxBorrowingRate?: Decimalish,
-    overrides?: EthersTransactionOverrides
-  ): Promise<PopulatedEthersLiquityTransaction<TroveCreationDetails>> {
-    const { borrowerOperations } = _getContracts(this._readable.connection);
-
-    const normalized = _normalizeTroveCreation(params);
-    const { depositCollateral, borrowZUSD } = normalized;
-
-    const fees = await this._readable.getFees();
-    const borrowingRate = fees.borrowingRate();
-    const newTrove = Trove.create(normalized, borrowingRate);
-
-    maxBorrowingRate =
-      maxBorrowingRate !== undefined
-        ? Decimal.from(maxBorrowingRate)
-        : borrowingRate.add(defaultBorrowingRateSlippageTolerance);
-
-    return this._wrapTroveChangeWithFees(
-      normalized,
-      await borrowerOperations.estimateAndPopulate.openNueTrove(
-        { ...overrides },
-        compose(addGasForPotentialLastFeeOperationTimeUpdate, addGasForPotentialListTraversal),
-        maxBorrowingRate.hex,
-        borrowZUSD.hex,
-        ...(await this._findHints(newTrove)),
-        depositCollateral.hex,
-      )
-    );
-  }
-
   /** {@inheritDoc @liquity/lib-base#PopulatableLiquity.closeTrove} */
   async closeTrove(
     overrides?: EthersTransactionOverrides
@@ -663,17 +630,6 @@ export class PopulatableEthersLiquity
 
     return this._wrapTroveClosure(
       await borrowerOperations.estimateAndPopulate.closeTrove({ ...overrides }, id)
-    );
-  }
-
-  /** {@inheritDoc @liquity/lib-base#PopulatableLiquity.closeNueTrove} */
-  async closeNueTrove(
-    overrides?: EthersTransactionOverrides
-  ): Promise<PopulatedEthersLiquityTransaction<TroveClosureDetails>> {
-    const { borrowerOperations } = _getContracts(this._readable.connection);
-
-    return this._wrapTroveClosure(
-      await borrowerOperations.estimateAndPopulate.closeNueTrove({ ...overrides }, (gas) => gas.mul(125).div(100))
     );
   }
 
@@ -738,49 +694,6 @@ export class PopulatableEthersLiquity
     return this._wrapTroveChangeWithFees(
       normalized,
       await borrowerOperations.estimateAndPopulate.adjustTrove(
-        { ...overrides },
-        compose(
-          borrowZUSD ? addGasForPotentialLastFeeOperationTimeUpdate : id,
-          addGasForPotentialListTraversal
-        ),
-        maxBorrowingRate.hex,
-        (withdrawCollateral ?? Decimal.ZERO).hex,
-        (borrowZUSD ?? repayZUSD ?? Decimal.ZERO).hex,
-        !!borrowZUSD,
-        ...(await this._findHints(finalTrove)),
-        (depositCollateral ?? Decimal.ZERO).hex,
-      )
-    );
-  }
-
-  /** {@inheritDoc @liquity/lib-base#PopulatableLiquity.adjustNueTrove} */
-  async adjustNueTrove(
-    params: TroveAdjustmentParams<Decimalish>,
-    maxBorrowingRate?: Decimalish,
-    overrides?: EthersTransactionOverrides
-  ): Promise<PopulatedEthersLiquityTransaction<TroveAdjustmentDetails>> {
-    const address = _requireAddress(this._readable.connection, overrides);
-    const { borrowerOperations } = _getContracts(this._readable.connection);
-
-    const normalized = _normalizeTroveAdjustment(params);
-    const { depositCollateral, withdrawCollateral, borrowZUSD, repayZUSD } = normalized;
-
-    const [trove, fees] = await Promise.all([
-      this._readable.getTrove(address),
-      borrowZUSD && this._readable.getFees()
-    ]);
-
-    const borrowingRate = fees?.borrowingRate();
-    const finalTrove = trove.adjust(normalized, borrowingRate);
-
-    maxBorrowingRate =
-      maxBorrowingRate !== undefined
-        ? Decimal.from(maxBorrowingRate)
-        : borrowingRate?.add(defaultBorrowingRateSlippageTolerance) ?? Decimal.ZERO;
-
-    return this._wrapTroveChangeWithFees(
-      normalized,
-      await borrowerOperations.estimateAndPopulate.adjustNueTrove(
         { ...overrides },
         compose(
           borrowZUSD ? addGasForPotentialLastFeeOperationTimeUpdate : id,

@@ -366,24 +366,9 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "_maxFeePercentage",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_collWithdrawal",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_ZUSDChange",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bool",
-        "name": "_isDebtIncrease",
-        "type": "bool"
+        "internalType": "address",
+        "name": "_troveOwner",
+        "type": "address"
       },
       {
         "internalType": "address",
@@ -401,7 +386,7 @@
         "type": "uint256"
       }
     ],
-    "name": "adjustNueTrove",
+    "name": "addCollFrom",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -452,13 +437,6 @@
   {
     "inputs": [],
     "name": "claimCollateral",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "closeNueTrove",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -636,13 +614,18 @@
         "type": "uint256"
       }
     ],
-    "name": "openNueTrove",
+    "name": "openTrove",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [
+      {
+        "internalType": "address",
+        "name": "_owner",
+        "type": "address"
+      },
       {
         "internalType": "uint256",
         "name": "_maxFeePercentage",
@@ -669,7 +652,7 @@
         "type": "uint256"
       }
     ],
-    "name": "openTrove",
+    "name": "openTroveFrom",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -685,6 +668,34 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_sender",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "_token",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_data",
+        "type": "bytes"
+      }
+    ],
+    "name": "receiveApproval",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
