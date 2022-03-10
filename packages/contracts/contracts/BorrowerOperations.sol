@@ -9,12 +9,13 @@ import "./Interfaces/ICollSurplusPool.sol";
 import "./Interfaces/ISortedTroves.sol";
 import "./Interfaces/IZEROStaking.sol";
 import "./Interfaces/IFeeDistributor.sol";
+import "./Interfaces/IApproveAndCall.sol";
 import "./Dependencies/LiquityBase.sol";
 import "./Dependencies/CheckContract.sol";
 import "./Dependencies/console.sol";
 import "./BorrowerOperationsStorage.sol";
 
-contract BorrowerOperations is LiquityBase, BorrowerOperationsStorage, CheckContract, IBorrowerOperations {
+contract BorrowerOperations is LiquityBase, BorrowerOperationsStorage, CheckContract, IBorrowerOperations, IApproveAndCall {
     /* --- Variable container structs  ---
 
     Used to hold, return and assign variables inside a function, in order to avoid the error:
@@ -149,16 +150,23 @@ contract BorrowerOperations is LiquityBase, BorrowerOperationsStorage, CheckCont
         masset = IMasset(_massetAddress);
     }
 
-    function openTrove(uint _maxFeePercentage, uint _ZUSDAmount, address _upperHint, address _lowerHint, uint _amount) external override {
-        _openTrove(_maxFeePercentage, _ZUSDAmount, _upperHint, _lowerHint, msg.sender, _amount, msg.sender);
+	function receiveApproval(
+		address _sender,
+		uint256 _amount,
+		address _token,
+		bytes calldata _data
+	) external override {
+        require(msg.sender == address(sovToken), "Only SOV token can call this contract");
+        (bool success, bytes memory returndata) = address(this).call(_data);
+        require(success, string(returndata));
     }
 
-    function openNueTrove(uint _maxFeePercentage, uint _ZUSDAmount, address _upperHint, address _lowerHint, uint _amount) external override {
-        require(address(masset) != address(0), "Masset address not set");
+    function openTroveFrom(address _owner, uint _maxFeePercentage, uint _ZUSDAmount, address _upperHint, address _lowerHint, uint _amount) external override {
+        _openTrove(_maxFeePercentage, _ZUSDAmount, _upperHint, _lowerHint, _owner, _amount, _owner);
+    }
 
-        _openTrove(_maxFeePercentage, _ZUSDAmount, _upperHint, _lowerHint, msg.sender, _amount, address(this));
-        zusdToken.transfer(address(masset), _ZUSDAmount);
-        masset.onTokensMinted(_ZUSDAmount, address(zusdToken), abi.encode(msg.sender));
+    function openTrove(uint _maxFeePercentage, uint _ZUSDAmount, address _upperHint, address _lowerHint, uint _amount) external override {
+        _openTrove(_maxFeePercentage, _ZUSDAmount, _upperHint, _lowerHint, msg.sender, _amount, msg.sender);
     }
 
     // --- Borrower Trove Operations ---
@@ -219,6 +227,10 @@ contract BorrowerOperations is LiquityBase, BorrowerOperationsStorage, CheckCont
     }
 
     /// Send SOV as collateral to a trove
+    function addCollFrom(address _troveOwner, address _upperHint, address _lowerHint, uint _amount) external override {
+        _adjustSenderTrove(_troveOwner, 0, 0, false, _upperHint, _lowerHint, 0, _troveOwner, _amount, _troveOwner);
+    }
+
     function addColl(address _upperHint, address _lowerHint, uint _amount) external override {
         _adjustTrove(msg.sender, 0, 0, false, _upperHint, _lowerHint, 0, _amount);
     }
@@ -246,19 +258,6 @@ contract BorrowerOperations is LiquityBase, BorrowerOperationsStorage, CheckCont
 
     function adjustTrove(uint _maxFeePercentage, uint _collWithdrawal, uint _ZUSDChange, bool _isDebtIncrease, address _upperHint, address _lowerHint, uint _amount) external override {
         _adjustTrove(msg.sender, _collWithdrawal, _ZUSDChange, _isDebtIncrease, _upperHint, _lowerHint, _maxFeePercentage, _amount);
-    }
-    // in case of _isDebtIncrease = false masset contract must have an approval of NUE tokens
-    function adjustNueTrove(uint _maxFeePercentage, uint _collWithdrawal, uint _ZUSDChange, bool _isDebtIncrease, address _upperHint, address _lowerHint, uint _amount) external override {
-        require(address(masset) != address(0), "Masset address not set");
-
-        if (!_isDebtIncrease && _ZUSDChange > 0) {
-            masset.redeemByBridge(address(zusdToken), _ZUSDChange, msg.sender);
-        }
-        _adjustSenderTrove(msg.sender, _collWithdrawal, _ZUSDChange, _isDebtIncrease, _upperHint, _lowerHint, _maxFeePercentage, msg.sender, _amount, address(this));
-        if (_isDebtIncrease  && _ZUSDChange > 0) {
-            zusdToken.transfer(address(masset), _ZUSDChange);
-            masset.onTokensMinted(_ZUSDChange, address(zusdToken), abi.encode(msg.sender));
-        }
     }
 
     function _adjustTrove(address _borrower, uint _collWithdrawal, uint _ZUSDChange, bool _isDebtIncrease, address _upperHint, address _lowerHint, uint _maxFeePercentage, uint _amount) internal {
@@ -346,15 +345,6 @@ contract BorrowerOperations is LiquityBase, BorrowerOperationsStorage, CheckCont
     }
 
     function closeTrove() external override {
-        _closeTrove();
-    }
-
-    function closeNueTrove() external override {
-        require(address(masset) != address(0), "Masset address not set");
-
-        uint debt = troveManager.getTroveDebt(msg.sender);
-
-        masset.redeemByBridge(address(zusdToken), debt.sub(ZUSD_GAS_COMPENSATION), msg.sender);
         _closeTrove();
     }
 

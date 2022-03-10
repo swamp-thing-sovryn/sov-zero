@@ -61,6 +61,7 @@ contract('BorrowerOperations', async accounts => {
   const getNetBorrowingAmount = async (debtWithFee) => th.getNetBorrowingAmount(contracts, debtWithFee)
   const getActualDebtFromComposite = async (compositeDebt) => th.getActualDebtFromComposite(compositeDebt, contracts)
   const openTrove = async (params) => th.openTrove(contracts, params)
+  const openTroveFrom = async (params) => th.openTroveFrom(contracts, params)
   const openNueTrove = async (params) => th.openNueTrove(contracts, params)
   const getTroveEntireColl = async (trove) => th.getTroveEntireColl(contracts, trove)
   const getTroveEntireDebt = async (trove) => th.getTroveEntireDebt(contracts, trove)
@@ -185,6 +186,30 @@ contract('BorrowerOperations', async accounts => {
       await sovToken.approve(borrowerOperations.address, toBN(dec(1, 16)), { from: alice })
       await borrowerOperations.addColl(alice, alice, toBN(dec(1, 16)), { from: alice })
 
+      const alice_Trove_After = await troveManager.Troves(alice)
+      const coll_After = alice_Trove_After[1]
+      const status_After = alice_Trove_After[3]
+
+      // check coll increases by correct amount,and status remains active
+      assert.isTrue(coll_After.eq(coll_before.add(toBN(dec(1, 16)))))
+      assert.equal(status_After, 1)
+    })
+
+    it("openTrove() and addColl(), can be invoked using SOV approveAndCAll", async () => {
+      // alice creates a Trove and adds first collateral
+      await openTroveFrom({ ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+
+      const alice_Trove_Before = await troveManager.Troves(alice)
+      const coll_before = alice_Trove_Before[1]
+      const status_Before = alice_Trove_Before[3]
+
+      // check status before
+      assert.equal(status_Before, 1)
+
+      // Alice adds second collateral
+      const addCollCallData = borrowerOperations.contract.methods.addCollFrom(alice, alice, alice, toBN(dec(1, 16))).encodeABI();
+      await sovToken.approveAndCall(borrowerOperations.address, toBN(dec(1, 16)), addCollCallData , { from: alice })
+      
       const alice_Trove_After = await troveManager.Troves(alice)
       const coll_After = alice_Trove_After[1]
       const status_After = alice_Trove_After[3]
@@ -351,7 +376,6 @@ contract('BorrowerOperations', async accounts => {
     //   const dennis_Trove = await troveManager.Troves(dennis)
 
     //   const dennis_Stake = dennis_Trove[2]
-    //   console.log(dennis_Stake.toString())
 
     //   assert.isAtMost(th.getDifference(dennis_Stake), 100)
     // })

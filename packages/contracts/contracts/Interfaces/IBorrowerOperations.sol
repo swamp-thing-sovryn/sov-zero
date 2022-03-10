@@ -64,6 +64,23 @@ interface IBorrowerOperations {
      * Successful execution is conditional mainly on the resulting collateralization ratio which must exceed the minimum (110% in Normal Mode, 150% in Recovery Mode).
      * In addition to the requested debt, extra debt is issued to pay the issuance fee, and cover the gas compensation. 
      * The borrower has to provide a `_maxFeePercentage` that he/she is willing to accept in case of a fee slippage, i.e. when a redemption transaction is processed first, driving up the issuance fee. 
+     *
+     * @dev This function can only be called from the SOV contract otherwise it will fail
+     * 
+     * @param _maxFee max fee percentage to acept in case of a fee slippage
+     * @param _ZUSDAmount ZUSD requested debt 
+     * @param _upperHint upper trove id hint
+     * @param _lowerHint lower trove id hint
+     * @param _amount SOV received as collateral
+     */
+    function openTroveFrom(address _owner, uint _maxFee, uint _ZUSDAmount, address _upperHint, address _lowerHint, uint _amount) external;
+
+
+    /**
+     * @notice Function that creates a Trove for the caller with the requested debt, and the SOV received as collateral.
+     * Successful execution is conditional mainly on the resulting collateralization ratio which must exceed the minimum (110% in Normal Mode, 150% in Recovery Mode).
+     * In addition to the requested debt, extra debt is issued to pay the issuance fee, and cover the gas compensation. 
+     * The borrower has to provide a `_maxFeePercentage` that he/she is willing to accept in case of a fee slippage, i.e. when a redemption transaction is processed first, driving up the issuance fee. 
      * @param _maxFee max fee percentage to acept in case of a fee slippage
      * @param _ZUSDAmount ZUSD requested debt 
      * @param _upperHint upper trove id hint
@@ -72,25 +89,20 @@ interface IBorrowerOperations {
      */
     function openTrove(uint _maxFee, uint _ZUSDAmount, address _upperHint, address _lowerHint, uint _amount) external;
 
-    /**
-     * @notice Function that creates a Trove for the caller with the requested debt, and the SOV received as collateral.
-     * Successful execution is conditional mainly on the resulting collateralization ratio which must exceed the minimum (110% in Normal Mode, 150% in Recovery Mode).
-     * In addition to the requested debt, extra debt is issued to pay the issuance fee, and cover the gas compensation. 
-     * The borrower has to provide a `_maxFeePercentage` that he/she is willing to accept in case of a fee slippage, i.e. when a redemption transaction is processed first, driving up the issuance fee.
-     * This method is identical to `openTrove()`, but operates on NUE tokens instead of ZUSD.
-     * @param _maxFee max fee percentage to acept in case of a fee slippage
-     * @param _ZUSDAmount ZUSD requested debt 
-     * @param _upperHint upper trove id hint
-     * @param _lowerHint lower trove id hint
-     * @param _amount SOV received as collateral
-     */
-    function openNueTrove(uint _maxFee, uint _ZUSDAmount, address _upperHint, address _lowerHint, uint _amount) external;
-
     /// @notice Function that adds the received SOV to the caller's active Trove.
     /// @param _upperHint upper trove id hint
     /// @param _lowerHint lower trove id hint
     /// @param _amount SOV received as collateral
     function addColl(address _upperHint, address _lowerHint, uint _amount) external;
+
+    /// @notice Function that adds the received SOV to active Trove.
+    /// @param _troveOwner address of the Trove owner
+    /// @param _upperHint upper trove id hint
+    /// @param _lowerHint lower trove id hint
+    /// @param _amount SOV received as collateral
+    ///
+    /// @dev Keep in mind this function can only be called from the SOV token
+    function addCollFrom(address _troveOwner, address _upperHint, address _lowerHint, uint _amount) external;
 
     /// @notice send SOV as collateral to a trove. Called by only the Stability Pool.
     /// @param _user user trove address
@@ -133,13 +145,6 @@ interface IBorrowerOperations {
     function closeTrove() external;
 
     /**
-     * @notice allows a borrower to repay all debt, withdraw all their collateral, and close their Trove. 
-     * Requires the borrower have a NUE balance sufficient to repay their trove's debt, excluding gas compensation - i.e. `(debt - 50)` NUE.
-     * This method is identical to `closeTrove()`, but operates on NUE tokens instead of ZUSD.
-     */
-    function closeNueTrove() external;
-
-    /**
      * @notice enables a borrower to simultaneously change both their collateral and debt, subject to all the restrictions that apply to individual increases/decreases of each quantity with the following particularity: 
      * if the adjustment reduces the collateralization ratio of the Trove, the function only executes if the resulting total collateralization ratio is above 150%. 
      * The borrower has to provide a `_maxFeePercentage` that he/she is willing to accept in case of a fee slippage, i.e. when a redemption transaction is processed first, driving up the issuance fee. 
@@ -153,22 +158,6 @@ interface IBorrowerOperations {
      * @param _amount SOV received as collateral
      */
     function adjustTrove(uint _maxFee, uint _collWithdrawal, uint _debtChange, bool isDebtIncrease, address _upperHint, address _lowerHint, uint _amount) external;
-
-    /**
-     * @notice enables a borrower to simultaneously change both their collateral and debt, subject to all the restrictions that apply to individual increases/decreases of each quantity with the following particularity: 
-     * if the adjustment reduces the collateralization ratio of the Trove, the function only executes if the resulting total collateralization ratio is above 150%. 
-     * The borrower has to provide a `_maxFeePercentage` that he/she is willing to accept in case of a fee slippage, i.e. when a redemption transaction is processed first, driving up the issuance fee. 
-     * The parameter is ignored if the debt is not increased with the transaction.
-     * This method is identical to `adjustTrove()`, but operates on NUE tokens instead of ZUSD.
-     * @param _maxFee max fee percentage to acept in case of a fee slippage
-     * @param _collWithdrawal collateral amount to withdraw 
-     * @param _debtChange ZUSD amount to change 
-     * @param isDebtIncrease indicates if increases debt
-     * @param _upperHint upper trove id hint
-     * @param _lowerHint lower trove id hint
-     * @param _amount SOV received as collateral
-     */
-    function adjustNueTrove(uint _maxFee, uint _collWithdrawal, uint _debtChange, bool isDebtIncrease, address _upperHint, address _lowerHint, uint _amount) external;
 
     /** 
     * @notice when a borrower’s Trove has been fully redeemed from and closed, or liquidated in Recovery Mode with a collateralization ratio above 110%, 

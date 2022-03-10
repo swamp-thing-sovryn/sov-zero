@@ -661,7 +661,8 @@ class TestHelper {
     return this.getGasMetrics(gasCostList)
   }
 
-  static async openTrove(contracts, {
+
+  static async _openTrove(contracts, openFn, {
     maxFeePercentage,
     extraZUSDAmount,
     upperHint,
@@ -692,8 +693,7 @@ class TestHelper {
       value = ICR.mul(totalDebt).div(price)
     }
 
-    await contracts.sovTokenTester.approve(contracts.borrowerOperations.address, value, {from: extraParams.from} )
-    const tx = await contracts.borrowerOperations.openTrove(maxFeePercentage, zusdAmount, upperHint, lowerHint, value, {from: extraParams.from} )
+    const tx = await openFn(maxFeePercentage, zusdAmount, upperHint, lowerHint, value, {from: extraParams.from} )
     return {
       zusdAmount,
       netDebt,
@@ -701,7 +701,21 @@ class TestHelper {
       ICR,
       collateral: value,
       tx
-    }
+    }  
+  }
+
+  static async openTrove(contracts, params) {
+    return this._openTrove(contracts, async (maxFeePercentage, zusdAmount, upperHint, lowerHint, value, txParams) => {
+      await contracts.sovTokenTester.approve(contracts.borrowerOperations.address, value, txParams )
+      return await contracts.borrowerOperations.openTrove(maxFeePercentage, zusdAmount, upperHint, lowerHint, value, txParams )
+    }, params)
+  }
+
+  static async openTroveFrom(contracts, params) {
+    return this._openTrove(contracts, async (maxFeePercentage, zusdAmount, upperHint, lowerHint, value, txParams) => {
+      const callData =  contracts.borrowerOperations.contract.methods.openTroveFrom(txParams.from, maxFeePercentage, zusdAmount, upperHint, lowerHint, value).encodeABI();
+      return await contracts.sovTokenTester.approveAndCall(contracts.borrowerOperations.address, value, callData, txParams)
+    }, params) 
   }
 
   static async openNueTrove(contracts, {
