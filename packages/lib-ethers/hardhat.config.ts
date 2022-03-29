@@ -83,23 +83,29 @@ const presaleAddresses = {
 };
 
 const sovTokenAddresses = {
-  mainnet: "0x0000000000000000000000000000000000000001",
-  rsktestnet: "0x0000000000000000000000000000000000000002",
+  mainnet: "0xEFc78fc7d48b64958315949279Ba181c2114ABBd",
+  rsktestnet: "0x6a9A07972D07e58F0daf5122d11E069288A375fb",
+  dev: ""
+};
+
+const xUSDTokenAddresses = {
+  mainnet: "0xb5999795BE0EbB5bAb23144AA5FD6A02D080299F",
+  rsktestnet: "0x74858FE37d391f81F89472e1D8BC8Ef9CF67B3b1",
   dev: ""
 };
 
 const oracleAddresses : Record<string, OracleAddresses> = {
   mainnet: {
-    mocOracleAddress: "",
-    rskOracleAddress: "0xA266aA67e2a25B0CCa460DEAfcacC81D17341a0D"
+    mainOracle: "0x437AC62769f386b2d238409B7f0a7596d36506e4",
+    fallbackOracle: "0x437AC62769f386b2d238409B7f0a7596d36506e4"
   },
   rsktestnet: {
-    mocOracleAddress: "",
-    rskOracleAddress: "0x0945E4d65Ad9AD7FB3d695c036CAdA63769079C7"
+    mainOracle: "0x7f38c422b99075f63C9c919ECD200DF8d2Cf5BD4",
+    fallbackOracle: "0x7f38c422b99075f63C9c919ECD200DF8d2Cf5BD4"
   },
   dev: {
-    mocOracleAddress: "",
-    rskOracleAddress: ""
+    mainOracle: "",
+    fallbackOracle: ""
   }
 };
 
@@ -120,8 +126,12 @@ const hasPresale = (network: string): network is keyof typeof presaleAddresses =
 const hasMarketMaker = (network: string): network is keyof typeof marketMakerAddresses =>
   network in marketMakerAddresses;
 
-  const hasSovToken = (network: string): network is keyof typeof sovTokenAddresses =>
+const hasSovToken = (network: string): network is keyof typeof sovTokenAddresses =>
   network in sovTokenAddresses;
+
+const hasxUSDToken = (network: string): network is keyof typeof xUSDTokenAddresses =>
+  network in xUSDTokenAddresses;
+
 
 const config: HardhatUserConfig = {
   networks: {
@@ -187,6 +197,7 @@ declare module "hardhat/types/runtime" {
       presaleAddress?: string,
       marketMakerAddress?: string,
       sovTokenAddress?: string,
+      xUSDTokenAddress?: string,
       overrides?: Overrides
     ) => Promise<_LiquityDeploymentJSON>;
   }
@@ -222,6 +233,7 @@ extendEnvironment(env => {
     presaleAddress,
     marketMakerAddress,
     sovTokenAddress,
+    xUSDTokenAddress,
     overrides?: Overrides
   ) => {
     const deployment = await deployAndSetupContracts(
@@ -235,6 +247,7 @@ extendEnvironment(env => {
       presaleAddress,
       marketMakerAddress,
       sovTokenAddress,
+      xUSDTokenAddress,
       overrides
     );
 
@@ -289,6 +302,7 @@ type DeployParams = {
   presaleAddress?: string;
   marketMakerAddress?: string;
   sovTokenAddress?: string;
+  xUSDTokenAddress?: string;
 };
 
 task("deploy", "Deploys the contracts to the network")
@@ -324,6 +338,7 @@ task("deploy", "Deploys the contracts to the network")
         presaleAddress,
         marketMakerAddress,
         sovTokenAddress,
+        xUSDTokenAddress
       }: DeployParams,
       env
     ) => {
@@ -356,6 +371,10 @@ task("deploy", "Deploys the contracts to the network")
         ? sovTokenAddresses[env.network.name]
         : undefined;
 
+      xUSDTokenAddress ??= hasxUSDToken(env.network.name)
+        ? xUSDTokenAddresses[env.network.name]
+        : undefined;
+
       const deployment = await env.deployLiquity(
         deployer,
         governanceAddress,
@@ -365,6 +384,7 @@ task("deploy", "Deploys the contracts to the network")
         presaleAddress,
         marketMakerAddress,
         sovTokenAddress,
+        xUSDTokenAddress,
         overrides
       );
 

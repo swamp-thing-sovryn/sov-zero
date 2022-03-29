@@ -229,6 +229,7 @@ export interface _LiquityDeploymentJSON {
   readonly presaleAddress?: string;
   readonly marketMakerAddress?: string;
   readonly sovTokenAddress?: string;
+  readonly xUSDTokenAddress?: string;
   readonly _priceFeedIsTestnet: boolean;
   readonly _isDev: boolean;
 }
