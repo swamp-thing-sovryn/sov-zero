@@ -33,6 +33,7 @@ contract PriceFeed is PriceFeedStorage, IPriceFeed {
     ///         It uses the main price feed and fallback to the backup one in case of an error. If both fail return the last 
     ///         good price seen.
     /// @dev It's also callable by anyone externally
+    /// @dev Price is returned in 1e18 precision
     /// @return The price
     function fetchPrice() external override returns (uint256) {
         for (uint8 index = 0; index < 2; index++) {

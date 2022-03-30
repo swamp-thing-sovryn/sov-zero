@@ -16,6 +16,7 @@ import "../ZUSDToken.sol";
 import "./PriceFeedTestnet.sol";
 import "../SortedTroves.sol";
 import "./EchidnaProxy.sol";
+import "../Dependencies/ERC20.sol";
 //import "../Dependencies/console.sol";
 
 // Run with:
@@ -43,6 +44,7 @@ contract EchidnaTester {
     ZUSDToken public zusdToken;
     PriceFeedTestnet priceFeedTestnet;
     SortedTroves sortedTroves;
+    ERC20 sovToken;
 
     EchidnaProxy[NUMBER_OF_ACTORS] public echidnaProxies;
 
@@ -69,16 +71,24 @@ contract EchidnaTester {
 
         sortedTroves = new SortedTroves();
 
-        troveManager.setAddresses(
+        sovToken = new ERC20("Sovryn Token", "SOV", 18);
+
+        address[15] memory setupAddress = 
+        [
+            address(sovToken),
             address(0),
             address(troveManagerRedeemOps),
             address(liquityBaseParams), address(borrowerOperations), 
             address(activePool), address(defaultPool), 
             address(stabilityPool), address(gasPool), address(collSurplusPool),
             address(priceFeedTestnet), address(zusdToken), 
-            address(sortedTroves), address(0), address(0));
+            address(sortedTroves), address(0), address(0)
+        ];
+
+        troveManager.setAddresses(setupAddress);
        
         borrowerOperations.setAddresses(
+            address(sovToken),
             address(0),
             address(liquityBaseParams), address(troveManager), 
             address(activePool), address(defaultPool), 
@@ -86,23 +96,24 @@ contract EchidnaTester {
             address(priceFeedTestnet), address(sortedTroves), 
             address(zusdToken), address(0));
 
-        activePool.setAddresses(address(borrowerOperations), 
+        activePool.setAddresses(address(sovToken), address(borrowerOperations), 
             address(troveManager), address(stabilityPool), address(defaultPool));
 
-        defaultPool.setAddresses(address(troveManager), address(activePool));
+        defaultPool.setAddresses(address(sovToken),address(troveManager), address(activePool));
         
         stabilityPool.setAddresses(
+            address(sovToken),
             address(liquityBaseParams), address(borrowerOperations), 
             address(troveManager), address(activePool), address(zusdToken), 
             address(sortedTroves), address(priceFeedTestnet), address(0));
 
-        collSurplusPool.setAddresses(address(borrowerOperations), 
+        collSurplusPool.setAddresses(address(sovToken), address(borrowerOperations), 
              address(troveManager), address(activePool));
     
         sortedTroves.setParams(1e18, address(troveManager), address(borrowerOperations));
 
         for (uint i = 0; i < NUMBER_OF_ACTORS; i++) {
-            echidnaProxies[i] = new EchidnaProxy(troveManager, borrowerOperations, stabilityPool, zusdToken);
+            echidnaProxies[i] = new EchidnaProxy(troveManager, borrowerOperations, stabilityPool, zusdToken, sovToken);
             (bool success, ) = address(echidnaProxies[i]).call{value: INITIAL_BALANCE}("");
             require(success);
         }
@@ -375,15 +386,15 @@ contract EchidnaTester {
             return false;
         }
 
-        if (address(activePool).balance != activePool.getETH()) {
+        if (address(activePool).balance != activePool.getSOV()) {
             return false;
         }
 
-        if (address(defaultPool).balance != defaultPool.getETH()) {
+        if (address(defaultPool).balance != defaultPool.getSOV()) {
             return false;
         }
 
-        if (address(stabilityPool).balance != stabilityPool.getETH()) {
+        if (address(stabilityPool).balance != stabilityPool.getSOV()) {
             return false;
         }
 

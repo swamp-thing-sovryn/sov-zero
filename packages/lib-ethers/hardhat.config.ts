@@ -82,18 +82,30 @@ const presaleAddresses = {
   dev: ""
 };
 
+const sovTokenAddresses = {
+  mainnet: "0xEFc78fc7d48b64958315949279Ba181c2114ABBd",
+  rsktestnet: "0x6a9A07972D07e58F0daf5122d11E069288A375fb",
+  dev: ""
+};
+
+const xUSDTokenAddresses = {
+  mainnet: "0xb5999795BE0EbB5bAb23144AA5FD6A02D080299F",
+  rsktestnet: "0x74858FE37d391f81F89472e1D8BC8Ef9CF67B3b1",
+  dev: ""
+};
+
 const oracleAddresses : Record<string, OracleAddresses> = {
   mainnet: {
-    mocOracleAddress: "",
-    rskOracleAddress: ""
+    mainOracle: "0x437AC62769f386b2d238409B7f0a7596d36506e4",
+    fallbackOracle: "0x437AC62769f386b2d238409B7f0a7596d36506e4"
   },
   rsktestnet: {
-    mocOracleAddress: "0x26a00aF444928d689DDEC7b4D17c0E4a8c9D407d",
-    rskOracleAddress: "0xE00243Bc6912BF148302e8478996c98c22fE8739"
+    mainOracle: "0x7f38c422b99075f63C9c919ECD200DF8d2Cf5BD4",
+    fallbackOracle: "0x7f38c422b99075f63C9c919ECD200DF8d2Cf5BD4"
   },
   dev: {
-    mocOracleAddress: "",
-    rskOracleAddress: ""
+    mainOracle: "",
+    fallbackOracle: ""
   }
 };
 
@@ -113,6 +125,13 @@ const hasPresale = (network: string): network is keyof typeof presaleAddresses =
 
 const hasMarketMaker = (network: string): network is keyof typeof marketMakerAddresses =>
   network in marketMakerAddresses;
+
+const hasSovToken = (network: string): network is keyof typeof sovTokenAddresses =>
+  network in sovTokenAddresses;
+
+const hasxUSDToken = (network: string): network is keyof typeof xUSDTokenAddresses =>
+  network in xUSDTokenAddresses;
+
 
 const config: HardhatUserConfig = {
   networks: {
@@ -177,6 +196,8 @@ declare module "hardhat/types/runtime" {
       externalPriceFeeds?: OracleAddresses,
       presaleAddress?: string,
       marketMakerAddress?: string,
+      sovTokenAddress?: string,
+      xUSDTokenAddress?: string,
       overrides?: Overrides
     ) => Promise<_LiquityDeploymentJSON>;
   }
@@ -211,6 +232,8 @@ extendEnvironment(env => {
     externalPriceFeeds,
     presaleAddress,
     marketMakerAddress,
+    sovTokenAddress,
+    xUSDTokenAddress,
     overrides?: Overrides
   ) => {
     const deployment = await deployAndSetupContracts(
@@ -223,6 +246,8 @@ extendEnvironment(env => {
       wrbtcAddress,
       presaleAddress,
       marketMakerAddress,
+      sovTokenAddress,
+      xUSDTokenAddress,
       overrides
     );
 
@@ -230,48 +255,7 @@ extendEnvironment(env => {
   };
 });
 
-type SetAddressParams = {
-  address: string;
-  nuetokenaddress: string;
-  channel: string;
-}
-
 const defaultChannel = process.env.CHANNEL || "default";
-
-task("setMassetAddress", "Sets address of masset contract in order to support NUE troves")
-  .addParam("address", "address of deployed MassetProxy contract")
-  .addParam("nuetokenaddress", "address of NUE token")
-  .addOptionalParam("channel", "Deployment channel to deploy into", defaultChannel, types.string)
-  .setAction(async (
-    {
-      address,
-      channel,
-      nuetokenaddress,
-    }: SetAddressParams,
-    hre
-  ) => {
-    const [deployer] = await hre.ethers.getSigners();
-    const deployment = getDeploymentData(hre.network.name, channel)
-    const { borrowerOperations: borrowerOperationsAddress } = deployment.addresses
-
-    const borrowerOperations = await hre.ethers.getContractAt("BorrowerOperations", borrowerOperationsAddress, deployer) as unknown as  BorrowerOperations
-
-    const currentMassetAddress = await borrowerOperations.masset()
-    console.log("Current masset address: ", currentMassetAddress)
-
-    const tx = await borrowerOperations.setMassetAddress(address) 
-    await tx.wait()
-
-    const newMassetAddress = await borrowerOperations.masset()
-    console.log("New masset address: ", newMassetAddress)
-
-    deployment.addresses.nueToken = nuetokenaddress
-
-    fs.writeFileSync(
-      path.join("deployments", channel, `${hre.network.name}.json`),
-      JSON.stringify(deployment, undefined, 2)
-    );
-  })
 
 type FundCommunityIssuance = {
   channel: string;
@@ -317,6 +301,8 @@ type DeployParams = {
   wrbtcAddress?: string;
   presaleAddress?: string;
   marketMakerAddress?: string;
+  sovTokenAddress?: string;
+  xUSDTokenAddress?: string;
 };
 
 task("deploy", "Deploys the contracts to the network")
@@ -351,6 +337,8 @@ task("deploy", "Deploys the contracts to the network")
         wrbtcAddress,
         presaleAddress,
         marketMakerAddress,
+        sovTokenAddress,
+        xUSDTokenAddress
       }: DeployParams,
       env
     ) => {
@@ -379,6 +367,13 @@ task("deploy", "Deploys the contracts to the network")
       marketMakerAddress ??= hasMarketMaker(env.network.name)
         ? marketMakerAddresses[env.network.name]
         : undefined;
+      sovTokenAddress ??= hasSovToken(env.network.name)
+        ? sovTokenAddresses[env.network.name]
+        : undefined;
+
+      xUSDTokenAddress ??= hasxUSDToken(env.network.name)
+        ? xUSDTokenAddresses[env.network.name]
+        : undefined;
 
       const deployment = await env.deployLiquity(
         deployer,
@@ -388,6 +383,8 @@ task("deploy", "Deploys the contracts to the network")
         useRealPriceFeed ? oracleAddresses[env.network.name] : undefined,
         presaleAddress,
         marketMakerAddress,
+        sovTokenAddress,
+        xUSDTokenAddress,
         overrides
       );
 

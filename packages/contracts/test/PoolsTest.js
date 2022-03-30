@@ -6,6 +6,8 @@ const NonPayable = artifacts.require("./NonPayable.sol")
 const testHelpers = require("../utils/testHelpers.js")
 const timeMachine = require('ganache-time-traveler');
 
+const sovTokenTester = artifacts.require("./SOVTokenTester.sol")
+
 const th = testHelpers.TestHelper
 const dec = th.dec
 
@@ -23,7 +25,8 @@ contract('StabilityPool', async accounts => {
     stabilityPool = await StabilityPool.new()
     const mockActivePoolAddress = (await NonPayable.new()).address
     const dumbContractAddress = (await NonPayable.new()).address
-    await stabilityPool.setAddresses(dumbContractAddress, dumbContractAddress, dumbContractAddress, mockActivePoolAddress, dumbContractAddress, dumbContractAddress, dumbContractAddress, dumbContractAddress)
+    const sovToken = await sovTokenTester.new()
+    await stabilityPool.setAddresses(sovToken.address, dumbContractAddress, dumbContractAddress, dumbContractAddress, mockActivePoolAddress, dumbContractAddress, dumbContractAddress, dumbContractAddress, dumbContractAddress)
   })
 
   let revertToSnapshot;
@@ -37,9 +40,9 @@ contract('StabilityPool', async accounts => {
     await revertToSnapshot();
   });
 
-  it('getETH(): gets the recorded ETH balance', async () => {
-    const recordedETHBalance = await stabilityPool.getETH()
-    assert.equal(recordedETHBalance, 0)
+  it('getSOV(): gets the recorded SOV balance', async () => {
+    const recordedSOVBalance = await stabilityPool.getSOV()
+    assert.equal(recordedSOVBalance, 0)
   })
 
   it('getTotalZUSDDeposits(): gets the recorded ZUSD balance', async () => {
@@ -51,18 +54,20 @@ contract('StabilityPool', async accounts => {
 contract('ActivePool', async accounts => {
 
   let activePool, mockBorrowerOperations
+  let sovToken
 
   const [owner, alice] = accounts;
   beforeEach(async () => {
     activePool = await ActivePool.new()
     mockBorrowerOperations = await NonPayable.new()
     const dumbContractAddress = (await NonPayable.new()).address
-    await activePool.setAddresses(mockBorrowerOperations.address, dumbContractAddress, dumbContractAddress, dumbContractAddress)
+    sovToken = await sovTokenTester.new()
+    await activePool.setAddresses(sovToken.address, mockBorrowerOperations.address, dumbContractAddress, dumbContractAddress, dumbContractAddress)
   })
 
-  it('getETH(): gets the recorded ETH balance', async () => {
-    const recordedETHBalance = await activePool.getETH()
-    assert.equal(recordedETHBalance, 0)
+  it('getSOV(): gets the recorded SOV balance', async () => {
+    const recordedSOVBalance = await activePool.getSOV()
+    assert.equal(recordedSOVBalance, 0)
   })
 
   it('getZUSDDebt(): gets the recorded ZUSD balance', async () => {
@@ -101,28 +106,26 @@ contract('ActivePool', async accounts => {
   })
 
   // send raw ether
-  it('sendETH(): decreases the recorded ETH balance by the correct amount', async () => {
-    // setup: give pool 2 ether
-    const activePool_initialBalance = web3.utils.toBN(await web3.eth.getBalance(activePool.address))
+  it('sendSOV(): decreases the recorded SOV balance by the correct amount', async () => {
+    // setup: give pool 2 SOV
+    const activePool_initialBalance = await sovToken.balanceOf(activePool.address)
     assert.equal(activePool_initialBalance, 0)
-    // start pool with 2 ether
-    //await web3.eth.sendTransaction({ from: mockBorrowerOperationsAddress, to: activePool.address, value: dec(2, 'ether') })
-    const tx1 = await mockBorrowerOperations.forward(activePool.address, '0x', { from: owner, value: dec(2, 'ether') })
+    // start pool with 2 SOV
+    const tx1 = await sovToken.transfer(activePool.address, dec(2, 'ether'))
     assert.isTrue(tx1.receipt.status)
 
-    const activePool_BalanceBeforeTx = web3.utils.toBN(await web3.eth.getBalance(activePool.address))
-    const alice_Balance_BeforeTx = web3.utils.toBN(await web3.eth.getBalance(alice))
+    const activePool_BalanceBeforeTx = await sovToken.balanceOf(activePool.address)
+    const alice_Balance_BeforeTx = await sovToken.balanceOf(alice)
 
     assert.equal(activePool_BalanceBeforeTx, dec(2, 'ether'))
 
-    // send ether from pool to alice
-    //await activePool.sendETH(alice, dec(1, 'ether'), { from: mockBorrowerOperationsAddress })
-    const sendETHData = th.getTransactionData('sendETH(address,uint256)', [alice, web3.utils.toHex(dec(1, 'ether'))])
-    const tx2 = await mockBorrowerOperations.forward(activePool.address, sendETHData, { from: owner })
+    // send SOV from pool to alice
+    const sendSOVData = th.getTransactionData('sendSOV(address,uint256)', [alice, web3.utils.toHex(dec(1, 'ether'))])
+    const tx2 = await mockBorrowerOperations.forward(activePool.address, sendSOVData, { from: owner })
     assert.isTrue(tx2.receipt.status)
 
-    const activePool_BalanceAfterTx = web3.utils.toBN(await web3.eth.getBalance(activePool.address))
-    const alice_Balance_AfterTx = web3.utils.toBN(await web3.eth.getBalance(alice))
+    const activePool_BalanceAfterTx = await sovToken.balanceOf(activePool.address)
+    const alice_Balance_AfterTx = await sovToken.balanceOf(alice)
 
     const alice_BalanceChange = alice_Balance_AfterTx.sub(alice_Balance_BeforeTx)
     const pool_BalanceChange = activePool_BalanceAfterTx.sub(activePool_BalanceBeforeTx)
@@ -134,17 +137,19 @@ contract('ActivePool', async accounts => {
 contract('DefaultPool', async accounts => {
  
   let defaultPool, mockTroveManager, mockActivePool
+  let sovToken
 
   const [owner, alice] = accounts;
   beforeEach(async () => {
     defaultPool = await DefaultPool.new()
     mockTroveManager = await NonPayable.new()
     mockActivePool = await NonPayable.new()
-    await defaultPool.setAddresses(mockTroveManager.address, mockActivePool.address)
+    sovToken = await sovTokenTester.new()
+    await defaultPool.setAddresses(sovToken.address, mockTroveManager.address, mockActivePool.address)
   })
 
-  it('getETH(): gets the recorded ZUSD balance', async () => {
-    const recordedETHBalance = await defaultPool.getETH()
+  it('getSOV(): gets the recorded ZUSD balance', async () => {
+    const recordedETHBalance = await defaultPool.getSOV()
     assert.equal(recordedETHBalance, 0)
   })
 
@@ -186,30 +191,29 @@ contract('DefaultPool', async accounts => {
   })
 
   // send raw ether
-  it('sendETHToActivePool(): decreases the recorded ETH balance by the correct amount', async () => {
-    // setup: give pool 2 ether
-    const defaultPool_initialBalance = web3.utils.toBN(await web3.eth.getBalance(defaultPool.address))
+  it('sendSOVToActivePool(): decreases the recorded SOV balance by the correct amount', async () => {
+    // setup: give pool 2 SOV
+    const defaultPool_initialBalance = await sovToken.balanceOf(defaultPool.address)
     assert.equal(defaultPool_initialBalance, 0)
 
-    // start pool with 2 ether
-    //await web3.eth.sendTransaction({ from: mockActivePool.address, to: defaultPool.address, value: dec(2, 'ether') })
-    const tx1 = await mockActivePool.forward(defaultPool.address, '0x', { from: owner, value: dec(2, 'ether') })
+    // start pool with 2 SOV
+    const tx1 = await sovToken.transfer(defaultPool.address,dec(2, 'ether'))
     assert.isTrue(tx1.receipt.status)
 
-    const defaultPool_BalanceBeforeTx = web3.utils.toBN(await web3.eth.getBalance(defaultPool.address))
-    const activePool_Balance_BeforeTx = web3.utils.toBN(await web3.eth.getBalance(mockActivePool.address))
+    const defaultPool_BalanceBeforeTx = await sovToken.balanceOf(defaultPool.address)
+    const activePool_Balance_BeforeTx = await sovToken.balanceOf(mockActivePool.address)
 
     assert.equal(defaultPool_BalanceBeforeTx, dec(2, 'ether'))
 
     // send ether from pool to alice
-    //await defaultPool.sendETHToActivePool(dec(1, 'ether'), { from: mockTroveManagerAddress })
-    const sendETHData = th.getTransactionData('sendETHToActivePool(uint256)', [web3.utils.toHex(dec(1, 'ether'))])
+    const sendSOVData = th.getTransactionData('sendSOVToActivePool(uint256)', [web3.utils.toHex(dec(1, 'ether'))])
     await mockActivePool.setPayable(true)
-    const tx2 = await mockTroveManager.forward(defaultPool.address, sendETHData, { from: owner })
+    const tx2 = await mockTroveManager.forward(defaultPool.address, sendSOVData, { from: owner })
     assert.isTrue(tx2.receipt.status)
 
-    const defaultPool_BalanceAfterTx = web3.utils.toBN(await web3.eth.getBalance(defaultPool.address))
-    const activePool_Balance_AfterTx = web3.utils.toBN(await web3.eth.getBalance(mockActivePool.address))
+    const defaultPool_BalanceAfterTx = await sovToken.balanceOf(defaultPool.address)
+    const activePool_Balance_AfterTx = await sovToken.balanceOf(mockActivePool.address)
+
 
     const activePool_BalanceChange = activePool_Balance_AfterTx.sub(activePool_Balance_BeforeTx)
     const defaultPool_BalanceChange = defaultPool_BalanceAfterTx.sub(defaultPool_BalanceBeforeTx)

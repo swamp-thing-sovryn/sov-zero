@@ -18,23 +18,24 @@ contract ZEROStaking is ZEROStakingStorage, IZEROStaking, CheckContract, BaseMat
 
     // --- Events ---
 
+    event SOVTokenAddressSet(address _sovTokenAddress);
     event ZEROTokenAddressSet(address _zeroTokenAddress);
     event ZUSDTokenAddressSet(address _zusdTokenAddress);
     event FeeDistributorAddressSet(address _feeDistributorAddress);
     event ActivePoolAddressSet(address _activePoolAddress);
 
     event StakeChanged(address indexed staker, uint newStake);
-    event StakingGainsWithdrawn(address indexed staker, uint ZUSDGain, uint ETHGain);
-    event F_ETHUpdated(uint _F_ETH);
+    event StakingGainsWithdrawn(address indexed staker, uint ZUSDGain, uint SOVGain);
+    event F_SOVUpdated(uint _F_SOV);
     event F_ZUSDUpdated(uint _F_ZUSD);
     event TotalZEROStakedUpdated(uint _totalZEROStaked);
-    event EtherSent(address _account, uint _amount);
-    event StakerSnapshotsUpdated(address _staker, uint _F_ETH, uint _F_ZUSD);
+    event StakerSnapshotsUpdated(address _staker, uint _F_SOV, uint _F_ZUSD);
 
     // --- Functions ---
 
     function setAddresses
     (
+        address _sovTokenAddress,
         address _zeroTokenAddress,
         address _zusdTokenAddress,
         address _feeDistributorAddress, 
@@ -44,16 +45,19 @@ contract ZEROStaking is ZEROStakingStorage, IZEROStaking, CheckContract, BaseMat
         onlyOwner 
         override 
     {
+        checkContract(_sovTokenAddress);
         checkContract(_zeroTokenAddress);
         checkContract(_zusdTokenAddress);
         checkContract(_feeDistributorAddress);
         checkContract(_activePoolAddress);
 
+        sovToken = IERC20(_sovTokenAddress);
         zeroToken = IZEROToken(_zeroTokenAddress);
         zusdToken = IZUSDToken(_zusdTokenAddress);
         feeDistributorAddress = _feeDistributorAddress;
         activePoolAddress = _activePoolAddress;
 
+        emit SOVTokenAddressSet(_sovTokenAddress);
         emit ZEROTokenAddressSet(_zeroTokenAddress);
         emit ZEROTokenAddressSet(_zusdTokenAddress);
         emit FeeDistributorAddressSet(_feeDistributorAddress);
@@ -62,17 +66,17 @@ contract ZEROStaking is ZEROStakingStorage, IZEROStaking, CheckContract, BaseMat
         
     }
 
-    // If caller has a pre-existing stake, send any accumulated ETH and ZUSD gains to them. 
+    // If caller has a pre-existing stake, send any accumulated SOV and ZUSD gains to them. 
     function stake(uint _ZEROamount) external override {
         _requireNonZeroAmount(_ZEROamount);
 
         uint currentStake = stakes[msg.sender];
 
-        uint ETHGain;
+        uint SOVGain;
         uint ZUSDGain;
-        // Grab any accumulated ETH and ZUSD gains from the current stake
+        // Grab any accumulated SOV and ZUSD gains from the current stake
         if (currentStake != 0) {
-            ETHGain = _getPendingETHGain(msg.sender);
+            SOVGain = _getPendingSOVGain(msg.sender);
             ZUSDGain = _getPendingZUSDGain(msg.sender);
         }
     
@@ -89,23 +93,23 @@ contract ZEROStaking is ZEROStakingStorage, IZEROStaking, CheckContract, BaseMat
         zeroToken.sendToZEROStaking(msg.sender, _ZEROamount);
 
         emit StakeChanged(msg.sender, newStake);
-        emit StakingGainsWithdrawn(msg.sender, ZUSDGain, ETHGain);
+        emit StakingGainsWithdrawn(msg.sender, ZUSDGain, SOVGain);
 
-         // Send accumulated ZUSD and ETH gains to the caller
+         // Send accumulated ZUSD and SOV gains to the caller
         if (currentStake != 0) {
             zusdToken.transfer(msg.sender, ZUSDGain);
-            _sendETHGainToUser(ETHGain);
+            sovToken.transfer(msg.sender, SOVGain);
         }
     }
 
-    /// Unstake the ZERO and send the it back to the caller, along with their accumulated ZUSD & ETH gains. 
+    /// Unstake the ZERO and send the it back to the caller, along with their accumulated ZUSD & SOV gains. 
     /// If requested amount > stake, send their entire stake.
     function unstake(uint _ZEROamount) external override {
         uint currentStake = stakes[msg.sender];
         _requireUserHasStake(currentStake);
 
-        // Grab any accumulated ETH and ZUSD gains from the current stake
-        uint ETHGain = _getPendingETHGain(msg.sender);
+        // Grab any accumulated SOV and ZUSD gains from the current stake
+        uint SOVGain = _getPendingSOVGain(msg.sender);
         uint ZUSDGain = _getPendingZUSDGain(msg.sender);
         
         _updateUserSnapshots(msg.sender);
@@ -126,23 +130,23 @@ contract ZEROStaking is ZEROStakingStorage, IZEROStaking, CheckContract, BaseMat
             emit StakeChanged(msg.sender, newStake);
         }
 
-        emit StakingGainsWithdrawn(msg.sender, ZUSDGain, ETHGain);
+        emit StakingGainsWithdrawn(msg.sender, ZUSDGain, SOVGain);
 
-        // Send accumulated ZUSD and ETH gains to the caller
+        // Send accumulated ZUSD and SOV gains to the caller
         zusdToken.transfer(msg.sender, ZUSDGain);
-        _sendETHGainToUser(ETHGain);
+        sovToken.transfer(msg.sender, SOVGain);
     }
 
     // --- Reward-per-unit-staked increase functions. Called by Liquity core contracts ---
 
-    function increaseF_ETH(uint _ETHFee) external override {
+    function increaseF_SOV(uint _SOVFee) external override {
         _requireCallerIsFeeDistributor();
-        uint ETHFeePerZEROStaked;
+        uint SOVFeePerZEROStaked;
      
-        if (totalZEROStaked > 0) {ETHFeePerZEROStaked = _ETHFee.mul(DECIMAL_PRECISION).div(totalZEROStaked);}
+        if (totalZEROStaked > 0) {SOVFeePerZEROStaked = _SOVFee.mul(DECIMAL_PRECISION).div(totalZEROStaked);}
 
-        F_ETH = F_ETH.add(ETHFeePerZEROStaked); 
-        emit F_ETHUpdated(F_ETH);
+        F_SOV = F_SOV.add(SOVFeePerZEROStaked); 
+        emit F_SOVUpdated(F_SOV);
     }
 
     function increaseF_ZUSD(uint _ZUSDFee) external override {
@@ -157,14 +161,14 @@ contract ZEROStaking is ZEROStakingStorage, IZEROStaking, CheckContract, BaseMat
 
     // --- Pending reward functions ---
 
-    function getPendingETHGain(address _user) external view override returns (uint) {
-        return _getPendingETHGain(_user);
+    function getPendingSOVGain(address _user) external view override returns (uint) {
+        return _getPendingSOVGain(_user);
     }
 
-    function _getPendingETHGain(address _user) internal view returns (uint) {
-        uint F_ETH_Snapshot = snapshots[_user].F_ETH_Snapshot;
-        uint ETHGain = stakes[_user].mul(F_ETH.sub(F_ETH_Snapshot)).div(DECIMAL_PRECISION);
-        return ETHGain;
+    function _getPendingSOVGain(address _user) internal view returns (uint) {
+        uint F_SOV_Snapshot = snapshots[_user].F_SOV_Snapshot;
+        uint SOVGain = stakes[_user].mul(F_SOV.sub(F_SOV_Snapshot)).div(DECIMAL_PRECISION);
+        return SOVGain;
     }
 
     function getPendingZUSDGain(address _user) external view override returns (uint) {
@@ -180,15 +184,9 @@ contract ZEROStaking is ZEROStakingStorage, IZEROStaking, CheckContract, BaseMat
     // --- Internal helper functions ---
 
     function _updateUserSnapshots(address _user) internal {
-        snapshots[_user].F_ETH_Snapshot = F_ETH;
+        snapshots[_user].F_SOV_Snapshot = F_SOV;
         snapshots[_user].F_ZUSD_Snapshot = F_ZUSD;
-        emit StakerSnapshotsUpdated(_user, F_ETH, F_ZUSD);
-    }
-
-    function _sendETHGainToUser(uint ETHGain) internal {
-        emit EtherSent(msg.sender, ETHGain);
-        (bool success, ) = msg.sender.call{value: ETHGain}("");
-        require(success, "ZEROStaking: Failed to send accumulated ETHGain");
+        emit StakerSnapshotsUpdated(_user, F_SOV, F_ZUSD);
     }
 
     // --- 'require' functions ---

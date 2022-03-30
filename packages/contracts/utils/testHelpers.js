@@ -481,9 +481,9 @@ class TestHelper {
     // console.log(`account: ${account}`)
     const rawColl = (await contracts.troveManager.Troves(account))[1]
     const rawDebt = (await contracts.troveManager.Troves(account))[0]
-    const pendingETHReward = await contracts.troveManager.getPendingETHReward(account)
+    const pendingSOVReward = await contracts.troveManager.getPendingSOVReward(account)
     const pendingZUSDDebtReward = await contracts.troveManager.getPendingZUSDDebtReward(account)
-    const entireColl = rawColl.add(pendingETHReward)
+    const entireColl = rawColl.add(pendingSOVReward)
     const entireDebt = rawDebt.add(pendingZUSDDebtReward)
 
     return { entireColl, entireDebt }
@@ -661,7 +661,8 @@ class TestHelper {
     return this.getGasMetrics(gasCostList)
   }
 
-  static async openTrove(contracts, {
+
+  static async _openTrove(contracts, openFn, {
     maxFeePercentage,
     extraZUSDAmount,
     upperHint,
@@ -669,6 +670,7 @@ class TestHelper {
     ICR,
     extraParams
   }) {
+    let value = extraParams.value
     if (!maxFeePercentage) maxFeePercentage = this._100pct
     if (!extraZUSDAmount) extraZUSDAmount = this.toBN(0)
     else if (typeof extraZUSDAmount == 'string') extraZUSDAmount = this.toBN(extraZUSDAmount)
@@ -688,61 +690,32 @@ class TestHelper {
 
     if (ICR) {
       const price = await contracts.priceFeedTestnet.getPrice()
-      extraParams.value = ICR.mul(totalDebt).div(price)
+      value = ICR.mul(totalDebt).div(price)
     }
 
-    const tx = await contracts.borrowerOperations.openTrove(maxFeePercentage, zusdAmount, upperHint, lowerHint, extraParams)
-
+    const tx = await openFn(maxFeePercentage, zusdAmount, upperHint, lowerHint, value, {from: extraParams.from} )
     return {
       zusdAmount,
       netDebt,
       totalDebt,
       ICR,
-      collateral: extraParams.value,
+      collateral: value,
       tx
-    }
+    }  
   }
 
-  static async openNueTrove(contracts, {
-    maxFeePercentage,
-    extraZUSDAmount,
-    upperHint,
-    lowerHint,
-    ICR,
-    extraParams
-  }) {
-    if (!maxFeePercentage) maxFeePercentage = this._100pct
-    if (!extraZUSDAmount) extraZUSDAmount = this.toBN(0)
-    else if (typeof extraZUSDAmount == 'string') extraZUSDAmount = this.toBN(extraZUSDAmount)
-    if (!upperHint) upperHint = this.ZERO_ADDRESS
-    if (!lowerHint) lowerHint = this.ZERO_ADDRESS
+  static async openTrove(contracts, params) {
+    return this._openTrove(contracts, async (maxFeePercentage, zusdAmount, upperHint, lowerHint, value, txParams) => {
+      await contracts.sovTokenTester.approve(contracts.borrowerOperations.address, value, txParams )
+      return await contracts.borrowerOperations.openTrove(maxFeePercentage, zusdAmount, upperHint, lowerHint, value, txParams )
+    }, params)
+  }
 
-    const MIN_DEBT = (
-      await this.getNetBorrowingAmount(contracts, await contracts.borrowerOperations.MIN_NET_DEBT())
-    ).add(this.toBN(1)) // add 1 to avoid rounding issues
-    const zusdAmount = MIN_DEBT.add(extraZUSDAmount)
-
-    if (!ICR && !extraParams.value) ICR = this.toBN(this.dec(15, 17)) // 150%
-    else if (typeof ICR == 'string') ICR = this.toBN(ICR)
-
-    const totalDebt = await this.getOpenTroveTotalDebt(contracts, zusdAmount)
-    const netDebt = await this.getActualDebtFromComposite(totalDebt, contracts)
-
-    if (ICR) {
-      const price = await contracts.priceFeedTestnet.getPrice()
-      extraParams.value = ICR.mul(totalDebt).div(price)
-    }
-
-    const tx = await contracts.borrowerOperations.openNueTrove(maxFeePercentage, zusdAmount, upperHint, lowerHint, extraParams)
-
-    return {
-      zusdAmount,
-      netDebt,
-      totalDebt,
-      ICR,
-      collateral: extraParams.value,
-      tx
-    }
+  static async openTroveFrom(contracts, params) {
+    return this._openTrove(contracts, async (maxFeePercentage, zusdAmount, upperHint, lowerHint, value, txParams) => {
+      const callData =  contracts.borrowerOperations.contract.methods.openTroveFrom(txParams.from, maxFeePercentage, zusdAmount, upperHint, lowerHint, value).encodeABI();
+      return await contracts.sovTokenTester.approveAndCall(contracts.borrowerOperations.address, value, callData, txParams)
+    }, params) 
   }
 
   static async withdrawZUSD(contracts, {

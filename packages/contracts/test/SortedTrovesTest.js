@@ -49,6 +49,7 @@ contract('SortedTroves', async accounts => {
   let troveManager
   let borrowerOperations
   let zusdToken
+  let sovToken
 
   const multisig = accounts[999];
 
@@ -74,10 +75,15 @@ contract('SortedTroves', async accounts => {
       troveManager = contracts.troveManager
       borrowerOperations = contracts.borrowerOperations
       zusdToken = contracts.zusdToken
+      sovToken = contracts.sovTokenTester
 
       await deploymentHelper.connectZEROContracts(ZEROContracts)
       await deploymentHelper.connectCoreContracts(contracts, ZEROContracts)
       await deploymentHelper.connectZEROContractsToCore(ZEROContracts, contracts, owner)
+
+      for (account of accounts.slice(0, 30)) {
+        await sovToken.transfer(account, toBN(dec(10000,30)))
+      }
     })
 
     let revertToSnapshot;

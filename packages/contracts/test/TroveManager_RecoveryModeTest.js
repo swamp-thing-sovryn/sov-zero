@@ -48,6 +48,8 @@ contract('TroveManager - in Recovery Mode', async accounts => {
 
   let contracts
 
+  let sovToken
+
   const getOpenTroveZUSDAmount = async (totalDebt) => th.getOpenTroveZUSDAmount(contracts, totalDebt)
   const getNetBorrowingAmount = async (debtWithFee) => th.getNetBorrowingAmount(contracts, debtWithFee)
   const openTrove = async (params) => th.openTrove(contracts, params)
@@ -73,10 +75,15 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     functionCaller = contracts.functionCaller
     borrowerOperations = contracts.borrowerOperations
     collSurplusPool = contracts.collSurplusPool
+    sovToken = contracts.sovTokenTester
 
     await deploymentHelper.connectZEROContracts(ZEROContracts)
     await deploymentHelper.connectCoreContracts(contracts, ZEROContracts)
     await deploymentHelper.connectZEROContractsToCore(ZEROContracts, contracts, owner)
+
+    for (account of accounts.slice(0, 30)) {
+      await sovToken.transfer(account, toBN(dec(10000,30)))
+    }
   })
 
   let revertToSnapshot;
@@ -104,7 +111,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
 
     // --- TEST ---
 
-    // price drops to 1ETH:150ZUSD, reducing TCR below 150%.  setPrice() calls checkTCRAndSetRecoveryMode() internally.
+    // price drops to 1SOV:150ZUSD, reducing TCR below 150%.  setPrice() calls checkTCRAndSetRecoveryMode() internally.
     await priceFeed.setPrice(dec(15, 17))
 
     // const price = await priceFeed.getPrice()
@@ -124,13 +131,14 @@ contract('TroveManager - in Recovery Mode', async accounts => {
 
     // --- TEST ---
 
-    // price drops to 1ETH:150ZUSD, reducing TCR below 150%
+    // price drops to 1SOV:150ZUSD, reducing TCR below 150%
     await priceFeed.setPrice('150000000000000000000')
 
     const recoveryMode_Before = await th.checkRecoveryMode(contracts);
     assert.isTrue(recoveryMode_Before)
 
-    await borrowerOperations.addColl(alice, alice, { from: alice, value: '1' })
+    await sovToken.approve(borrowerOperations.address, '1', { from: alice })
+    await borrowerOperations.addColl(alice, alice, '1', { from: alice })
 
     const recoveryMode_After = await th.checkRecoveryMode(contracts);
     assert.isTrue(recoveryMode_After)
@@ -160,13 +168,14 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     assert.equal(TCR, '1500000000000000000')
 
     // --- TEST ---
-    // price drops to 1ETH:150ZUSD, reducing TCR below 150%
+    // price drops to 1SOV:150ZUSD, reducing TCR below 150%
     await priceFeed.setPrice('150000000000000000000')
 
     const recoveryMode_Before = await th.checkRecoveryMode(contracts);
     assert.isTrue(recoveryMode_Before)
 
-    await borrowerOperations.addColl(alice, alice, { from: alice, value: A_coll })
+    await sovToken.approve(borrowerOperations.address, A_coll, { from: alice })
+    await borrowerOperations.addColl(alice, alice, A_coll, { from: alice })
 
     const recoveryMode_After = await th.checkRecoveryMode(contracts);
     assert.isFalse(recoveryMode_After)
@@ -191,7 +200,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     assert.equal(totalStakes_Before.toString(), A_coll.add(B_coll))
 
     // --- TEST ---
-    // price drops to 1ETH:100ZUSD, reducing TCR below 150%
+    // price drops to 1SOV:100ZUSD, reducing TCR below 150%
     await priceFeed.setPrice('100000000000000000000')
     const price = await priceFeed.getPrice()
 
@@ -223,7 +232,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     assert.equal(TCR, '1500000000000000000')
 
     // --- TEST ---
-    // price drops to 1ETH:100ZUSD, reducing TCR below 150%, and all Troves below 100% ICR
+    // price drops to 1SOV:100ZUSD, reducing TCR below 150%, and all Troves below 100% ICR
     await priceFeed.setPrice('100000000000000000000')
 
     const recoveryMode = await th.checkRecoveryMode(contracts)
@@ -268,7 +277,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     assert.isTrue(bob_Trove_isInSortedList_Before)
 
     // --- TEST ---
-    // price drops to 1ETH:100ZUSD, reducing TCR below 150%
+    // price drops to 1SOV:100ZUSD, reducing TCR below 150%
     await priceFeed.setPrice('100000000000000000000')
     const price = await priceFeed.getPrice()
 
@@ -309,7 +318,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     // assert.equal(TCR, '1500000000000000000')
 
     // --- TEST ---
-    // price drops to 1ETH:100ZUSD, reducing TCR below 150%, and all Troves below 100% ICR
+    // price drops to 1SOV:100ZUSD, reducing TCR below 150%, and all Troves below 100% ICR
     await priceFeed.setPrice('100000000000000000000')
 
     const recoveryMode = await th.checkRecoveryMode(contracts)
@@ -344,7 +353,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     assert.equal(totalStakes_Before.toString(), A_coll.add(B_coll))
 
     // --- TEST ---
-    // price drops to 1ETH:100ZUSD, reducing TCR to 117%
+    // price drops to 1SOV:100ZUSD, reducing TCR to 117%
     await priceFeed.setPrice('100000000000000000000')
     price = await priceFeed.getPrice()
 
@@ -379,7 +388,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     assert.equal(totalCollateralSnapshot_1, 0)
 
     // --- TEST ---
-    // price drops to 1ETH:100ZUSD, reducing TCR below 150%, and all Troves below 100% ICR
+    // price drops to 1SOV:100ZUSD, reducing TCR below 150%, and all Troves below 100% ICR
     await priceFeed.setPrice('100000000000000000000')
     const price = await priceFeed.getPrice()
 
@@ -437,7 +446,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     assert.isTrue(bob_Trove_isInSortedList_Before)
 
     // --- TEST ---
-    // price drops to 1ETH:100ZUSD, reducing TCR below 150%
+    // price drops to 1SOV:100ZUSD, reducing TCR below 150%
     await priceFeed.setPrice('100000000000000000000')
     const price = await priceFeed.getPrice()
 
@@ -472,7 +481,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     await stabilityPool.provideToSP(spDeposit, ZERO_ADDRESS, { from: alice })
 
     // --- TEST ---
-    // price drops to 1ETH:100ZUSD, reducing TCR below 150%
+    // price drops to 1SOV:100ZUSD, reducing TCR below 150%
     await priceFeed.setPrice('100000000000000000000')
     const price = await priceFeed.getPrice()
 
@@ -498,7 +507,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
   
     Stability Pool rewards for alice should be:
     ZUSDLoss: 390ZUSD
-    ETHGain: (390 / 2000) * 21*0.995 = 4.074525 ether
+    SOVGain: (390 / 2000) * 21*0.995 = 4.074525 ether
 
     After offsetting 390 ZUSD and 4.074525 ether, the remainders - 1610 ZUSD and 16.820475 ether - should be redistributed to all active Troves.
    */
@@ -506,11 +515,11 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     await troveManager.liquidate(bob, { from: owner })
 
     const aliceDeposit = await stabilityPool.getCompoundedZUSDDeposit(alice)
-    const aliceETHGain = await stabilityPool.getDepositorETHGain(alice)
-    const aliceExpectedETHGain = spDeposit.mul(th.applyLiquidationFee(B_coll)).div(B_totalDebt)
+    const aliceSOVGain = await stabilityPool.getDepositorSOVGain(alice)
+    const aliceExpectedSOVGain = spDeposit.mul(th.applyLiquidationFee(B_coll)).div(B_totalDebt)
 
     assert.equal(aliceDeposit.toString(), 0)
-    assert.equal(aliceETHGain.toString(), aliceExpectedETHGain)
+    assert.equal(aliceSOVGain.toString(), aliceExpectedSOVGain)
 
     /* Now, check redistribution to active Troves. Remainders of 1610 ZUSD and 16.82 ether are distributed.
     
@@ -519,13 +528,13 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     Rewards-per-unit-staked from the redistribution should be:
   
     L_ZUSDDebt = 1610 / 6 = 268.333 ZUSD
-    L_ETH = 16.820475 /6 =  2.8034125 ether
+    L_SOV = 16.820475 /6 =  2.8034125 ether
     */
     const L_ZUSDDebt = (await troveManager.L_ZUSDDebt()).toString()
-    const L_ETH = (await troveManager.L_ETH()).toString()
+    const L_SOV = (await troveManager.L_SOV()).toString()
 
     assert.isAtMost(th.getDifference(L_ZUSDDebt, B_totalDebt.sub(spDeposit).mul(mv._1e18BN).div(A_coll.add(D_coll))), 100)
-    assert.isAtMost(th.getDifference(L_ETH, th.applyLiquidationFee(B_coll.sub(B_coll.mul(spDeposit).div(B_totalDebt)).mul(mv._1e18BN).div(A_coll.add(D_coll)))), 100)
+    assert.isAtMost(th.getDifference(L_SOV, th.applyLiquidationFee(B_coll.sub(B_coll.mul(spDeposit).div(B_totalDebt)).mul(mv._1e18BN).div(A_coll.add(D_coll)))), 100)
   })
 
   // --- liquidate(), applied to trove with ICR > 110% that has the lowest ICR 
@@ -539,7 +548,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     const { collateral: D_coll } = await openTrove({ ICR: toBN(dec(266, 16)), extraZUSDAmount: dec(2000, 18), extraParams: { from: dennis } })
 
     // --- TEST ---
-    // price drops to 1ETH:100ZUSD, reducing TCR below 150%
+    // price drops to 1SOV:100ZUSD, reducing TCR below 150%
     await priceFeed.setPrice('100000000000000000000')
     const price = await priceFeed.getPrice()
 
@@ -565,10 +574,10 @@ contract('TroveManager - in Recovery Mode', async accounts => {
 
     // Check that redistribution rewards don't change
     const L_ZUSDDebt = (await troveManager.L_ZUSDDebt()).toString()
-    const L_ETH = (await troveManager.L_ETH()).toString()
+    const L_SOV = (await troveManager.L_SOV()).toString()
 
     assert.equal(L_ZUSDDebt, '0')
-    assert.equal(L_ETH, '0')
+    assert.equal(L_SOV, '0')
 
     // Check that Bob's Trove and stake remains active with unchanged coll and debt
     const bob_Trove = await troveManager.Troves(bob);
@@ -600,7 +609,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     await stabilityPool.provideToSP(spDeposit, ZERO_ADDRESS, { from: alice })
 
     // --- TEST ---
-    // price drops to 1ETH:100ZUSD, reducing TCR below 150%
+    // price drops to 1SOV:100ZUSD, reducing TCR below 150%
     await priceFeed.setPrice('100000000000000000000')
     const price = await priceFeed.getPrice()
     const TCR = await th.getTCR(contracts)
@@ -619,22 +628,22 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     As liquidated debt (250 ZUSD) was completely offset
 
     Alice's expected compounded deposit: (1490 - 250) = 1240ZUSD
-    Alice's expected ETH gain:  Bob's liquidated capped coll (minus gas comp), 2.75*0.995 ether
+    Alice's expected SOV gain:  Bob's liquidated capped coll (minus gas comp), 2.75*0.995 ether
   
     */
     const aliceExpectedDeposit = await stabilityPool.getCompoundedZUSDDeposit(alice)
-    const aliceExpectedETHGain = await stabilityPool.getDepositorETHGain(alice)
+    const aliceExpectedSOVGain = await stabilityPool.getDepositorSOVGain(alice)
 
     assert.isAtMost(th.getDifference(aliceExpectedDeposit.toString(), spDeposit.sub(B_totalDebt)), 2000)
-    assert.isAtMost(th.getDifference(aliceExpectedETHGain, th.applyLiquidationFee(B_totalDebt.mul(th.toBN(dec(11, 17))).div(price))), 3000)
+    assert.isAtMost(th.getDifference(aliceExpectedSOVGain, th.applyLiquidationFee(B_totalDebt.mul(th.toBN(dec(11, 17))).div(price))), 3000)
 
     // check Bob’s collateral surplus
     const bob_remainingCollateral = B_coll.sub(B_totalDebt.mul(th.toBN(dec(11, 17))).div(price))
     th.assertIsApproximatelyEqual(await collSurplusPool.getCollateral(bob), bob_remainingCollateral)
     // can claim collateral
-    const bob_balanceBefore = th.toBN(await web3.eth.getBalance(bob))
+    const bob_balanceBefore = await sovToken.balanceOf(bob)
     await borrowerOperations.claimCollateral({ from: bob, gasPrice: 0 })
-    const bob_balanceAfter = th.toBN(await web3.eth.getBalance(bob))
+    const bob_balanceAfter = await sovToken.balanceOf(bob)
     th.assertIsApproximatelyEqual(bob_balanceAfter, bob_balanceBefore.add(th.toBN(bob_remainingCollateral)))
   })
 
@@ -651,7 +660,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     await stabilityPool.provideToSP(spDeposit, ZERO_ADDRESS, { from: alice })
 
     // --- TEST ---
-    // price drops to 1ETH:100ZUSD, reducing TCR below 150%
+    // price drops to 1SOV:100ZUSD, reducing TCR below 150%
     await priceFeed.setPrice('100000000000000000000')
     const price = await priceFeed.getPrice()
     const TCR = await th.getTCR(contracts)
@@ -670,14 +679,14 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     As liquidated debt (250 ZUSD) was completely offset
 
     Alice's expected compounded deposit: (1490 - 250) = 1240ZUSD
-    Alice's expected ETH gain:  Bob's liquidated capped coll (minus gas comp), 2.75*0.995 ether
+    Alice's expected SOV gain:  Bob's liquidated capped coll (minus gas comp), 2.75*0.995 ether
 
     */
     const aliceExpectedDeposit = await stabilityPool.getCompoundedZUSDDeposit(alice)
-    const aliceExpectedETHGain = await stabilityPool.getDepositorETHGain(alice)
+    const aliceExpectedSOVGain = await stabilityPool.getDepositorSOVGain(alice)
 
     assert.isAtMost(th.getDifference(aliceExpectedDeposit.toString(), spDeposit.sub(B_totalDebt)), 2000)
-    assert.isAtMost(th.getDifference(aliceExpectedETHGain, th.applyLiquidationFee(B_totalDebt.mul(th.toBN(dec(11, 17))).div(price))), 3000)
+    assert.isAtMost(th.getDifference(aliceExpectedSOVGain, th.applyLiquidationFee(B_totalDebt.mul(th.toBN(dec(11, 17))).div(price))), 3000)
 
     // check Bob’s collateral surplus
     th.assertIsApproximatelyEqual(await collSurplusPool.getCollateral(bob), '0')
@@ -695,7 +704,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     await stabilityPool.provideToSP(B_totalDebt.add(toBN(1)), ZERO_ADDRESS, { from: alice })
 
     // --- TEST ---
-    // price drops to 1ETH:100ZUSD, reducing TCR below 150%
+    // price drops to 1SOV:100ZUSD, reducing TCR below 150%
     await priceFeed.setPrice('100000000000000000000')
     const price = await priceFeed.getPrice()
 
@@ -727,9 +736,9 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     const bob_remainingCollateral = B_coll.sub(B_totalDebt.mul(th.toBN(dec(11, 17))).div(price))
     th.assertIsApproximatelyEqual(await collSurplusPool.getCollateral(bob), bob_remainingCollateral)
     // can claim collateral
-    const bob_balanceBefore = th.toBN(await web3.eth.getBalance(bob))
+    const bob_balanceBefore = await sovToken.balanceOf(bob)
     await borrowerOperations.claimCollateral({ from: bob, gasPrice: 0 })
-    const bob_balanceAfter = th.toBN(await web3.eth.getBalance(bob))
+    const bob_balanceAfter = await sovToken.balanceOf(bob)
     th.assertIsApproximatelyEqual(bob_balanceAfter, bob_balanceBefore.add(th.toBN(bob_remainingCollateral)))
   })
 
@@ -745,7 +754,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     await stabilityPool.provideToSP(B_totalDebt.add(toBN(1)), ZERO_ADDRESS, { from: alice })
 
     // --- TEST ---
-    // price drops to 1ETH:100ZUSD, reducing TCR below 150%
+    // price drops to 1SOV:100ZUSD, reducing TCR below 150%
     await priceFeed.setPrice('100000000000000000000')
     const price = await priceFeed.getPrice()
 
@@ -787,7 +796,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     await stabilityPool.provideToSP(B_totalDebt.add(toBN(1)), ZERO_ADDRESS, { from: alice })
 
     // --- TEST ---
-    // price drops to 1ETH:100ZUSD, reducing TCR below 150%
+    // price drops to 1SOV:100ZUSD, reducing TCR below 150%
     await priceFeed.setPrice('100000000000000000000')
     const price = await priceFeed.getPrice()
 
@@ -819,9 +828,9 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     const bob_remainingCollateral = B_coll.sub(B_totalDebt.mul(th.toBN(dec(11, 17))).div(price))
     th.assertIsApproximatelyEqual(await collSurplusPool.getCollateral(bob), bob_remainingCollateral)
     // can claim collateral
-    const bob_balanceBefore = th.toBN(await web3.eth.getBalance(bob))
+    const bob_balanceBefore = await sovToken.balanceOf(bob)
     await borrowerOperations.claimCollateral({ from: bob, gasPrice: 0 })
-    const bob_balanceAfter = th.toBN(await web3.eth.getBalance(bob))
+    const bob_balanceAfter = await sovToken.balanceOf(bob)
     th.assertIsApproximatelyEqual(bob_balanceAfter, bob_balanceBefore.add(th.toBN(bob_remainingCollateral)))
   })
 
@@ -893,19 +902,19 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     th.assertIsApproximatelyEqual(await collSurplusPool.getCollateral(carol), carol_remainingCollateral)
 
     // can claim collateral
-    const dennis_balanceBefore = th.toBN(await web3.eth.getBalance(dennis))
+    const dennis_balanceBefore = await sovToken.balanceOf(dennis)
     await borrowerOperations.claimCollateral({ from: dennis, gasPrice: 0 })
-    const dennis_balanceAfter = th.toBN(await web3.eth.getBalance(dennis))
+    const dennis_balanceAfter = await sovToken.balanceOf(dennis)
     assert.isTrue(dennis_balanceAfter.eq(dennis_balanceBefore.add(th.toBN(dennis_remainingCollateral))))
 
-    const bob_balanceBefore = th.toBN(await web3.eth.getBalance(bob))
+    const bob_balanceBefore = await sovToken.balanceOf(bob)
     await borrowerOperations.claimCollateral({ from: bob, gasPrice: 0 })
-    const bob_balanceAfter = th.toBN(await web3.eth.getBalance(bob))
+    const bob_balanceAfter = await sovToken.balanceOf(bob)
     th.assertIsApproximatelyEqual(bob_balanceAfter, bob_balanceBefore.add(th.toBN(bob_remainingCollateral)))
 
-    const carol_balanceBefore = th.toBN(await web3.eth.getBalance(carol))
+    const carol_balanceBefore = await sovToken.balanceOf(carol)
     await borrowerOperations.claimCollateral({ from: carol, gasPrice: 0 })
-    const carol_balanceAfter = th.toBN(await web3.eth.getBalance(carol))
+    const carol_balanceAfter = await sovToken.balanceOf(carol)
     th.assertIsApproximatelyEqual(carol_balanceAfter, carol_balanceBefore.add(th.toBN(carol_remainingCollateral)))
   })
 
@@ -927,7 +936,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     await stabilityPool.provideToSP('100000000000000000000', ZERO_ADDRESS, { from: alice })
 
     // --- TEST ---
-    // price drops to 1ETH:100ZUSD, reducing TCR below 150%
+    // price drops to 1SOV:100ZUSD, reducing TCR below 150%
     await priceFeed.setPrice('100000000000000000000')
 
     const recoveryMode = await th.checkRecoveryMode(contracts)
@@ -965,7 +974,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     await stabilityPool.provideToSP(dec(100, 18), ZERO_ADDRESS, { from: alice })
 
     // --- TEST ---
-    // price drops to 1ETH:100ZUSD, reducing TCR below 150%
+    // price drops to 1SOV:100ZUSD, reducing TCR below 150%
     await priceFeed.setPrice('100000000000000000000')
 
     const recoveryMode = await th.checkRecoveryMode(contracts)
@@ -1016,7 +1025,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     await stabilityPool.provideToSP(dec(100, 18), ZERO_ADDRESS, { from: alice })
 
     // --- TEST ---
-    // price drops to 1ETH:100ZUSD, reducing TCR below 150%
+    // price drops to 1SOV:100ZUSD, reducing TCR below 150%
     await priceFeed.setPrice('100000000000000000000')
 
     const recoveryMode = await th.checkRecoveryMode(contracts)
@@ -1058,7 +1067,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     await stabilityPool.provideToSP(dec(100, 18), ZERO_ADDRESS, { from: alice })
 
     // --- TEST ---
-    // price drops to 1ETH:100ZUSD, reducing TCR below 150%
+    // price drops to 1SOV:100ZUSD, reducing TCR below 150%
     await priceFeed.setPrice('100000000000000000000')
 
     const recoveryMode = await th.checkRecoveryMode(contracts)
@@ -1085,7 +1094,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     assert.equal(totalCollateralSnapshot_After, totalCollateralSnapshot_Before)
   })
 
-  it("liquidate(), with ICR > 110%, and StabilityPool ZUSD < liquidated debt: causes correct Pool offset and ETH gain, and doesn't redistribute to active troves", async () => {
+  it("liquidate(), with ICR > 110%, and StabilityPool ZUSD < liquidated debt: causes correct Pool offset and SOV gain, and doesn't redistribute to active troves", async () => {
     // --- SETUP ---
     // Alice withdraws up to 1500 ZUSD of debt, and Dennis up to 150, resulting in ICRs of 266%.
     // Bob withdraws up to 250 ZUSD of debt, resulting in ICR of 240%. Bob has lowest ICR.
@@ -1097,7 +1106,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     await stabilityPool.provideToSP(dec(100, 18), ZERO_ADDRESS, { from: alice })
 
     // --- TEST ---
-    // price drops to 1ETH:100ZUSD, reducing TCR below 150%
+    // price drops to 1SOV:100ZUSD, reducing TCR below 150%
     await priceFeed.setPrice('100000000000000000000')
 
     const recoveryMode = await th.checkRecoveryMode(contracts)
@@ -1109,19 +1118,19 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     // check Stability Pool rewards. Nothing happened, so everything should remain the same
 
     const aliceExpectedDeposit = await stabilityPool.getCompoundedZUSDDeposit(alice)
-    const aliceExpectedETHGain = await stabilityPool.getDepositorETHGain(alice)
+    const aliceExpectedSOVGain = await stabilityPool.getDepositorSOVGain(alice)
 
     assert.equal(aliceExpectedDeposit.toString(), dec(100, 18))
-    assert.equal(aliceExpectedETHGain.toString(), '0')
+    assert.equal(aliceExpectedSOVGain.toString(), '0')
 
     /* For this Recovery Mode test case with ICR > 110%, there should be no redistribution of remainder to active Troves. 
     Redistribution rewards-per-unit-staked should be zero. */
 
     const L_ZUSDDebt_After = (await troveManager.L_ZUSDDebt()).toString()
-    const L_ETH_After = (await troveManager.L_ETH()).toString()
+    const L_SOV_After = (await troveManager.L_SOV()).toString()
 
     assert.equal(L_ZUSDDebt_After, '0')
-    assert.equal(L_ETH_After, '0')
+    assert.equal(L_SOV_After, '0')
   })
 
   it("liquidate(), with ICR > 110%, and StabilityPool ZUSD < liquidated debt: ICR of non liquidated trove does not change", async () => {
@@ -1138,7 +1147,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     await stabilityPool.provideToSP(dec(100, 18), ZERO_ADDRESS, { from: alice })
 
     // --- TEST ---
-    // price drops to 1ETH:100ZUSD, reducing TCR below 150%
+    // price drops to 1SOV:100ZUSD, reducing TCR below 150%
     await priceFeed.setPrice(dec(100, 18))
     const price = await priceFeed.getPrice()
 
@@ -1215,10 +1224,10 @@ contract('TroveManager - in Recovery Mode', async accounts => {
 
     //Confirm liquidations have not led to any redistributions to troves
     const L_ZUSDDebt_After = (await troveManager.L_ZUSDDebt()).toString()
-    const L_ETH_After = (await troveManager.L_ETH()).toString()
+    const L_SOV_After = (await troveManager.L_SOV()).toString()
 
     assert.equal(L_ZUSDDebt_After, '0')
-    assert.equal(L_ETH_After, '0')
+    assert.equal(L_SOV_After, '0')
   })
 
   it("liquidate() with ICR > 110%, and StabilityPool ZUSD < liquidated debt: total liquidated coll and debt is correct", async () => {
@@ -1263,13 +1272,13 @@ contract('TroveManager - in Recovery Mode', async accounts => {
   // --- 
 
   it("liquidate(): Doesn't liquidate undercollateralized trove if it is the only trove in the system", async () => {
-    // Alice creates a single trove with 0.62 ETH and a debt of 62 ZUSD, and provides 10 ZUSD to SP
+    // Alice creates a single trove with 0.62 SOV and a debt of 62 ZUSD, and provides 10 ZUSD to SP
     await openTrove({ ICR: toBN(dec(200, 16)), extraParams: { from: alice } })
     await stabilityPool.provideToSP(dec(10, 18), ZERO_ADDRESS, { from: alice })
 
     assert.isFalse(await th.checkRecoveryMode(contracts))
 
-    // Set ETH:USD price to 105
+    // Set SOV:USD price to 105
     await priceFeed.setPrice('105000000000000000000')
     const price = await priceFeed.getPrice()
 
@@ -1296,7 +1305,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
   it("liquidate(): Liquidates undercollateralized trove if there are two troves in the system", async () => {
     await openTrove({ ICR: toBN(dec(200, 16)), extraParams: { from: bob } })
 
-    // Alice creates a single trove with 0.62 ETH and a debt of 62 ZUSD, and provides 10 ZUSD to SP
+    // Alice creates a single trove with 0.62 SOV and a debt of 62 ZUSD, and provides 10 ZUSD to SP
     await openTrove({ ICR: toBN(dec(200, 16)), extraParams: { from: alice } })
 
     // Alice proves 10 ZUSD to SP
@@ -1304,7 +1313,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
 
     assert.isFalse(await th.checkRecoveryMode(contracts))
 
-    // Set ETH:USD price to 105
+    // Set SOV:USD price to 105
     await priceFeed.setPrice('105000000000000000000')
     const price = await priceFeed.getPrice()
 
@@ -1459,7 +1468,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     await openTrove({ ICR: toBN(dec(220, 16)), extraParams: { from: bob } })
     await openTrove({ ICR: toBN(dec(200, 16)), extraParams: { from: carol } })
 
-    // Defaulter opens with 60 ZUSD, 0.6 ETH
+    // Defaulter opens with 60 ZUSD, 0.6 SOV
     await openTrove({ ICR: toBN(dec(200, 16)), extraParams: { from: defaulter_1 } })
 
     // Price drops
@@ -1483,7 +1492,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     assert.isTrue(bob_ICR_Before.gte(mv._MCR))
     assert.isTrue(carol_ICR_Before.lte(mv._MCR))
 
-    // Liquidate defaulter. 30 ZUSD and 0.3 ETH is distributed uniformly between A, B and C. Each receive 10 ZUSD, 0.1 ETH
+    // Liquidate defaulter. 30 ZUSD and 0.3 SOV is distributed uniformly between A, B and C. Each receive 10 ZUSD, 0.1 SOV
     await troveManager.liquidate(defaulter_1)
 
     const alice_ICR_After = await troveManager.getCurrentICR(alice, price)
@@ -1527,7 +1536,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     assert.equal((await troveManager.Troves(carol))[3].toString(), '3')
   })
 
-  it("liquidate(): does not affect the SP deposit or ETH gain when called on an SP depositor's address that has no trove", async () => {
+  it("liquidate(): does not affect the SP deposit or SOV gain when called on an SP depositor's address that has no trove", async () => {
     const { collateral: C_coll, totalDebt: C_totalDebt } = await openTrove({ ICR: toBN(dec(200, 16)), extraParams: { from: carol } })
     const spDeposit = C_totalDebt.add(toBN(dec(1000, 18)))
     await openTrove({ ICR: toBN(dec(220, 16)), extraZUSDAmount: spDeposit, extraParams: { from: bob } })
@@ -1547,11 +1556,11 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     // Carol gets liquidated
     await troveManager.liquidate(carol)
 
-    // Check Dennis' SP deposit has absorbed Carol's debt, and he has received her liquidated ETH
+    // Check Dennis' SP deposit has absorbed Carol's debt, and he has received her liquidated SOV
     const dennis_Deposit_Before = (await stabilityPool.getCompoundedZUSDDeposit(dennis)).toString()
-    const dennis_ETHGain_Before = (await stabilityPool.getDepositorETHGain(dennis)).toString()
+    const dennis_SOVGain_Before = (await stabilityPool.getDepositorSOVGain(dennis)).toString()
     assert.isAtMost(th.getDifference(dennis_Deposit_Before, spDeposit.sub(C_totalDebt)), 1000)
-    assert.isAtMost(th.getDifference(dennis_ETHGain_Before, th.applyLiquidationFee(C_coll)), 1000)
+    assert.isAtMost(th.getDifference(dennis_SOVGain_Before, th.applyLiquidationFee(C_coll)), 1000)
 
     // Attempt to liquidate Dennis
     try {
@@ -1562,9 +1571,9 @@ contract('TroveManager - in Recovery Mode', async accounts => {
 
     // Check Dennis' SP deposit does not change after liquidation attempt
     const dennis_Deposit_After = (await stabilityPool.getCompoundedZUSDDeposit(dennis)).toString()
-    const dennis_ETHGain_After = (await stabilityPool.getDepositorETHGain(dennis)).toString()
+    const dennis_SOVGain_After = (await stabilityPool.getDepositorSOVGain(dennis)).toString()
     assert.equal(dennis_Deposit_Before, dennis_Deposit_After)
-    assert.equal(dennis_ETHGain_Before, dennis_ETHGain_After)
+    assert.equal(dennis_SOVGain_Before, dennis_SOVGain_After)
   })
 
   it("liquidate(): does not alter the liquidated user's token balance", async () => {
@@ -1617,7 +1626,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     await stabilityPool.provideToSP(B_totalDebt, ZERO_ADDRESS, { from: alice })
 
     // --- TEST ---
-    // price drops to 1ETH:100ZUSD, reducing TCR below 150%
+    // price drops to 1SOV:100ZUSD, reducing TCR below 150%
     await priceFeed.setPrice('100000000000000000000')
     let price = await priceFeed.getPrice()
     const TCR = await th.getTCR(contracts)
@@ -1636,16 +1645,16 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     const bob_remainingCollateral = B_coll.sub(B_totalDebt.mul(th.toBN(dec(11, 17))).div(price))
     th.assertIsApproximatelyEqual(await collSurplusPool.getCollateral(bob), bob_remainingCollateral)
     // can claim collateral
-    const bob_balanceBefore = th.toBN(await web3.eth.getBalance(bob))
+    const bob_balanceBefore = await sovToken.balanceOf(bob)
     await borrowerOperations.claimCollateral({ from: bob, gasPrice: 0 })
-    const bob_balanceAfter = th.toBN(await web3.eth.getBalance(bob))
+    const bob_balanceAfter = await sovToken.balanceOf(bob)
     th.assertIsApproximatelyEqual(bob_balanceAfter, bob_balanceBefore.add(th.toBN(bob_remainingCollateral)))
 
     // skip bootstrapping phase
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_WEEK * 2, web3.currentProvider)
 
     // Bob re-opens the trove, price 200, total debt 80 ZUSD, ICR = 120% (lowest one)
-    // Dennis redeems 30, so Bob has a surplus of (200 * 0.48 - 30) / 200 = 0.33 ETH
+    // Dennis redeems 30, so Bob has a surplus of (200 * 0.48 - 30) / 200 = 0.33 SOV
     await priceFeed.setPrice('200000000000000000000')
     const { collateral: B_coll_2, netDebt: B_netDebt_2 } = await openTrove({ ICR: toBN(dec(150, 16)), extraZUSDAmount: dec(480, 18), extraParams: { from: bob, value: bob_remainingCollateral } })
     const { collateral: D_coll } = await openTrove({ ICR: toBN(dec(266, 16)), extraZUSDAmount: B_netDebt_2, extraParams: { from: dennis } })
@@ -1654,9 +1663,9 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     const bob_surplus = B_coll_2.sub(B_netDebt_2.mul(mv._1e18BN).div(price))
     th.assertIsApproximatelyEqual(await collSurplusPool.getCollateral(bob), bob_surplus)
     // can claim collateral
-    const bob_balanceBefore_2 = th.toBN(await web3.eth.getBalance(bob))
+    const bob_balanceBefore_2 = await sovToken.balanceOf(bob)
     await borrowerOperations.claimCollateral({ from: bob, gasPrice: 0 })
-    const bob_balanceAfter_2 = th.toBN(await web3.eth.getBalance(bob))
+    const bob_balanceAfter_2 = await sovToken.balanceOf(bob)
     th.assertIsApproximatelyEqual(bob_balanceAfter_2, bob_balanceBefore_2.add(th.toBN(bob_surplus)))
   })
 
@@ -1671,16 +1680,16 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     // skip bootstrapping phase
     await th.fastForwardTime(timeValues.SECONDS_IN_ONE_WEEK * 2, web3.currentProvider)
 
-    // Dennis redeems 40, so Bob has a surplus of (200 * 1 - 40) / 200 = 0.8 ETH
+    // Dennis redeems 40, so Bob has a surplus of (200 * 1 - 40) / 200 = 0.8 SOV
     await th.redeemCollateral(dennis, contracts, B_netDebt)
     let price = await priceFeed.getPrice()
     const bob_surplus = B_coll.sub(B_netDebt.mul(mv._1e18BN).div(price))
     th.assertIsApproximatelyEqual(await collSurplusPool.getCollateral(bob), bob_surplus)
 
     // can claim collateral
-    const bob_balanceBefore = th.toBN(await web3.eth.getBalance(bob))
+    const bob_balanceBefore = await sovToken.balanceOf(bob)
     await borrowerOperations.claimCollateral({ from: bob, gasPrice: 0 })
-    const bob_balanceAfter = th.toBN(await web3.eth.getBalance(bob))
+    const bob_balanceAfter = await sovToken.balanceOf(bob)
     th.assertIsApproximatelyEqual(bob_balanceAfter, bob_balanceBefore.add(bob_surplus))
 
     // Bob re-opens the trove, price 200, total debt 250 ZUSD, ICR = 240% (lowest one)
@@ -1689,7 +1698,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     await openTrove({ ICR: toBN(dec(266, 16)), extraZUSDAmount: B_totalDebt_2, extraParams: { from: alice } })
     await stabilityPool.provideToSP(B_totalDebt_2, ZERO_ADDRESS, { from: alice })
 
-    // price drops to 1ETH:100ZUSD, reducing TCR below 150%
+    // price drops to 1SOV:100ZUSD, reducing TCR below 150%
     await priceFeed.setPrice('100000000000000000000')
     price = await priceFeed.getPrice()
     const TCR = await th.getTCR(contracts)
@@ -1711,9 +1720,9 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     th.assertIsApproximatelyEqual((await collSurplusPool.getCollateral(bob)).toString(), bob_remainingCollateral.toString())
 
     // can claim collateral
-    const bob_balanceBefore_2 = th.toBN(await web3.eth.getBalance(bob))
+    const bob_balanceBefore_2 = await sovToken.balanceOf(bob)
     await borrowerOperations.claimCollateral({ from: bob, gasPrice: 0 })
-    const bob_balanceAfter_2 = th.toBN(await web3.eth.getBalance(bob))
+    const bob_balanceAfter_2 = await sovToken.balanceOf(bob)
     th.assertIsApproximatelyEqual(bob_balanceAfter_2, bob_balanceBefore_2.add(th.toBN(bob_remainingCollateral)))
   })
 
@@ -1738,7 +1747,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     await stabilityPool.provideToSP(liquidationAmount, ZERO_ADDRESS, { from: alice })
 
     // price drops
-    // price drops to 1ETH:90ZUSD, reducing TCR below 150%
+    // price drops to 1SOV:90ZUSD, reducing TCR below 150%
     await priceFeed.setPrice('90000000000000000000')
     const price = await priceFeed.getPrice()
 
@@ -1864,7 +1873,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     // Alice deposits ZUSD to Stability Pool
     await stabilityPool.provideToSP(liquidationAmount, ZERO_ADDRESS, { from: alice })
 
-    // price drops to 1ETH:85ZUSD, reducing TCR below 150%
+    // price drops to 1SOV:85ZUSD, reducing TCR below 150%
     await priceFeed.setPrice('85000000000000000000')
     const price = await priceFeed.getPrice()
 
@@ -2065,7 +2074,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
 
     // --- TEST ---
 
-    // Price drops to 1ETH:100ZUSD, reducing Bob and Carol's ICR below MCR
+    // Price drops to 1SOV:100ZUSD, reducing Bob and Carol's ICR below MCR
     await priceFeed.setPrice(dec(100, 18));
     const price = await priceFeed.getPrice()
 
@@ -2209,7 +2218,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     await openTrove({ ICR: toBN(dec(220, 16)), extraParams: { from: bob } })
     await openTrove({ ICR: toBN(dec(200, 16)), extraParams: { from: carol } })
 
-    // Defaulter opens with 60 ZUSD, 0.6 ETH
+    // Defaulter opens with 60 ZUSD, 0.6 SOV
     await openTrove({ ICR: toBN(dec(200, 16)), extraParams: { from: defaulter_1 } })
 
     // Price drops
@@ -2233,7 +2242,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     assert.isTrue(bob_ICR_Before.gte(mv._MCR))
     assert.isTrue(carol_ICR_Before.lte(mv._MCR))
 
-    // Liquidate defaulter. 30 ZUSD and 0.3 ETH is distributed uniformly between A, B and C. Each receive 10 ZUSD, 0.1 ETH
+    // Liquidate defaulter. 30 ZUSD and 0.3 SOV is distributed uniformly between A, B and C. Each receive 10 ZUSD, 0.1 SOV
     await troveManager.liquidate(defaulter_1)
 
     const alice_ICR_After = await troveManager.getCurrentICR(alice, price)
@@ -2376,14 +2385,14 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     th.assertIsApproximatelyEqual(await collSurplusPool.getCollateral(greta), greta_remainingCollateral)
 
     // can claim collateral
-    const freddy_balanceBefore = th.toBN(await web3.eth.getBalance(freddy))
+    const freddy_balanceBefore = await sovToken.balanceOf(freddy)
     await borrowerOperations.claimCollateral({ from: freddy, gasPrice: 0 })
-    const freddy_balanceAfter = th.toBN(await web3.eth.getBalance(freddy))
+    const freddy_balanceAfter = await sovToken.balanceOf(freddy)
     th.assertIsApproximatelyEqual(freddy_balanceAfter, freddy_balanceBefore.add(th.toBN(freddy_remainingCollateral)))
 
-    const greta_balanceBefore = th.toBN(await web3.eth.getBalance(greta))
+    const greta_balanceBefore = await sovToken.balanceOf(greta)
     await borrowerOperations.claimCollateral({ from: greta, gasPrice: 0 })
-    const greta_balanceAfter = th.toBN(await web3.eth.getBalance(greta))
+    const greta_balanceAfter = await sovToken.balanceOf(greta)
     th.assertIsApproximatelyEqual(greta_balanceAfter, greta_balanceBefore.add(th.toBN(greta_remainingCollateral)))
   })
 
@@ -2436,7 +2445,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     assert.isTrue(await sortedTroves.contains(whale))
 
     // Check A's collateral and debt remain the same
-    const entireColl_A = (await troveManager.Troves(alice))[1].add(await troveManager.getPendingETHReward(alice))
+    const entireColl_A = (await troveManager.Troves(alice))[1].add(await troveManager.getPendingSOVReward(alice))
     const entireDebt_A = (await troveManager.Troves(alice))[0].add(await troveManager.getPendingZUSDDebtReward(alice))
 
     assert.equal(entireColl_A.toString(), A_coll)
@@ -2455,14 +2464,14 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     th.assertIsApproximatelyEqual(await collSurplusPool.getCollateral(greta), greta_remainingCollateral)
 
     // can claim collateral
-    const freddy_balanceBefore = th.toBN(await web3.eth.getBalance(freddy))
+    const freddy_balanceBefore = await sovToken.balanceOf(freddy)
     await borrowerOperations.claimCollateral({ from: freddy, gasPrice: 0 })
-    const freddy_balanceAfter = th.toBN(await web3.eth.getBalance(freddy))
+    const freddy_balanceAfter = await sovToken.balanceOf(freddy)
     th.assertIsApproximatelyEqual(freddy_balanceAfter, freddy_balanceBefore.add(th.toBN(freddy_remainingCollateral)))
 
-    const greta_balanceBefore = th.toBN(await web3.eth.getBalance(greta))
+    const greta_balanceBefore = await sovToken.balanceOf(greta)
     await borrowerOperations.claimCollateral({ from: greta, gasPrice: 0 })
-    const greta_balanceAfter = th.toBN(await web3.eth.getBalance(greta))
+    const greta_balanceAfter = await sovToken.balanceOf(greta)
     th.assertIsApproximatelyEqual(greta_balanceAfter, greta_balanceBefore.add(th.toBN(greta_remainingCollateral)))
   })
 
@@ -2505,7 +2514,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     assert.equal((await zusdToken.balanceOf(freddy)).toString(), zusdAmountF)
   })
 
-  it("liquidateTroves(): Liquidating troves at 100 < ICR < 110 with SP deposits correctly impacts their SP deposit and ETH gain", async () => {
+  it("liquidateTroves(): Liquidating troves at 100 < ICR < 110 with SP deposits correctly impacts their SP deposit and SOV gain", async () => {
     // Whale provides ZUSD to the SP
     const { zusdAmount: W_zusdAmount } = await openTrove({ ICR: toBN(dec(300, 16)), extraZUSDAmount: dec(4000, 18), extraParams: { from: whale } })
     await stabilityPool.provideToSP(W_zusdAmount, ZERO_ADDRESS, { from: whale })
@@ -2566,7 +2575,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     Then, liquidation hits A,B,C: 
 
     Total liquidated debt = 100 + 300 + 100 = 500 ZUSD
-    Total liquidated ETH = 1 + 3 + 1 = 5 ETH
+    Total liquidated SOV = 1 + 3 + 1 = 5 SOV
 
     Whale ZUSD Loss: 500 * (400/680) = 294.12 ZUSD
     Alice ZUSD Loss:  500 *(40/680) = 29.41 ZUSD
@@ -2576,24 +2585,24 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     Alice remaining deposit: (40 - 29.41) = 10.59 ZUSD
     Bob remaining deposit: (240 - 176.47) = 63.53 ZUSD
 
-    Whale ETH Gain: 5*0.995 * (400/680) = 2.93 ETH
-    Alice ETH Gain: 5*0.995 *(40/680) = 0.293 ETH
-    Bob ETH Gain: 5*0.995 * (240/680) = 1.76 ETH
+    Whale SOV Gain: 5*0.995 * (400/680) = 2.93 SOV
+    Alice SOV Gain: 5*0.995 *(40/680) = 0.293 SOV
+    Bob SOV Gain: 5*0.995 * (240/680) = 1.76 SOV
 
     Total remaining deposits: 180 ZUSD
-    Total ETH gain: 5*0.995 ETH */
+    Total SOV gain: 5*0.995 SOV */
 
     const ZUSDinSP = (await stabilityPool.getTotalZUSDDeposits()).toString()
-    const ETHinSP = (await stabilityPool.getETH()).toString()
+    const SOVinSP = (await stabilityPool.getSOV()).toString()
 
-    // Check remaining ZUSD Deposits and ETH gain, for whale and depositors whose troves were liquidated
+    // Check remaining ZUSD Deposits and SOV gain, for whale and depositors whose troves were liquidated
     const whale_Deposit_After = (await stabilityPool.getCompoundedZUSDDeposit(whale)).toString()
     const alice_Deposit_After = (await stabilityPool.getCompoundedZUSDDeposit(alice)).toString()
     const bob_Deposit_After = (await stabilityPool.getCompoundedZUSDDeposit(bob)).toString()
 
-    const whale_ETHGain = (await stabilityPool.getDepositorETHGain(whale)).toString()
-    const alice_ETHGain = (await stabilityPool.getDepositorETHGain(alice)).toString()
-    const bob_ETHGain = (await stabilityPool.getDepositorETHGain(bob)).toString()
+    const whale_SOVGain = (await stabilityPool.getDepositorSOVGain(whale)).toString()
+    const alice_SOVGain = (await stabilityPool.getDepositorSOVGain(alice)).toString()
+    const bob_SOVGain = (await stabilityPool.getDepositorSOVGain(bob)).toString()
 
     const liquidatedDebt = A_totalDebt.add(B_totalDebt).add(C_totalDebt)
     const liquidatedColl = A_coll.add(B_coll).add(C_coll)
@@ -2601,19 +2610,19 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     assert.isAtMost(th.getDifference(alice_Deposit_After, A_zusdAmount.sub(liquidatedDebt.mul(A_zusdAmount).div(totalDeposit))), 100000)
     assert.isAtMost(th.getDifference(bob_Deposit_After, B_zusdAmount.sub(liquidatedDebt.mul(B_zusdAmount).div(totalDeposit))), 100000)
 
-    assert.isAtMost(th.getDifference(whale_ETHGain, th.applyLiquidationFee(liquidatedColl).mul(W_zusdAmount).div(totalDeposit)), 4000)
-    assert.isAtMost(th.getDifference(alice_ETHGain, th.applyLiquidationFee(liquidatedColl).mul(A_zusdAmount).div(totalDeposit)), 4000)
-    assert.isAtMost(th.getDifference(bob_ETHGain, th.applyLiquidationFee(liquidatedColl).mul(B_zusdAmount).div(totalDeposit)), 4000)
+    assert.isAtMost(th.getDifference(whale_SOVGain, th.applyLiquidationFee(liquidatedColl).mul(W_zusdAmount).div(totalDeposit)), 4000)
+    assert.isAtMost(th.getDifference(alice_SOVGain, th.applyLiquidationFee(liquidatedColl).mul(A_zusdAmount).div(totalDeposit)), 4000)
+    assert.isAtMost(th.getDifference(bob_SOVGain, th.applyLiquidationFee(liquidatedColl).mul(B_zusdAmount).div(totalDeposit)), 4000)
 
-    // Check total remaining deposits and ETH gain in Stability Pool
+    // Check total remaining deposits and SOV gain in Stability Pool
     const total_ZUSDinSP = (await stabilityPool.getTotalZUSDDeposits()).toString()
-    const total_ETHinSP = (await stabilityPool.getETH()).toString()
+    const total_SOVinSP = (await stabilityPool.getSOV()).toString()
 
     assert.isAtMost(th.getDifference(total_ZUSDinSP, totalDeposit.sub(liquidatedDebt)), 1000)
-    assert.isAtMost(th.getDifference(total_ETHinSP, th.applyLiquidationFee(liquidatedColl)), 1000)
+    assert.isAtMost(th.getDifference(total_SOVinSP, th.applyLiquidationFee(liquidatedColl)), 1000)
   })
 
-  it("liquidateTroves(): Liquidating troves at ICR <=100% with SP deposits does not alter their deposit or ETH gain", async () => {
+  it("liquidateTroves(): Liquidating troves at ICR <=100% with SP deposits does not alter their deposit or SOV gain", async () => {
     // Whale provides 400 ZUSD to the SP
     await openTrove({ ICR: toBN(dec(300, 16)), extraZUSDAmount: dec(400, 18), extraParams: { from: whale } })
     await stabilityPool.provideToSP(dec(400, 18), ZERO_ADDRESS, { from: whale })
@@ -2635,11 +2644,11 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     // Confirm Recovery Mode
     assert.isTrue(await th.checkRecoveryMode(contracts))
 
-    // Check ZUSD and ETH in Pool  before
+    // Check ZUSD and SOV in Pool  before
     const ZUSDinSP_Before = (await stabilityPool.getTotalZUSDDeposits()).toString()
-    const ETHinSP_Before = (await stabilityPool.getETH()).toString()
+    const SOVinSP_Before = (await stabilityPool.getSOV()).toString()
     assert.equal(ZUSDinSP_Before, dec(800, 18))
-    assert.equal(ETHinSP_Before, '0')
+    assert.equal(SOVinSP_Before, '0')
 
     // *** Check A, B, C ICRs < 100
     assert.isTrue((await troveManager.getCurrentICR(alice, price)).lte(mv._ICR100))
@@ -2657,28 +2666,28 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     // check system sized reduced to 1 troves
     assert.equal((await sortedTroves.getSize()).toString(), '1')
 
-    // Check ZUSD and ETH in Pool after
+    // Check ZUSD and SOV in Pool after
     const ZUSDinSP_After = (await stabilityPool.getTotalZUSDDeposits()).toString()
-    const ETHinSP_After = (await stabilityPool.getETH()).toString()
+    const SOVinSP_After = (await stabilityPool.getSOV()).toString()
     assert.equal(ZUSDinSP_Before, ZUSDinSP_After)
-    assert.equal(ETHinSP_Before, ETHinSP_After)
+    assert.equal(SOVinSP_Before, SOVinSP_After)
 
-    // Check remaining ZUSD Deposits and ETH gain, for whale and depositors whose troves were liquidated
+    // Check remaining ZUSD Deposits and SOV gain, for whale and depositors whose troves were liquidated
     const whale_Deposit_After = (await stabilityPool.getCompoundedZUSDDeposit(whale)).toString()
     const alice_Deposit_After = (await stabilityPool.getCompoundedZUSDDeposit(alice)).toString()
     const bob_Deposit_After = (await stabilityPool.getCompoundedZUSDDeposit(bob)).toString()
 
-    const whale_ETHGain_After = (await stabilityPool.getDepositorETHGain(whale)).toString()
-    const alice_ETHGain_After = (await stabilityPool.getDepositorETHGain(alice)).toString()
-    const bob_ETHGain_After = (await stabilityPool.getDepositorETHGain(bob)).toString()
+    const whale_SOVGain_After = (await stabilityPool.getDepositorSOVGain(whale)).toString()
+    const alice_SOVGain_After = (await stabilityPool.getDepositorSOVGain(alice)).toString()
+    const bob_SOVGain_After = (await stabilityPool.getDepositorSOVGain(bob)).toString()
 
     assert.equal(whale_Deposit_After, dec(400, 18))
     assert.equal(alice_Deposit_After, dec(100, 18))
     assert.equal(bob_Deposit_After, dec(300, 18))
 
-    assert.equal(whale_ETHGain_After, '0')
-    assert.equal(alice_ETHGain_After, '0')
-    assert.equal(bob_ETHGain_After, '0')
+    assert.equal(whale_SOVGain_After, '0')
+    assert.equal(alice_SOVGain_After, '0')
+    assert.equal(bob_SOVGain_After, '0')
   })
 
   it("liquidateTroves() with a non fullfilled liquidation: non liquidated trove remains active", async () => {
@@ -2922,7 +2931,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     That leaves 50 ZUSD in the Pool that won’t be enough to absorb any other trove */
     const tx = await troveManager.liquidateTroves(10)
 
-    // Expect system debt reduced by 203 ZUSD and system coll 2.3 ETH
+    // Expect system debt reduced by 203 ZUSD and system coll 2.3 SOV
     const entireSystemCollAfter = await troveManager.getEntireSystemColl()
     const entireSystemDebtAfter = await troveManager.getEntireSystemDebt()
 
@@ -2982,14 +2991,14 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     th.assertIsApproximatelyEqual(await collSurplusPool.getCollateral(bob), bob_remainingCollateral)
 
     // can claim collateral
-    const alice_balanceBefore = th.toBN(await web3.eth.getBalance(alice))
+    const alice_balanceBefore = await sovToken.balanceOf(alice)
     await borrowerOperations.claimCollateral({ from: alice, gasPrice: 0 })
-    const alice_balanceAfter = th.toBN(await web3.eth.getBalance(alice))
+    const alice_balanceAfter = await sovToken.balanceOf(alice)
     th.assertIsApproximatelyEqual(alice_balanceAfter, alice_balanceBefore.add(th.toBN(alice_remainingCollateral)))
 
-    const bob_balanceBefore = th.toBN(await web3.eth.getBalance(bob))
+    const bob_balanceBefore = await sovToken.balanceOf(bob)
     await borrowerOperations.claimCollateral({ from: bob, gasPrice: 0 })
-    const bob_balanceAfter = th.toBN(await web3.eth.getBalance(bob))
+    const bob_balanceAfter = await sovToken.balanceOf(bob)
     th.assertIsApproximatelyEqual(bob_balanceAfter, bob_balanceBefore.add(th.toBN(bob_remainingCollateral)))
   })
 
@@ -3050,7 +3059,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     // Alice deposits ZUSD to Stability Pool
     await stabilityPool.provideToSP(spDeposit, ZERO_ADDRESS, { from: alice })
 
-    // price drops to 1ETH:85ZUSD, reducing TCR below 150%
+    // price drops to 1SOV:85ZUSD, reducing TCR below 150%
     await priceFeed.setPrice('85000000000000000000')
     const price = await priceFeed.getPrice()
 
@@ -3156,7 +3165,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     // Alice deposits ZUSD to Stability Pool
     await stabilityPool.provideToSP(spDeposit, ZERO_ADDRESS, { from: alice })
 
-    // price drops to 1ETH:85ZUSD, reducing TCR below 150%
+    // price drops to 1SOV:85ZUSD, reducing TCR below 150%
     await priceFeed.setPrice('85000000000000000000')
     const price = await priceFeed.getPrice()
 
@@ -3262,7 +3271,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     // Alice closes trove
     await borrowerOperations.closeTrove({ from: alice })
 
-    // price drops to 1ETH:85ZUSD, reducing TCR below 150%
+    // price drops to 1SOV:85ZUSD, reducing TCR below 150%
     await priceFeed.setPrice('85000000000000000000')
     const price = await priceFeed.getPrice()
 
@@ -3578,7 +3587,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     const trovesToLiquidate = [alice, bob, carol]
     await troveManager.batchLiquidateTroves(trovesToLiquidate)
 
-    // Expect system debt reduced by 203 ZUSD and system coll by 2 ETH
+    // Expect system debt reduced by 203 ZUSD and system coll by 2 SOV
     const entireSystemCollAfter = await troveManager.getEntireSystemColl()
     const entireSystemDebtAfter = await troveManager.getEntireSystemDebt()
 
@@ -3636,14 +3645,14 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     th.assertIsApproximatelyEqual(await collSurplusPool.getCollateral(bob), bob_remainingCollateral)
 
     // can claim collateral
-    const alice_balanceBefore = th.toBN(await web3.eth.getBalance(alice))
+    const alice_balanceBefore = await sovToken.balanceOf(alice)
     await borrowerOperations.claimCollateral({ from: alice, gasPrice: 0 })
-    const alice_balanceAfter = th.toBN(await web3.eth.getBalance(alice))
+    const alice_balanceAfter = await sovToken.balanceOf(alice)
     th.assertIsApproximatelyEqual(alice_balanceAfter, alice_balanceBefore.add(th.toBN(alice_remainingCollateral)))
 
-    const bob_balanceBefore = th.toBN(await web3.eth.getBalance(bob))
+    const bob_balanceBefore = await sovToken.balanceOf(bob)
     await borrowerOperations.claimCollateral({ from: bob, gasPrice: 0 })
-    const bob_balanceAfter = th.toBN(await web3.eth.getBalance(bob))
+    const bob_balanceAfter = await sovToken.balanceOf(bob)
     th.assertIsApproximatelyEqual(bob_balanceAfter, bob_balanceBefore.add(th.toBN(bob_remainingCollateral)))
   })
 
@@ -3786,9 +3795,9 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     const bobDebt_After = (await troveManager.Troves(bob))[0].add(await troveManager.getPendingZUSDDebtReward(bob))
     const carolDebt_After = (await troveManager.Troves(carol))[0].add(await troveManager.getPendingZUSDDebtReward(carol))
 
-    const dennisColl_After = (await troveManager.Troves(dennis))[1].add(await troveManager.getPendingETHReward(dennis))  
-    const bobColl_After = (await troveManager.Troves(bob))[1].add(await troveManager.getPendingETHReward(bob))
-    const carolColl_After = (await troveManager.Troves(carol))[1].add(await troveManager.getPendingETHReward(carol))
+    const dennisColl_After = (await troveManager.Troves(dennis))[1].add(await troveManager.getPendingSOVReward(dennis))  
+    const bobColl_After = (await troveManager.Troves(bob))[1].add(await troveManager.getPendingSOVReward(bob))
+    const carolColl_After = (await troveManager.Troves(carol))[1].add(await troveManager.getPendingSOVReward(carol))
 
     assert.isTrue(dennisColl_After.eq(dennisColl_Before))
     assert.isTrue(bobColl_After.eq(bobColl_Before))
@@ -4009,14 +4018,14 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     th.assertIsApproximatelyEqual(await collSurplusPool.getCollateral(greta), greta_remainingCollateral)
 
     // can claim collateral
-    const freddy_balanceBefore = th.toBN(await web3.eth.getBalance(freddy))
+    const freddy_balanceBefore = await sovToken.balanceOf(freddy)
     await borrowerOperations.claimCollateral({ from: freddy, gasPrice: 0 })
-    const freddy_balanceAfter = th.toBN(await web3.eth.getBalance(freddy))
+    const freddy_balanceAfter = await sovToken.balanceOf(freddy)
     th.assertIsApproximatelyEqual(freddy_balanceAfter, freddy_balanceBefore.add(th.toBN(freddy_remainingCollateral)))
 
-    const greta_balanceBefore = th.toBN(await web3.eth.getBalance(greta))
+    const greta_balanceBefore = await sovToken.balanceOf(greta)
     await borrowerOperations.claimCollateral({ from: greta, gasPrice: 0 })
-    const greta_balanceAfter = th.toBN(await web3.eth.getBalance(greta))
+    const greta_balanceAfter = await sovToken.balanceOf(greta)
     th.assertIsApproximatelyEqual(greta_balanceAfter, greta_balanceBefore.add(th.toBN(greta_remainingCollateral)))
   })
 
@@ -4071,7 +4080,7 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     assert.isTrue(await sortedTroves.contains(whale))
 
     // Check A's collateral and debt are the same
-    const entireColl_A = (await troveManager.Troves(alice))[1].add(await troveManager.getPendingETHReward(alice))
+    const entireColl_A = (await troveManager.Troves(alice))[1].add(await troveManager.getPendingSOVReward(alice))
     const entireDebt_A = (await troveManager.Troves(alice))[0].add(await troveManager.getPendingZUSDDebtReward(alice))
 
     assert.equal(entireColl_A.toString(), A_coll)
@@ -4090,14 +4099,14 @@ contract('TroveManager - in Recovery Mode', async accounts => {
     th.assertIsApproximatelyEqual(await collSurplusPool.getCollateral(greta), greta_remainingCollateral)
 
     // can claim collateral
-    const freddy_balanceBefore = th.toBN(await web3.eth.getBalance(freddy))
+    const freddy_balanceBefore = await sovToken.balanceOf(freddy)
     await borrowerOperations.claimCollateral({ from: freddy, gasPrice: 0 })
-    const freddy_balanceAfter = th.toBN(await web3.eth.getBalance(freddy))
+    const freddy_balanceAfter = await sovToken.balanceOf(freddy)
     th.assertIsApproximatelyEqual(freddy_balanceAfter, freddy_balanceBefore.add(th.toBN(freddy_remainingCollateral)))
 
-    const greta_balanceBefore = th.toBN(await web3.eth.getBalance(greta))
+    const greta_balanceBefore = await sovToken.balanceOf(greta)
     await borrowerOperations.claimCollateral({ from: greta, gasPrice: 0 })
-    const greta_balanceAfter = th.toBN(await web3.eth.getBalance(greta))
+    const greta_balanceAfter = await sovToken.balanceOf(greta)
     th.assertIsApproximatelyEqual(greta_balanceAfter, greta_balanceBefore.add(th.toBN(greta_remainingCollateral)))
   })
 

@@ -9,8 +9,4 @@ contract DefaultPoolTester is DefaultPool {
     function unprotectedIncreaseZUSDDebt(uint _amount) external {
         ZUSDDebt  = ZUSDDebt.add(_amount);
     }
-
-    function unprotectedPayable() external payable {
-        ETH = ETH.add(msg.value);
-    }
 }

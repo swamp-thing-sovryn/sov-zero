@@ -92,7 +92,7 @@ class BorrowerOperationsProxy extends Proxy {
   }
 
   async openTrove(...params) {
-    return this.forwardFunction(params, 'openTrove(uint256,uint256,address,address)')
+    return this.forwardFunction(params, 'openTrove(uint256,uint256,address,address,uint256)')
   }
 
   async addColl(...params) {
@@ -154,7 +154,7 @@ class BorrowerWrappersProxy extends Proxy {
   }
 
   async claimCollateralAndOpenTrove(...params) {
-    return this.forwardFunction(params, 'claimCollateralAndOpenTrove(uint256,uint256,address,address)')
+    return this.forwardFunction(params, 'claimCollateralAndOpenTrove(uint256,uint256,address,address,uint256)')
   }
 
   async claimSPRewardsAndRecycle(...params) {
@@ -167,6 +167,10 @@ class BorrowerWrappersProxy extends Proxy {
 
   async transferETH(...params) {
     return this.forwardFunction(params, 'transferETH(address,uint256)')
+  }
+
+  async transferSOV(...params) {
+    return this.forwardFunction(params, 'transferSOV(address,uint256)')
   }
 }
 
@@ -227,8 +231,8 @@ class TroveManagerProxy extends Proxy {
     return this.proxyFunction('baseRate', [])
   }
 
-  async L_ETH() {
-    return this.proxyFunction('L_ETH', [])
+  async L_SOV() {
+    return this.proxyFunction('L_SOV', [])
   }
 
   async L_ZUSDDebt() {
@@ -293,8 +297,8 @@ class StabilityPoolProxy extends Proxy {
     return this.proxyFunctionWithUser('deposits', user)
   }
 
-  async getDepositorETHGain(user) {
-    return this.proxyFunctionWithUser('getDepositorETHGain', user)
+  async getDepositorSOVGain(user) {
+    return this.proxyFunctionWithUser('getDepositorSOVGain', user)
   }
 }
 

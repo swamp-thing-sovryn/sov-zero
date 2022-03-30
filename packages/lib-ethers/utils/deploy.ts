@@ -15,8 +15,8 @@ import { PriceFeed } from "../types";
 let silent = true;
 
 export type OracleAddresses = {
-  mocOracleAddress: string;
-  rskOracleAddress: string;
+  mainOracle: string;
+  fallbackOracle: string;
 } | undefined;
 
 export const log = (...args: unknown[]): void => {
@@ -179,6 +179,7 @@ const connectContracts = async (
   sovFeeCollectorAddress: string,
   wrbtcAddress: string,
   presaleAddress: string,
+  sovTokenAddress: string,
   marketMakerAddress?: string,
   overrides?: Overrides
 ) => {
@@ -220,6 +221,8 @@ const connectContracts = async (
 
     nonce =>
       troveManager.setAddresses(
+        [
+        sovTokenAddress,
         feeDistributor.address,
         troveManagerRedeemOps.address,
         liquityBaseParams.address,
@@ -233,12 +236,14 @@ const connectContracts = async (
         zusdToken.address,
         sortedTroves.address,
         zeroToken.address,
-        zeroStaking.address,
+        zeroStaking.address
+      ],
         { ...overrides, nonce }
       ),
 
     nonce =>
       borrowerOperations.setAddresses(
+        sovTokenAddress,
         feeDistributor.address,
         liquityBaseParams.address,
         troveManager.address,
@@ -256,6 +261,7 @@ const connectContracts = async (
 
     nonce =>
       stabilityPool.setAddresses(
+        sovTokenAddress,
         liquityBaseParams.address,
         borrowerOperations.address,
         troveManager.address,
@@ -269,6 +275,7 @@ const connectContracts = async (
 
     nonce =>
       activePool.setAddresses(
+        sovTokenAddress,
         borrowerOperations.address,
         troveManager.address,
         stabilityPool.address,
@@ -277,13 +284,14 @@ const connectContracts = async (
       ),
 
     nonce =>
-      defaultPool.setAddresses(troveManager.address, activePool.address, {
+      defaultPool.setAddresses(sovTokenAddress, troveManager.address, activePool.address, {
         ...overrides,
         nonce
       }),
 
     nonce =>
       collSurplusPool.setAddresses(
+        sovTokenAddress,
         borrowerOperations.address,
         troveManager.address,
         activePool.address,
@@ -298,6 +306,7 @@ const connectContracts = async (
 
     nonce =>
       zeroStaking.setAddresses(
+        sovTokenAddress,
         zeroToken.address,
         zusdToken.address,
         feeDistributor.address,
@@ -319,6 +328,7 @@ const connectContracts = async (
 
       nonce => 
       feeDistributor.setAddresses(
+        sovTokenAddress,
         sovFeeCollectorAddress,
         zeroStaking.address,
         borrowerOperations.address,
@@ -467,6 +477,8 @@ export const deployAndSetupContracts = async (
   wrbtcAddress?: string,
   presaleAddress?: string,
   marketMakerAddress?: string,
+  sovTokenAddress?: string,
+  xUSDTokenAddress?: string,
   overrides?: Overrides
 ): Promise<_LiquityDeploymentJSON> => {
 
@@ -479,6 +491,8 @@ export const deployAndSetupContracts = async (
   wrbtcAddress ??=  await deployContract(deployer, getContractFactory, "WRBTCTokenTester", { ...overrides });
   presaleAddress ??= await deployContract(deployer, getContractFactory, "MockBalanceRedirectPresale", { ...overrides });
   marketMakerAddress ??= await deployContract(deployer, getContractFactory, "MockBalanceRedirectPresale", { ...overrides });
+  sovTokenAddress ??= await deployContract(deployer, getContractFactory, "SOVTokenTester", { ...overrides });
+  xUSDTokenAddress ??= await deployContract(deployer, getContractFactory, "SOVTokenTester", { ...overrides });
 
   log("Deploying contracts...");
   log();
@@ -495,6 +509,8 @@ export const deployAndSetupContracts = async (
     wrbtcAddress,
     presaleAddress,
     marketMakerAddress,
+    sovTokenAddress,
+    xUSDTokenAddress,
     _priceFeedIsTestnet,
     _isDev,
 
@@ -504,17 +520,20 @@ export const deployAndSetupContracts = async (
   const contracts = _connectToContracts(deployer, deployment);
 
   log("Connecting contracts...");
-  await connectContracts(contracts, deployer, governanceAddress, sovFeeCollectorAddress,wrbtcAddress, presaleAddress, marketMakerAddress, overrides);
+  await connectContracts(contracts, deployer, governanceAddress, sovFeeCollectorAddress,wrbtcAddress, presaleAddress, sovTokenAddress, marketMakerAddress, overrides);
 
   if (externalPriceFeeds !== undefined) {
     assert(!checkPriceFeedIsTestnet(contracts.priceFeed));
 
     console.log("Deploying external price feeds");
-    const mocMedianizerAddress = await deployContract(deployer, getContractFactory, "MoCMedianizer", externalPriceFeeds.mocOracleAddress, {...overrides});
-    const rskPriceFeedAddress = await deployContract(deployer, getContractFactory, "RskOracle", externalPriceFeeds.rskOracleAddress, {...overrides});
+    const mainOracleAddress = await deployContract(deployer, getContractFactory, "SOVPriceFeed", externalPriceFeeds.mainOracle, sovTokenAddress, xUSDTokenAddress, {...overrides});
 
-    console.log(`Hooking up PriceFeed with oracles: MocMedianizer => ${mocMedianizerAddress}, RskPriceFeed => ${rskPriceFeedAddress}`);
-    const tx = await contracts.priceFeed.setAddresses(mocMedianizerAddress, rskPriceFeedAddress, {...overrides});
+    console.log(`Hooking up PriceFeed with oracles: mainOracle => ${mainOracleAddress}, fallbackOracle => ${mainOracleAddress}`);
+    // Leaving the same oracle for fallback in case of failure because:
+    // - There is a single oracle for all price feeds
+    // - It won't fail (as the interface just returns a value)
+    // - We don't want to remove the whole oracle fallback machinery just in case oracles are replaced with one that can fallback
+    const tx = await contracts.priceFeed.setAddresses(mainOracleAddress, mainOracleAddress, {...overrides});
     await tx.wait();
   }
 

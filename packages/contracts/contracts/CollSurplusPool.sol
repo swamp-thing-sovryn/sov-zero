@@ -13,16 +13,18 @@ contract CollSurplusPool is CollSurplusPoolStorage, CheckContract, ICollSurplusP
     using SafeMath for uint256;
     // --- Events ---
 
+    event SOVTokenAddressChanged(address _sovTokenAddress);
     event BorrowerOperationsAddressChanged(address _newBorrowerOperationsAddress);
     event TroveManagerAddressChanged(address _newTroveManagerAddress);
     event ActivePoolAddressChanged(address _newActivePoolAddress);
 
     event CollBalanceUpdated(address indexed _account, uint _newBalance);
-    event EtherSent(address _to, uint _amount);
+    event SOVSent(address _to, uint _amount);
     
     // --- Contract setters ---
 
     function setAddresses(
+        address _sovTokenAddress,
         address _borrowerOperationsAddress,
         address _troveManagerAddress,
         address _activePoolAddress
@@ -31,14 +33,17 @@ contract CollSurplusPool is CollSurplusPoolStorage, CheckContract, ICollSurplusP
         override
         onlyOwner
     {
+        checkContract(_sovTokenAddress);
         checkContract(_borrowerOperationsAddress);
         checkContract(_troveManagerAddress);
         checkContract(_activePoolAddress);
 
+        sovToken = IERC20(_sovTokenAddress);
         borrowerOperationsAddress = _borrowerOperationsAddress;
         troveManagerAddress = _troveManagerAddress;
         activePoolAddress = _activePoolAddress;
 
+        emit SOVTokenAddressChanged(_sovTokenAddress);
         emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
         emit TroveManagerAddressChanged(_troveManagerAddress);
         emit ActivePoolAddressChanged(_activePoolAddress);
@@ -46,10 +51,9 @@ contract CollSurplusPool is CollSurplusPoolStorage, CheckContract, ICollSurplusP
         
     }
 
-    /** Returns the ETH state variable at ActivePool address.
-       Not necessarily equal to the raw ether balance - ether can be forcibly sent to contracts. */
-    function getETH() external view override returns (uint) {
-        return ETH;
+    /** Returns the SOV balance */
+    function getSOV() external view override returns (uint) {
+        return sovToken.balanceOf(address(this));
     }
 
     function getCollateral(address _account) external view override returns (uint) {
@@ -74,12 +78,9 @@ contract CollSurplusPool is CollSurplusPoolStorage, CheckContract, ICollSurplusP
 
         balances[_account] = 0;
         emit CollBalanceUpdated(_account, 0);
+        emit SOVSent(_account, claimableColl);
 
-        ETH = ETH.sub(claimableColl);
-        emit EtherSent(_account, claimableColl);
-
-        (bool success, ) = _account.call{ value: claimableColl }("");
-        require(success, "CollSurplusPool: sending ETH failed");
+        sovToken.transfer(_account, claimableColl);
     }
 
     // --- 'require' functions ---
@@ -100,12 +101,5 @@ contract CollSurplusPool is CollSurplusPoolStorage, CheckContract, ICollSurplusP
         require(
             msg.sender == activePoolAddress,
             "CollSurplusPool: Caller is not Active Pool");
-    }
-
-    // --- Fallback function ---
-
-    receive() external payable {
-        _requireCallerIsActivePool();
-        ETH = ETH.add(msg.value);
     }
 }

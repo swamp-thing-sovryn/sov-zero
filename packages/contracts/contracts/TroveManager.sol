@@ -18,6 +18,7 @@ import "./TroveManagerStorage.sol";
 
 contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
 
+    event SOVTokenAddressChanged(address _sovTokenAddress);
     event FeeDistributorAddressChanged(address _feeDistributorAddress);
     event TroveManagerRedeemOpsAddressChanged(address _troveManagerRedeemOps);
     event LiquityBaseParamsAddressChanges(address _borrowerOperationsAddress);
@@ -35,67 +36,80 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
 
 
     // --- Dependency setter ---
+
+    /**
+     * @notice Called only once on init, to set addresses of other Liquity contracts. Callable only by owner
+     * @dev initializer function, checks addresses are contracts
+     *  To avoid stack too deep compile error use an addresses array to pass the addresses.
+     *  _sovTokenAddress SOV token contract address
+     *  _feeDistributorAddress feeDistributor contract address
+     *  _troveManagerRedeemOps TroveManagerRedeemOps contract address
+     *  _liquityBaseParamsAddress LiquityBaseParams contract address
+     *  _borrowerOperationsAddress BorrowerOperations contract address
+     *  _activePoolAddress ActivePool contract address
+     *  _defaultPoolAddress DefaultPool contract address
+     *  _stabilityPoolAddress StabilityPool contract address
+     *  _gasPoolAddress GasPool contract address
+     *  _collSurplusPoolAddress CollSurplusPool contract address
+     *  _priceFeedAddress PriceFeed contract address
+     *  _zusdTokenAddress ZUSDToken contract address
+     *  _sortedTrovesAddress SortedTroves contract address
+     *  _zeroTokenAddress ZEROToken contract address
+     *  _zeroStakingAddress ZEROStaking contract address
+     * @param _setupAddresses array of contract addresses to setup
+     */
     function setAddresses(
-        address _feeDistributorAddress,
-        address _troveManagerRedeemOps,
-        address _liquityBaseParamsAddress,
-        address _borrowerOperationsAddress,
-        address _activePoolAddress,
-        address _defaultPoolAddress,
-        address _stabilityPoolAddress,
-        address _gasPoolAddress,
-        address _collSurplusPoolAddress,
-        address _priceFeedAddress,
-        address _zusdTokenAddress,
-        address _sortedTrovesAddress,
-        address _zeroTokenAddress,
-        address _zeroStakingAddress
+        address[15] calldata _setupAddresses
     ) external override onlyOwner {
+        require(_setupAddresses.length == 15, "Invalid array length");
+        
+        checkContract(_setupAddresses[0]);
+        checkContract(_setupAddresses[1]);
+        checkContract(_setupAddresses[2]);
+        checkContract(_setupAddresses[3]);
+        checkContract(_setupAddresses[4]);
+        checkContract(_setupAddresses[5]);
+        checkContract(_setupAddresses[6]);
+        checkContract(_setupAddresses[7]);
+        checkContract(_setupAddresses[8]);
+        checkContract(_setupAddresses[9]);
+        checkContract(_setupAddresses[10]);
+        checkContract(_setupAddresses[11]);
+        checkContract(_setupAddresses[12]);
+        checkContract(_setupAddresses[13]);
+        checkContract(_setupAddresses[14]);
 
-        checkContract(_feeDistributorAddress);
-        checkContract(_troveManagerRedeemOps);
-        checkContract(_liquityBaseParamsAddress);
-        checkContract(_borrowerOperationsAddress);
-        checkContract(_activePoolAddress);
-        checkContract(_defaultPoolAddress);
-        checkContract(_stabilityPoolAddress);
-        checkContract(_gasPoolAddress);
-        checkContract(_collSurplusPoolAddress);
-        checkContract(_priceFeedAddress);
-        checkContract(_zusdTokenAddress);
-        checkContract(_sortedTrovesAddress);
-        checkContract(_zeroTokenAddress);
-        checkContract(_zeroStakingAddress);
+        sovToken = IERC20(_setupAddresses[0]);
+        feeDistributor = IFeeDistributor(_setupAddresses[1]);
+        troveManagerRedeemOps = _setupAddresses[2];
+        liquityBaseParams = ILiquityBaseParams(_setupAddresses[3]);
+        borrowerOperationsAddress = _setupAddresses[4];
+        activePool = IActivePool(_setupAddresses[5]);
+        defaultPool = IDefaultPool(_setupAddresses[6]);
+        _stabilityPool = IStabilityPool(_setupAddresses[7]);
+        gasPoolAddress = _setupAddresses[8];
+        collSurplusPool = ICollSurplusPool(_setupAddresses[9]);
+        priceFeed = IPriceFeed(_setupAddresses[10]);
+        _zusdToken = IZUSDToken(_setupAddresses[11]);
+        sortedTroves = ISortedTroves(_setupAddresses[12]);
+        _zeroToken = IZEROToken(_setupAddresses[13]);
+        _zeroStaking = IZEROStaking(_setupAddresses[14]);     
 
-        feeDistributor = IFeeDistributor(_feeDistributorAddress);
-        troveManagerRedeemOps = _troveManagerRedeemOps;
-        liquityBaseParams = ILiquityBaseParams(_liquityBaseParamsAddress);
-        borrowerOperationsAddress = _borrowerOperationsAddress;
-        activePool = IActivePool(_activePoolAddress);
-        defaultPool = IDefaultPool(_defaultPoolAddress);
-        _stabilityPool = IStabilityPool(_stabilityPoolAddress);
-        gasPoolAddress = _gasPoolAddress;
-        collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
-        priceFeed = IPriceFeed(_priceFeedAddress);
-        _zusdToken = IZUSDToken(_zusdTokenAddress);
-        sortedTroves = ISortedTroves(_sortedTrovesAddress);
-        _zeroToken = IZEROToken(_zeroTokenAddress);
-        _zeroStaking = IZEROStaking(_zeroStakingAddress);        
-
-        emit FeeDistributorAddressChanged(_feeDistributorAddress);
-        emit TroveManagerRedeemOpsAddressChanged(_troveManagerRedeemOps);
-        emit LiquityBaseParamsAddressChanges(_borrowerOperationsAddress);
-        emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
-        emit ActivePoolAddressChanged(_activePoolAddress);
-        emit DefaultPoolAddressChanged(_defaultPoolAddress);
-        emit StabilityPoolAddressChanged(_stabilityPoolAddress);
-        emit GasPoolAddressChanged(_gasPoolAddress);
-        emit CollSurplusPoolAddressChanged(_collSurplusPoolAddress);
-        emit PriceFeedAddressChanged(_priceFeedAddress);
-        emit ZUSDTokenAddressChanged(_zusdTokenAddress);
-        emit SortedTrovesAddressChanged(_sortedTrovesAddress);
-        emit ZEROTokenAddressChanged(_zeroTokenAddress);
-        emit ZEROStakingAddressChanged(_zeroStakingAddress);
+        emit SOVTokenAddressChanged(_setupAddresses[0]);
+        emit FeeDistributorAddressChanged(_setupAddresses[1]);
+        emit TroveManagerRedeemOpsAddressChanged(_setupAddresses[2]);
+        emit LiquityBaseParamsAddressChanges(_setupAddresses[3]);
+        emit BorrowerOperationsAddressChanged(_setupAddresses[4]);
+        emit ActivePoolAddressChanged(_setupAddresses[5]);
+        emit DefaultPoolAddressChanged(_setupAddresses[6]);
+        emit StabilityPoolAddressChanged(_setupAddresses[7]);
+        emit GasPoolAddressChanged(_setupAddresses[8]);
+        emit CollSurplusPoolAddressChanged(_setupAddresses[9]);
+        emit PriceFeedAddressChanged(_setupAddresses[10]);
+        emit ZUSDTokenAddressChanged(_setupAddresses[11]);
+        emit SortedTrovesAddressChanged(_setupAddresses[12]);
+        emit ZEROTokenAddressChanged(_setupAddresses[13]);
+        emit ZEROStakingAddressChanged(_setupAddresses[14]);
 
     }
 
@@ -346,7 +360,7 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
     }
 
     /**
-     *  Get its offset coll/debt and ETH gas comp, and close the trove.
+     *  Get its offset coll/debt and SOV gas comp, and close the trove.
      */
     function _getCappedOffsetVals(
         uint256 _entireTroveDebt,
@@ -412,7 +426,7 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
 
         require(totals.totalDebtInSequence > 0, "TroveManager: nothing to liquidate");
 
-        // Move liquidated ETH and ZUSD to the appropriate pools
+        // Move liquidated SOV and ZUSD to the appropriate pools
         stabilityPoolCached.offset(totals.totalDebtToOffset, totals.totalCollToSendToSP);
         _redistributeDebtAndColl(
             contractsCache.activePool,
@@ -421,7 +435,7 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
             totals.totalCollToRedistribute
         );
         if (totals.totalCollSurplus > 0) {
-            contractsCache.activePool.sendETH(address(collSurplusPool), totals.totalCollSurplus);
+            contractsCache.activePool.sendSOV(address(collSurplusPool), totals.totalCollSurplus);
         }
 
         // Update system snapshots
@@ -610,7 +624,7 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
 
         require(totals.totalDebtInSequence > 0, "TroveManager: nothing to liquidate");
 
-        // Move liquidated ETH and ZUSD to the appropriate pools
+        // Move liquidated SOV and ZUSD to the appropriate pools
         stabilityPoolCached.offset(totals.totalDebtToOffset, totals.totalCollToSendToSP);
         _redistributeDebtAndColl(
             activePoolCached,
@@ -619,7 +633,7 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
             totals.totalCollToRedistribute
         );
         if (totals.totalCollSurplus > 0) {
-            activePoolCached.sendETH(address(collSurplusPool), totals.totalCollSurplus);
+            activePoolCached.sendSOV(address(collSurplusPool), totals.totalCollSurplus);
         }
 
         // Update system snapshots
@@ -802,14 +816,14 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
         IActivePool _activePool,
         address _liquidator,
         uint256 _ZUSD,
-        uint256 _ETH
+        uint256 _SOV
     ) internal {
         if (_ZUSD > 0) {
             _zusdToken.returnFromPool(gasPoolAddress, _liquidator, _ZUSD);
         }
 
-        if (_ETH > 0) {
-            _activePool.sendETH(_liquidator, _ETH);
+        if (_SOV > 0) {
+            _activePool.sendSOV(_liquidator, _SOV);
         }
     }
 
@@ -817,9 +831,9 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
 
     /// @return the nominal collateral ratio (ICR) of a given Trove, without the price. Takes a trove's pending coll and debt rewards from redistributions into account.
     function getNominalICR(address _borrower) public view override returns (uint256) {
-        (uint256 currentETH, uint256 currentZUSDDebt) = _getCurrentTroveAmounts(_borrower);
+        (uint256 currentSOV, uint256 currentZUSDDebt) = _getCurrentTroveAmounts(_borrower);
 
-        uint256 NICR = LiquityMath._computeNominalCR(currentETH, currentZUSDDebt);
+        uint256 NICR = LiquityMath._computeNominalCR(currentSOV, currentZUSDDebt);
         return NICR;
     }
 
@@ -828,7 +842,7 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
         return _applyPendingRewards(activePool, defaultPool, _borrower);
     }
 
-    /// Update borrower's snapshots of L_ETH and L_ZUSDDebt to reflect the current values
+    /// Update borrower's snapshots of L_SOV and L_ZUSDDebt to reflect the current values
     function updateTroveRewardSnapshots(address _borrower) external override {
         _requireCallerIsBorrowerOperations();
         return _updateTroveRewardSnapshots(_borrower);
@@ -843,17 +857,17 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
             uint256 debt,
             uint256 coll,
             uint256 pendingZUSDDebtReward,
-            uint256 pendingETHReward
+            uint256 pendingSOVReward
         )
     {
         debt = Troves[_borrower].debt;
         coll = Troves[_borrower].coll;
 
         pendingZUSDDebtReward = getPendingZUSDDebtReward(_borrower);
-        pendingETHReward = getPendingETHReward(_borrower);
+        pendingSOVReward = getPendingSOVReward(_borrower);
 
         debt = debt.add(pendingZUSDDebtReward);
-        coll = coll.add(pendingETHReward);
+        coll = coll.add(pendingSOVReward);
     }
 
     function removeStake(address _borrower) external override {
@@ -878,7 +892,7 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
 
         /*
          * Add distributed coll and debt rewards-per-unit-staked to the running totals. Division uses a "feedback"
-         * error correction, to keep the cumulative error low in the running totals L_ETH and L_ZUSDDebt:
+         * error correction, to keep the cumulative error low in the running totals L_SOV and L_ZUSDDebt:
          *
          * 1) Form numerators which compensate for the floor division errors that occurred the last time this
          * function was called.
@@ -887,30 +901,30 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
          * 4) Store these errors for use in the next correction when this function is called.
          * 5) Note: static analysis tools complain about this "division before multiplication", however, it is intended.
          */
-        uint256 ETHNumerator = _coll.mul(DECIMAL_PRECISION).add(lastETHError_Redistribution);
+        uint256 SOVNumerator = _coll.mul(DECIMAL_PRECISION).add(lastSOVError_Redistribution);
         uint256 ZUSDDebtNumerator = _debt.mul(DECIMAL_PRECISION).add(
             lastZUSDDebtError_Redistribution
         );
 
         // Get the per-unit-staked terms
-        uint256 ETHRewardPerUnitStaked = ETHNumerator.div(totalStakes);
+        uint256 SOVRewardPerUnitStaked = SOVNumerator.div(totalStakes);
         uint256 ZUSDDebtRewardPerUnitStaked = ZUSDDebtNumerator.div(totalStakes);
 
-        lastETHError_Redistribution = ETHNumerator.sub(ETHRewardPerUnitStaked.mul(totalStakes));
+        lastSOVError_Redistribution = SOVNumerator.sub(SOVRewardPerUnitStaked.mul(totalStakes));
         lastZUSDDebtError_Redistribution = ZUSDDebtNumerator.sub(
             ZUSDDebtRewardPerUnitStaked.mul(totalStakes)
         );
 
         // Add per-unit-staked terms to the running totals
-        L_ETH = L_ETH.add(ETHRewardPerUnitStaked);
+        L_SOV = L_SOV.add(SOVRewardPerUnitStaked);
         L_ZUSDDebt = L_ZUSDDebt.add(ZUSDDebtRewardPerUnitStaked);
 
-        emit LTermsUpdated(L_ETH, L_ZUSDDebt);
+        emit LTermsUpdated(L_SOV, L_ZUSDDebt);
 
         // Transfer coll and debt from ActivePool to DefaultPool
         _activePool.decreaseZUSDDebt(_debt);
         _defaultPool.increaseZUSDDebt(_debt);
-        _activePool.sendETH(address(_defaultPool), _coll);
+        _activePool.sendSOV(address(_defaultPool), _coll);
     }
 
     function closeTrove(address _borrower) external override {
@@ -924,9 +938,9 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
      *
      * The calculation excludes a portion of collateral that is in the ActivePool:
      *
-     * the total ETH gas compensation from the liquidation sequence
+     * the total SOV gas compensation from the liquidation sequence
      *
-     * The ETH as compensation must be excluded as it is always sent out at the very end of the liquidation sequence.
+     * The SOV as compensation must be excluded as it is always sent out at the very end of the liquidation sequence.
      */
     function _updateSystemSnapshots_excludeCollRemainder(
         IActivePool _activePool,
@@ -934,8 +948,8 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
     ) internal {
         totalStakesSnapshot = totalStakes;
 
-        uint256 activeColl = _activePool.getETH();
-        uint256 liquidatedColl = defaultPool.getETH();
+        uint256 activeColl = _activePool.getSOV();
+        uint256 liquidatedColl = defaultPool.getSOV();
         totalCollateralSnapshot = activeColl.sub(_collRemainder).add(liquidatedColl);
 
         emit SystemSnapshotsUpdated(totalStakesSnapshot, totalCollateralSnapshot);
@@ -979,7 +993,7 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
         return _checkRecoveryMode(_price);
     }
 
-    // Check whether or not the system *would be* in Recovery Mode, given an ETH:USD price, and the entire system coll and debt.
+    // Check whether or not the system *would be* in Recovery Mode, given an SOV:USD price, and the entire system coll and debt.
     function _checkPotentialRecoveryMode(
         uint256 _entireSystemColl,
         uint256 _entireSystemDebt,
@@ -994,8 +1008,8 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
         return _calcRedemptionRate(_calcDecayedBaseRate());
     }
 
-    function getRedemptionFeeWithDecay(uint256 _ETHDrawn) external view override returns (uint256) {
-        return _calcRedemptionFee(getRedemptionRateWithDecay(), _ETHDrawn);
+    function getRedemptionFeeWithDecay(uint256 _SOVDrawn) external view override returns (uint256) {
+        return _calcRedemptionFee(getRedemptionRateWithDecay(), _SOVDrawn);
     }
 
     // --- Borrowing fee functions ---
@@ -1125,8 +1139,8 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
         return _getCurrentICR(_borrower, _price);
     }
 
-    function getPendingETHReward(address _borrower) public view override returns (uint256) {
-        return _getPendingETHReward(_borrower);
+    function getPendingSOVReward(address _borrower) public view override returns (uint256) {
+        return _getPendingSOVReward(_borrower);
     }
 
     function getPendingZUSDDebtReward(address _borrower) public view override returns (uint256) {

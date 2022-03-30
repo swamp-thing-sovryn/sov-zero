@@ -11,6 +11,7 @@ import './Interfaces/ISortedTroves.sol';
 import "./Interfaces/ICommunityIssuance.sol";
 import "./Dependencies/Ownable.sol";
 import "./Dependencies/BaseMath.sol";
+import "./Dependencies/IERC20.sol";
 
 contract StabilityPoolStorage is Ownable, BaseMath {
     string constant public NAME = "StabilityPool";
@@ -21,12 +22,12 @@ contract StabilityPoolStorage is Ownable, BaseMath {
 
     IZUSDToken public zusdToken;
 
+    IERC20 public sovToken;
+
     // Needed to check if there are pending liquidations
     ISortedTroves public sortedTroves;
 
     ICommunityIssuance public communityIssuance;
-
-    uint256 internal ETH;  // deposited ether tracker
 
     // Tracker for ZUSD held in the pool. Changes when users deposit/withdraw, and when Trove debt is offset.
     uint256 internal totalZUSDDeposits;
@@ -74,7 +75,7 @@ contract StabilityPoolStorage is Ownable, BaseMath {
     // With each offset that fully empties the Pool, the epoch is incremented by 1
     uint128 public currentEpoch;
 
-    /* ETH Gain sum 'S': During its lifetime, each deposit d_t earns an ETH gain of ( d_t * [S - S_t] )/P_t, where S_t
+    /* SOV Gain sum 'S': During its lifetime, each deposit d_t earns an SOV gain of ( d_t * [S - S_t] )/P_t, where S_t
     * is the depositor's snapshot of S taken at the time t when the deposit was made.
     *
     * The 'S' sums are stored in a nested mapping (epoch => scale => sum):
@@ -96,7 +97,7 @@ contract StabilityPoolStorage is Ownable, BaseMath {
     // Error tracker for the error correction in the ZERO issuance calculation
     uint public lastZEROError;
     // Error trackers for the error correction in the offset calculation
-    uint public lastETHError_Offset;
+    uint public lastSOVError_Offset;
     uint public lastZUSDLossError_Offset;
 
 }

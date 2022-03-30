@@ -9,34 +9,38 @@ import "./Dependencies/console.sol";
 import "./DefaultPoolStorage.sol";
 
 /**
- * The Default Pool holds the ETH and ZUSD debt (but not ZUSD tokens) from liquidations that have been redistributed
+ * The Default Pool holds the SOV and ZUSD debt (but not ZUSD tokens) from liquidations that have been redistributed
  * to active troves but not yet "applied", i.e. not yet recorded on a recipient active trove's struct.
  *
- * When a trove makes an operation that applies its pending ETH and ZUSD debt, its pending ETH and ZUSD debt is moved
+ * When a trove makes an operation that applies its pending SOV and ZUSD debt, its pending SOV and ZUSD debt is moved
  * from the Default Pool to the Active Pool.
  */
 contract DefaultPool is DefaultPoolStorage, CheckContract, IDefaultPool {
     using SafeMath for uint256;
     
+    event SOVTokenAddressChanged(address _sovTokenAddress);
     event TroveManagerAddressChanged(address _newTroveManagerAddress);
     event DefaultPoolZUSDDebtUpdated(uint _ZUSDDebt);
-    event DefaultPoolETHBalanceUpdated(uint _ETH);
 
     // --- Dependency setters ---
 
     function setAddresses(
+        address _sovTokenAddress,
         address _troveManagerAddress,
         address _activePoolAddress
     )
         external
         onlyOwner
     {
+        checkContract(_sovTokenAddress);
         checkContract(_troveManagerAddress);
         checkContract(_activePoolAddress);
 
+        sovToken = IERC20(_sovTokenAddress);
         troveManagerAddress = _troveManagerAddress;
         activePoolAddress = _activePoolAddress;
 
+        emit SOVTokenAddressChanged(_sovTokenAddress);
         emit TroveManagerAddressChanged(_troveManagerAddress);
         emit ActivePoolAddressChanged(_activePoolAddress);
 
@@ -46,12 +50,11 @@ contract DefaultPool is DefaultPoolStorage, CheckContract, IDefaultPool {
     // --- Getters for public variables. Required by IPool interface ---
 
     /**
-    * @return the ETH state variable.
+    * @return the SOV balance.
     *
-    * Not necessarily equal to the the contract's raw ETH balance - ether can be forcibly sent to contracts.
     */
-    function getETH() external view override returns (uint) {
-        return ETH;
+    function getSOV() external view override returns (uint) {
+        return sovToken.balanceOf(address(this));
     }
 
     function getZUSDDebt() external view override returns (uint) {
@@ -60,15 +63,13 @@ contract DefaultPool is DefaultPoolStorage, CheckContract, IDefaultPool {
 
     // --- Pool functionality ---
 
-    function sendETHToActivePool(uint _amount) external override {
+    function sendSOVToActivePool(uint _amount) external override {
         _requireCallerIsTroveManager();
         address activePool = activePoolAddress; // cache to save an SLOAD
-        ETH = ETH.sub(_amount);
-        emit DefaultPoolETHBalanceUpdated(ETH);
-        emit EtherSent(activePool, _amount);
 
-        (bool success, ) = activePool.call{ value: _amount }("");
-        require(success, "DefaultPool: sending ETH failed");
+        emit SOVSent(activePool, _amount);
+
+        sovToken.transfer(activePool, _amount);
     }
 
     function increaseZUSDDebt(uint _amount) external override {
@@ -91,13 +92,5 @@ contract DefaultPool is DefaultPoolStorage, CheckContract, IDefaultPool {
 
     function _requireCallerIsTroveManager() internal view {
         require(msg.sender == troveManagerAddress, "DefaultPool: Caller is not the TroveManager");
-    }
-
-    // --- Fallback function ---
-
-    receive() external payable {
-        _requireCallerIsActivePool();
-        ETH = ETH.add(msg.value);
-        emit DefaultPoolETHBalanceUpdated(ETH);
     }
 }
