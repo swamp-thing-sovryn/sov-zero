@@ -113,7 +113,7 @@ export class BlockPolledLiquityStore extends LiquityStore<BlockPolledLiquityStor
       numberOfTroves: this._readable.getNumberOfTroves({ blockTag }),
       totalRedistributed: this._readable.getTotalRedistributed({ blockTag }),
       total: this._readable.getTotal({ blockTag }),
-      zusdInStabilityPool: this._readable.getZUSDInStabilityPool({ blockTag }),
+      zsusdInStabilityPool: this._readable.getZSUSDInStabilityPool({ blockTag }),
       totalStakedZERO: this._readable.getTotalStakedZERO({ blockTag }),
       _riskiestTroveBeforeRedistribution: this._getRiskiestTroveBeforeRedistribution({ blockTag }),
       remainingStabilityPoolZEROReward: this._readable.getRemainingStabilityPoolZEROReward({
@@ -127,7 +127,7 @@ export class BlockPolledLiquityStore extends LiquityStore<BlockPolledLiquityStor
       ...(userAddress
         ? {
             accountBalance: this._provider.getBalance(userAddress, blockTag).then(decimalify),
-            zusdBalance: this._readable.getZUSDBalance(userAddress, { blockTag }),
+            zsusdBalance: this._readable.getZSUSDBalance(userAddress, { blockTag }),
             nueBalance: this._readable.getNUEBalance(userAddress, { blockTag }),
             zeroBalance: this._readable.getZEROBalance(userAddress, { blockTag }),
             collateralSurplusBalance: this._readable.getCollateralSurplusBalance(userAddress, {
@@ -142,7 +142,7 @@ export class BlockPolledLiquityStore extends LiquityStore<BlockPolledLiquityStor
           }
         : {
             accountBalance: Decimal.ZERO,
-            zusdBalance: Decimal.ZERO,
+            zsusdBalance: Decimal.ZERO,
             nueBalance: Decimal.ZERO,
             zeroBalance: Decimal.ZERO,
             uniTokenBalance: Decimal.ZERO,

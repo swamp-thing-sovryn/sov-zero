@@ -4,7 +4,7 @@ pragma solidity 0.6.11;
 
 import "./ILiquityBase.sol";
 import "./IStabilityPool.sol";
-import "./IZUSDToken.sol";
+import "./IZSUSDToken.sol";
 import "./IZEROToken.sol";
 import "./IZEROStaking.sol";
 
@@ -20,7 +20,7 @@ interface ITroveManager is ILiquityBase {
     event LiquityBaseParamsAddressChanges(address _borrowerOperationsAddress);
     event BorrowerOperationsAddressChanged(address _newBorrowerOperationsAddress);
     event PriceFeedAddressChanged(address _newPriceFeedAddress);
-    event ZUSDTokenAddressChanged(address _newZUSDTokenAddress);
+    event ZSUSDTokenAddressChanged(address _newZSUSDTokenAddress);
     event ActivePoolAddressChanged(address _activePoolAddress);
     event DefaultPoolAddressChanged(address _defaultPoolAddress);
     event StabilityPoolAddressChanged(address _stabilityPoolAddress);
@@ -30,16 +30,16 @@ interface ITroveManager is ILiquityBase {
     event ZEROTokenAddressChanged(address _zeroTokenAddress);
     event ZEROStakingAddressChanged(address _zeroStakingAddress);
 
-    event Liquidation(uint _liquidatedDebt, uint _liquidatedColl, uint _collGasCompensation, uint _ZUSDGasCompensation);
-    event Redemption(uint _attemptedZUSDAmount, uint _actualZUSDAmount, uint _SOVSent, uint _SOVFee);
+    event Liquidation(uint _liquidatedDebt, uint _liquidatedColl, uint _collGasCompensation, uint _ZSUSDGasCompensation);
+    event Redemption(uint _attemptedZSUSDAmount, uint _actualZSUSDAmount, uint _SOVSent, uint _SOVFee);
     event TroveUpdated(address indexed _borrower, uint _debt, uint _coll, uint stake, uint8 operation);
     event TroveLiquidated(address indexed _borrower, uint _debt, uint _coll, uint8 operation);
     event BaseRateUpdated(uint _baseRate);
     event LastFeeOpTimeUpdated(uint _lastFeeOpTime);
     event TotalStakesUpdated(uint _newTotalStakes);
     event SystemSnapshotsUpdated(uint _totalStakesSnapshot, uint _totalCollateralSnapshot);
-    event LTermsUpdated(uint _L_SOV, uint _L_ZUSDDebt);
-    event TroveSnapshotsUpdated(uint _L_SOV, uint _L_ZUSDDebt);
+    event LTermsUpdated(uint _L_SOV, uint _L_ZSUSDDebt);
+    event TroveSnapshotsUpdated(uint _L_SOV, uint _L_ZSUSDDebt);
     event TroveIndexUpdated(address _borrower, uint _newIndex);
 
     // --- Functions ---
@@ -59,7 +59,7 @@ interface ITroveManager is ILiquityBase {
      *  _gasPoolAddress GasPool contract address
      *  _collSurplusPoolAddress CollSurplusPool contract address
      *  _priceFeedAddress PriceFeed contract address
-     *  _zusdTokenAddress ZUSDToken contract address
+     *  _zsusdTokenAddress ZSUSDToken contract address
      *  _sortedTrovesAddress SortedTroves contract address
      *  _zeroTokenAddress ZEROToken contract address
      *  _zeroStakingAddress ZEROStaking contract address
@@ -80,7 +80,7 @@ interface ITroveManager is ILiquityBase {
     /// @return the nominal collateral ratio (ICR) of a given Trove, without the price. Takes a trove's pending coll and debt rewards from redistributions into account.
     function getNominalICR(address _borrower) external view returns (uint);
 
-    /// @notice computes the user’s individual collateralization ratio (ICR) based on their total collateral and total ZUSD debt. Returns 2^256 -1 if they have 0 debt.
+    /// @notice computes the user’s individual collateralization ratio (ICR) based on their total collateral and total ZSUSD debt. Returns 2^256 -1 if they have 0 debt.
     /// @param _borrower borrower address
     /// @param _price SOV price
     /// @return the current collateral ratio (ICR) of a given Trove. Takes a trove's pending coll and debt rewards from redistributions into account.
@@ -104,7 +104,7 @@ interface ITroveManager is ILiquityBase {
     function batchLiquidateTroves(address[] calldata _troveArray) external;
 
     /** 
-     * @notice Send _ZUSDamount ZUSD to the system and redeem the corresponding amount of collateral from as many Troves as are needed to fill the redemption
+     * @notice Send _ZSUSDamount ZSUSD to the system and redeem the corresponding amount of collateral from as many Troves as are needed to fill the redemption
      * request.  Applies pending rewards to a Trove before reducing its debt and coll.
      *
      * Note that if _amount is very large, this function can run out of gas, specially if traversed troves are small. This can be easily avoided by
@@ -122,16 +122,16 @@ interface ITroveManager is ILiquityBase {
      *
      * If another transaction modifies the list between calling getRedemptionHints() and passing the hints to redeemCollateral(), it
      * is very likely that the last (partially) redeemed Trove would end up with a different ICR than what the hint is for. In this case the
-     * redemption will stop after the last completely redeemed Trove and the sender will keep the remaining ZUSD amount, which they can attempt
+     * redemption will stop after the last completely redeemed Trove and the sender will keep the remaining ZSUSD amount, which they can attempt
      * to redeem later.
      * 
-     * @param _ZUSDAmount ZUSD amount to send to the system
+     * @param _ZSUSDAmount ZSUSD amount to send to the system
      * @param _firstRedemptionHint calculated ICR hint of first trove after redemption
      * @param _maxIterations max Troves iterations (can be 0)
      * @param _maxFee max fee percentage to accept
      */
     function redeemCollateral(
-        uint _ZUSDAmount,
+        uint _ZSUSDAmount,
         address _firstRedemptionHint,
         address _upperPartialRedemptionHint,
         address _lowerPartialRedemptionHint,
@@ -144,7 +144,7 @@ interface ITroveManager is ILiquityBase {
     /// @param _borrower borrower address
     function updateStakeAndTotalStakes(address _borrower) external returns (uint);
 
-    /// @notice Update borrower's snapshots of L_SOV and L_ZUSDDebt to reflect the current values
+    /// @notice Update borrower's snapshots of L_SOV and L_ZSUSDDebt to reflect the current values
     /// @param _borrower borrower address
     function updateTroveRewardSnapshots(address _borrower) external;
 
@@ -162,8 +162,8 @@ interface ITroveManager is ILiquityBase {
     function getPendingSOVReward(address _borrower) external view returns (uint);
 
     /// @param _borrower borrower address
-    /// @return the borrower's pending accumulated ZUSD reward, earned by their stake
-    function getPendingZUSDDebtReward(address _borrower) external view returns (uint);
+    /// @return the borrower's pending accumulated ZSUSD reward, earned by their stake
+    function getPendingZSUSDDebtReward(address _borrower) external view returns (uint);
 
     /*
     * @notice A Trove has pending rewards if its snapshot is less than the current rewards per-unit-staked sum:
@@ -180,7 +180,7 @@ interface ITroveManager is ILiquityBase {
     function getEntireDebtAndColl(address _borrower) external view returns (
         uint debt, 
         uint coll, 
-        uint pendingZUSDDebtReward, 
+        uint pendingZSUSDDebtReward, 
         uint pendingSOVReward
     );
 
@@ -208,15 +208,15 @@ interface ITroveManager is ILiquityBase {
     /// @return borrowing rate calculated using decayed as base rate
     function getBorrowingRateWithDecay() external view returns (uint);
 
-    /// @param ZUSDDebt ZUSD debt amount to calculate fee
+    /// @param ZSUSDDebt ZSUSD debt amount to calculate fee
     /// @return borrowing fee using borrowing rate
-    function getBorrowingFee(uint ZUSDDebt) external view returns (uint);
+    function getBorrowingFee(uint ZSUSDDebt) external view returns (uint);
 
-    /// @param _ZUSDDebt ZUSD debt amount to calculate fee
+    /// @param _ZSUSDDebt ZSUSD debt amount to calculate fee
     /// @return borrowing fee using borrowing rate with decay
-    function getBorrowingFeeWithDecay(uint _ZUSDDebt) external view returns (uint);
+    function getBorrowingFeeWithDecay(uint _ZSUSDDebt) external view returns (uint);
 
-    /// @notice Updates the baseRate state variable based on time elapsed since the last redemption or ZUSD borrowing operation.
+    /// @notice Updates the baseRate state variable based on time elapsed since the last redemption or ZSUSD borrowing operation.
     function decayBaseRateFromBorrowing() external;
 
     /// @param _borrower borrower address

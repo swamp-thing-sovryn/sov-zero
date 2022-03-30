@@ -23,7 +23,7 @@ async function example() {
 
   const { newTrove } = await liquity.openTrove({
     depositCollateral: 5, // ETH
-    borrowZUSD: 2000
+    borrowZSUSD: 2000
   });
 
   console.log(`Successfully opened a Liquity Trove (${newTrove})!`);

@@ -4,7 +4,7 @@
 
 ## Trove.netDebt property
 
-Amount of ZUSD that must be repaid to close this Trove.
+Amount of ZSUSD that must be repaid to close this Trove.
 
 <b>Signature:</b>
 

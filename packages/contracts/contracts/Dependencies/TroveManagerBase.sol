@@ -4,7 +4,7 @@ pragma solidity 0.6.11;
 
 import "../Interfaces/IActivePool.sol";
 import "../Interfaces/IDefaultPool.sol";
-import "../Interfaces/IZUSDToken.sol";
+import "../Interfaces/IZSUSDToken.sol";
 import "../Interfaces/IZEROStaking.sol";
 import "../Interfaces/ISortedTroves.sol";
 import "../Interfaces/ICollSurplusPool.sol";
@@ -34,7 +34,7 @@ contract TroveManagerBase is LiquityBase, TroveManagerStorage {
 
     struct LocalVariables_OuterLiquidationFunction {
         uint256 price;
-        uint256 ZUSDInStabPool;
+        uint256 ZSUSDInStabPool;
         bool recoveryModeAtStart;
         uint256 liquidatedDebt;
         uint256 liquidatedColl;
@@ -47,7 +47,7 @@ contract TroveManagerBase is LiquityBase, TroveManagerStorage {
     }
 
     struct LocalVariables_LiquidationSequence {
-        uint256 remainingZUSDInStabPool;
+        uint256 remainingZSUSDInStabPool;
         uint256 i;
         uint256 ICR;
         address user;
@@ -60,7 +60,7 @@ contract TroveManagerBase is LiquityBase, TroveManagerStorage {
         uint256 entireTroveDebt;
         uint256 entireTroveColl;
         uint256 collGasCompensation;
-        uint256 ZUSDGasCompensation;
+        uint256 ZSUSDGasCompensation;
         uint256 debtToOffset;
         uint256 collToSendToSP;
         uint256 debtToRedistribute;
@@ -72,7 +72,7 @@ contract TroveManagerBase is LiquityBase, TroveManagerStorage {
         uint256 totalCollInSequence;
         uint256 totalDebtInSequence;
         uint256 totalCollGasCompensation;
-        uint256 totalZUSDGasCompensation;
+        uint256 totalZSUSDGasCompensation;
         uint256 totalDebtToOffset;
         uint256 totalCollToSendToSP;
         uint256 totalDebtToRedistribute;
@@ -83,7 +83,7 @@ contract TroveManagerBase is LiquityBase, TroveManagerStorage {
     struct ContractsCache {
         IActivePool activePool;
         IDefaultPool defaultPool;
-        IZUSDToken zusdToken;
+        IZSUSDToken zsusdToken;
         IZEROStaking zeroStaking;
         ISortedTroves sortedTroves;
         ICollSurplusPool collSurplusPool;
@@ -92,18 +92,18 @@ contract TroveManagerBase is LiquityBase, TroveManagerStorage {
     // --- Variable container structs for redemptions ---
 
     struct RedemptionTotals {
-        uint256 remainingZUSD;
-        uint256 totalZUSDToRedeem;
+        uint256 remainingZSUSD;
+        uint256 totalZSUSDToRedeem;
         uint256 totalSOVDrawn;
         uint256 SOVFee;
         uint256 SOVToSendToRedeemer;
         uint256 decayedBaseRate;
         uint256 price;
-        uint256 totalZUSDSupplyAtStart;
+        uint256 totalZSUSDSupplyAtStart;
     }
 
     struct SingleRedemptionValues {
-        uint256 ZUSDLot;
+        uint256 ZSUSDLot;
         uint256 SOVLot;
         bool cancelledPartial;
     }
@@ -114,11 +114,11 @@ contract TroveManagerBase is LiquityBase, TroveManagerStorage {
         uint256 _liquidatedDebt,
         uint256 _liquidatedColl,
         uint256 _collGasCompensation,
-        uint256 _ZUSDGasCompensation
+        uint256 _ZSUSDGasCompensation
     );
     event Redemption(
-        uint256 _attemptedZUSDAmount,
-        uint256 _actualZUSDAmount,
+        uint256 _attemptedZSUSDAmount,
+        uint256 _actualZSUSDAmount,
         uint256 _SOVSent,
         uint256 _SOVFee
     );
@@ -139,8 +139,8 @@ contract TroveManagerBase is LiquityBase, TroveManagerStorage {
     event LastFeeOpTimeUpdated(uint256 _lastFeeOpTime);
     event TotalStakesUpdated(uint256 _newTotalStakes);
     event SystemSnapshotsUpdated(uint256 _totalStakesSnapshot, uint256 _totalCollateralSnapshot);
-    event LTermsUpdated(uint256 _L_SOV, uint256 _L_ZUSDDebt);
-    event TroveSnapshotsUpdated(uint256 _L_SOV, uint256 _L_ZUSDDebt);
+    event LTermsUpdated(uint256 _L_SOV, uint256 _L_ZSUSDDebt);
+    event TroveSnapshotsUpdated(uint256 _L_SOV, uint256 _L_ZSUSDDebt);
     event TroveIndexUpdated(address _borrower, uint256 _newIndex);
 
     enum TroveManagerOperation {
@@ -152,20 +152,20 @@ contract TroveManagerBase is LiquityBase, TroveManagerStorage {
 
     /// Return the current collateral ratio (ICR) of a given Trove. Takes a trove's pending coll and debt rewards from redistributions into account.
     function _getCurrentICR(address _borrower, uint256 _price) public view returns (uint256) {
-        (uint256 currentSOV, uint256 currentZUSDDebt) = _getCurrentTroveAmounts(_borrower);
+        (uint256 currentSOV, uint256 currentZSUSDDebt) = _getCurrentTroveAmounts(_borrower);
 
-        uint256 ICR = LiquityMath._computeCR(currentSOV, currentZUSDDebt, _price);
+        uint256 ICR = LiquityMath._computeCR(currentSOV, currentZSUSDDebt, _price);
         return ICR;
     }
 
     function _getCurrentTroveAmounts(address _borrower) internal view returns (uint256, uint256) {
         uint256 pendingSOVReward = _getPendingSOVReward(_borrower);
-        uint256 pendingZUSDDebtReward = _getPendingZUSDDebtReward(_borrower);
+        uint256 pendingZSUSDDebtReward = _getPendingZSUSDDebtReward(_borrower);
 
         uint256 currentSOV = Troves[_borrower].coll.add(pendingSOVReward);
-        uint256 currentZUSDDebt = Troves[_borrower].debt.add(pendingZUSDDebtReward);
+        uint256 currentZSUSDDebt = Troves[_borrower].debt.add(pendingZSUSDDebtReward);
 
-        return (currentSOV, currentZUSDDebt);
+        return (currentSOV, currentZSUSDDebt);
     }
 
     /// Get the borrower's pending accumulated SOV reward, earned by their stake
@@ -184,10 +184,10 @@ contract TroveManagerBase is LiquityBase, TroveManagerStorage {
         return pendingSOVReward;
     }
 
-    /// Get the borrower's pending accumulated ZUSD reward, earned by their stake
-    function _getPendingZUSDDebtReward(address _borrower) public view returns (uint256) {
-        uint256 snapshotZUSDDebt = rewardSnapshots[_borrower].ZUSDDebt;
-        uint256 rewardPerUnitStaked = L_ZUSDDebt.sub(snapshotZUSDDebt);
+    /// Get the borrower's pending accumulated ZSUSD reward, earned by their stake
+    function _getPendingZSUSDDebtReward(address _borrower) public view returns (uint256) {
+        uint256 snapshotZSUSDDebt = rewardSnapshots[_borrower].ZSUSDDebt;
+        uint256 rewardPerUnitStaked = L_ZSUSDDebt.sub(snapshotZSUSDDebt);
 
         if (rewardPerUnitStaked == 0 || Troves[_borrower].status != Status.active) {
             return 0;
@@ -195,9 +195,9 @@ contract TroveManagerBase is LiquityBase, TroveManagerStorage {
 
         uint256 stake = Troves[_borrower].stake;
 
-        uint256 pendingZUSDDebtReward = stake.mul(rewardPerUnitStaked).div(DECIMAL_PRECISION);
+        uint256 pendingZSUSDDebtReward = stake.mul(rewardPerUnitStaked).div(DECIMAL_PRECISION);
 
-        return pendingZUSDDebtReward;
+        return pendingZSUSDDebtReward;
     }
 
     /// Add the borrowers's coll and debt rewards earned from redistributions, to their Trove
@@ -211,11 +211,11 @@ contract TroveManagerBase is LiquityBase, TroveManagerStorage {
 
             // Compute pending rewards
             uint256 pendingSOVReward = _getPendingSOVReward(_borrower);
-            uint256 pendingZUSDDebtReward = _getPendingZUSDDebtReward(_borrower);
+            uint256 pendingZSUSDDebtReward = _getPendingZSUSDDebtReward(_borrower);
 
             // Apply pending rewards to trove's state
             Troves[_borrower].coll = Troves[_borrower].coll.add(pendingSOVReward);
-            Troves[_borrower].debt = Troves[_borrower].debt.add(pendingZUSDDebtReward);
+            Troves[_borrower].debt = Troves[_borrower].debt.add(pendingZSUSDDebtReward);
 
             _updateTroveRewardSnapshots(_borrower);
 
@@ -223,7 +223,7 @@ contract TroveManagerBase is LiquityBase, TroveManagerStorage {
             _movePendingTroveRewardsToActivePool(
                 _activePool,
                 _defaultPool,
-                pendingZUSDDebtReward,
+                pendingZSUSDDebtReward,
                 pendingSOVReward
             );
 
@@ -252,19 +252,19 @@ contract TroveManagerBase is LiquityBase, TroveManagerStorage {
 
     function _updateTroveRewardSnapshots(address _borrower) internal {
         rewardSnapshots[_borrower].SOV = L_SOV;
-        rewardSnapshots[_borrower].ZUSDDebt = L_ZUSDDebt;
-        emit TroveSnapshotsUpdated(L_SOV, L_ZUSDDebt);
+        rewardSnapshots[_borrower].ZSUSDDebt = L_ZSUSDDebt;
+        emit TroveSnapshotsUpdated(L_SOV, L_ZSUSDDebt);
     }
 
     /// Move a Trove's pending debt and collateral rewards from distributions, from the Default Pool to the Active Pool
     function _movePendingTroveRewardsToActivePool(
         IActivePool _activePool,
         IDefaultPool _defaultPool,
-        uint256 _ZUSD,
+        uint256 _ZSUSD,
         uint256 _SOV
     ) internal {
-        _defaultPool.decreaseZUSDDebt(_ZUSD);
-        _activePool.increaseZUSDDebt(_ZUSD);
+        _defaultPool.decreaseZSUSDDebt(_ZSUSD);
+        _activePool.increaseZSUSDDebt(_ZSUSD);
         _defaultPool.sendSOVToActivePool(_SOV);
     }
 
@@ -286,7 +286,7 @@ contract TroveManagerBase is LiquityBase, TroveManagerStorage {
         Troves[_borrower].debt = 0;
 
         rewardSnapshots[_borrower].SOV = 0;
-        rewardSnapshots[_borrower].ZUSDDebt = 0;
+        rewardSnapshots[_borrower].ZSUSDDebt = 0;
 
         _removeTroveOwner(_borrower, TroveOwnersArrayLength);
         sortedTroves.remove(_borrower);
@@ -409,14 +409,14 @@ contract TroveManagerBase is LiquityBase, TroveManagerStorage {
         );
     }
 
-    function _requireZUSDBalanceCoversRedemption(
-        IZUSDToken _zusdToken,
+    function _requireZSUSDBalanceCoversRedemption(
+        IZSUSDToken _zsusdToken,
         address _redeemer,
         uint256 _amount
     ) internal view {
         require(
-            _zusdToken.balanceOf(_redeemer) >= _amount,
-            "TroveManager: Requested redemption amount must be <= user's ZUSD token balance"
+            _zsusdToken.balanceOf(_redeemer) >= _amount,
+            "TroveManager: Requested redemption amount must be <= user's ZSUSD token balance"
         );
     }
 

@@ -3,17 +3,17 @@
 pragma solidity 0.6.11;
 
 /*
- * The Stability Pool holds ZUSD tokens deposited by Stability Pool depositors.
+ * The Stability Pool holds ZSUSD tokens deposited by Stability Pool depositors.
  *
- * When a trove is liquidated, then depending on system conditions, some of its ZUSD debt gets offset with
- * ZUSD in the Stability Pool:  that is, the offset debt evaporates, and an equal amount of ZUSD tokens in the Stability Pool is burned.
+ * When a trove is liquidated, then depending on system conditions, some of its ZSUSD debt gets offset with
+ * ZSUSD in the Stability Pool:  that is, the offset debt evaporates, and an equal amount of ZSUSD tokens in the Stability Pool is burned.
  *
- * Thus, a liquidation causes each depositor to receive a ZUSD loss, in proportion to their deposit as a share of total deposits.
+ * Thus, a liquidation causes each depositor to receive a ZSUSD loss, in proportion to their deposit as a share of total deposits.
  * They also receive an SOV gain, as the SOV collateral of the liquidated trove is distributed among Stability depositors,
  * in the same proportion.
  *
  * When a liquidation occurs, it depletes every deposit by the same fraction: for example, a liquidation that depletes 40%
- * of the total ZUSD in the Stability Pool, depletes 40% of each deposit.
+ * of the total ZSUSD in the Stability Pool, depletes 40% of each deposit.
  *
  * A deposit that has experienced a series of liquidations is termed a "compounded deposit": each liquidation depletes the deposit,
  * multiplying it by some factor in range ]0,1[
@@ -38,14 +38,14 @@ interface IStabilityPool {
     // --- Events ---
     
     event StabilityPoolSOVBalanceUpdated(uint _newBalance);
-    event StabilityPoolZUSDBalanceUpdated(uint _newBalance);
+    event StabilityPoolZSUSDBalanceUpdated(uint _newBalance);
 
     event SOVTokenAddressChanged(address _sovTokenAddress);
     event BorrowerOperationsAddressChanged(address _newBorrowerOperationsAddress);
     event TroveManagerAddressChanged(address _newTroveManagerAddress);
     event ActivePoolAddressChanged(address _newActivePoolAddress);
     event DefaultPoolAddressChanged(address _newDefaultPoolAddress);
-    event ZUSDTokenAddressChanged(address _newZUSDTokenAddress);
+    event ZSUSDTokenAddressChanged(address _newZSUSDTokenAddress);
     event SortedTrovesAddressChanged(address _newSortedTrovesAddress);
     event PriceFeedAddressChanged(address _newPriceFeedAddress);
     event CommunityIssuanceAddressChanged(address _newCommunityIssuanceAddress);
@@ -64,7 +64,7 @@ interface IStabilityPool {
     event UserDepositChanged(address indexed _depositor, uint _newDeposit);
     event FrontEndStakeChanged(address indexed _frontEnd, uint _newFrontEndStake, address _depositor);
 
-    event SOVGainWithdrawn(address indexed _depositor, uint _SOV, uint _ZUSDLoss);
+    event SOVGainWithdrawn(address indexed _depositor, uint _SOV, uint _ZSUSDLoss);
     event ZEROPaidToDepositor(address indexed _depositor, uint _ZERO);
     event ZEROPaidToFrontEnd(address indexed _frontEnd, uint _ZERO);
     event SOVSent(address _to, uint _amount);
@@ -79,7 +79,7 @@ interface IStabilityPool {
      * @param _borrowerOperationsAddress BorrowerOperations contract address
      * @param _troveManagerAddress TroveManager contract address
      * @param _activePoolAddress ActivePool contract address
-     * @param _zusdTokenAddress ZUSDToken contract address
+     * @param _zsusdTokenAddress ZSUSDToken contract address
      * @param _sortedTrovesAddress SortedTroves contract address
      * @param _priceFeedAddress PriceFeed contract address
      * @param _communityIssuanceAddress CommunityIssuanceAddress
@@ -90,7 +90,7 @@ interface IStabilityPool {
         address _borrowerOperationsAddress,
         address _troveManagerAddress,
         address _activePoolAddress,
-        address _zusdTokenAddress,
+        address _zsusdTokenAddress,
         address _sortedTrovesAddress,
         address _priceFeedAddress,
         address _communityIssuanceAddress
@@ -160,7 +160,7 @@ interface IStabilityPool {
      * @notice Initial checks:
      *    - Caller is TroveManager
      *    ---
-     *    Cancels out the specified debt against the ZUSD contained in the Stability Pool (as far as possible)
+     *    Cancels out the specified debt against the ZSUSD contained in the Stability Pool (as far as possible)
      *    and transfers the Trove's SOV collateral from ActivePool to StabilityPool.
      *    Only called by liquidation functions in the TroveManager.
      * @param _debt debt to cancel
@@ -174,9 +174,9 @@ interface IStabilityPool {
     function getSOV() external view returns (uint);
 
     /**
-     * @return ZUSD held in the pool. Changes when users deposit/withdraw, and when Trove debt is offset.
+     * @return ZSUSD held in the pool. Changes when users deposit/withdraw, and when Trove debt is offset.
      */
-    function getTotalZUSDDeposits() external view returns (uint);
+    function getTotalZSUSDDeposits() external view returns (uint);
 
     /**
      * @notice Calculates the SOV gain earned by the deposit since its last snapshots were taken.
@@ -189,7 +189,7 @@ interface IStabilityPool {
      * @param _depositor depositor address
      * @return the user's compounded deposit.
      */
-    function getCompoundedZUSDDeposit(address _depositor) external view returns (uint);
+    function getCompoundedZSUSDDeposit(address _depositor) external view returns (uint);
 
     /**
      * @notice The front end's compounded stake is equal to the sum of its depositors' compounded deposits.

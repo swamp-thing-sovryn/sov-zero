@@ -17,7 +17,7 @@ export interface StabilityPoolGainsWithdrawalDetails
 |  Property | Type | Description |
 |  --- | --- | --- |
 |  [collateralGain](./lib-base.stabilitypoolgainswithdrawaldetails.collateralgain.md) | [Decimal](./lib-base.decimal.md) | Amount of native currency (e.g. Ether) paid out to the depositor in this transaction. |
-|  [newZUSDDeposit](./lib-base.stabilitypoolgainswithdrawaldetails.newzusddeposit.md) | [Decimal](./lib-base.decimal.md) | Amount of ZUSD in the deposit directly after this transaction. |
+|  [newZSUSDDeposit](./lib-base.stabilitypoolgainswithdrawaldetails.newzsusddeposit.md) | [Decimal](./lib-base.decimal.md) | Amount of ZSUSD in the deposit directly after this transaction. |
 |  [zeroReward](./lib-base.stabilitypoolgainswithdrawaldetails.zeroreward.md) | [Decimal](./lib-base.decimal.md) | Amount of ZERO rewarded to the depositor in this transaction. |
-|  [zusdLoss](./lib-base.stabilitypoolgainswithdrawaldetails.zusdloss.md) | [Decimal](./lib-base.decimal.md) | Amount of ZUSD burned from the deposit by liquidations since the last modification. |
+|  [zsusdLoss](./lib-base.stabilitypoolgainswithdrawaldetails.zsusdloss.md) | [Decimal](./lib-base.decimal.md) | Amount of ZSUSD burned from the deposit by liquidations since the last modification. |
 

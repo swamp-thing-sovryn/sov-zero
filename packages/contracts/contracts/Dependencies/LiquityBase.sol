@@ -19,10 +19,10 @@ contract LiquityBase is BaseMath, ILiquityBase {
 
     uint256 public constant _100pct = 1000000000000000000; // 1e18 == 100%
 
-    /// Amount of ZUSD to be locked in gas pool on opening troves
-    uint256 public constant ZUSD_GAS_COMPENSATION = 20e18;
+    /// Amount of ZSUSD to be locked in gas pool on opening troves
+    uint256 public constant ZSUSD_GAS_COMPENSATION = 20e18;
 
-    /// Minimum amount of net ZUSD debt a trove must have
+    /// Minimum amount of net ZSUSD debt a trove must have
     uint256 public constant MIN_NET_DEBT = 180e18;
 
     IActivePool public activePool;
@@ -37,11 +37,11 @@ contract LiquityBase is BaseMath, ILiquityBase {
 
     // Returns the composite debt (drawn debt + gas compensation) of a trove, for the purpose of ICR calculation
     function _getCompositeDebt(uint256 _debt) internal pure returns (uint256) {
-        return _debt.add(ZUSD_GAS_COMPENSATION);
+        return _debt.add(ZSUSD_GAS_COMPENSATION);
     }
 
     function _getNetDebt(uint256 _debt) internal pure returns (uint256) {
-        return _debt.sub(ZUSD_GAS_COMPENSATION);
+        return _debt.sub(ZSUSD_GAS_COMPENSATION);
     }
 
     /// Return the amount of SOV to be drawn from a trove's collateral and sent as gas compensation.
@@ -57,8 +57,8 @@ contract LiquityBase is BaseMath, ILiquityBase {
     }
 
     function getEntireSystemDebt() public view returns (uint256 entireSystemDebt) {
-        uint256 activeDebt = activePool.getZUSDDebt();
-        uint256 closedDebt = defaultPool.getZUSDDebt();
+        uint256 activeDebt = activePool.getZSUSDDebt();
+        uint256 closedDebt = defaultPool.getZSUSDDebt();
 
         return activeDebt.add(closedDebt);
     }

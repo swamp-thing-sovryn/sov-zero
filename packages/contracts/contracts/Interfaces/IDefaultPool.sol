@@ -8,7 +8,7 @@ interface IDefaultPool is IPool {
     // --- Events ---
     event SOVTokenAddressChanged(address _sovTokenAddress);
     event TroveManagerAddressChanged(address _newTroveManagerAddress);
-    event DefaultPoolZUSDDebtUpdated(uint256 _ZUSDDebt);
+    event DefaultPoolZSUSDDebtUpdated(uint256 _ZSUSDDebt);
 
     // --- Functions ---
 

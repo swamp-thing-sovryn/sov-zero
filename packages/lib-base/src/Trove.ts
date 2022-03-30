@@ -5,19 +5,19 @@ import { Decimal, Decimalish } from "./Decimal";
 import {
   MINIMUM_COLLATERAL_RATIO,
   CRITICAL_COLLATERAL_RATIO,
-  ZUSD_LIQUIDATION_RESERVE,
+  ZSUSD_LIQUIDATION_RESERVE,
   MINIMUM_BORROWING_RATE
 } from "./constants";
 
 /** @internal */ export type _CollateralDeposit<T> = { depositCollateral: T };
 /** @internal */ export type _CollateralWithdrawal<T> = { withdrawCollateral: T };
-/** @internal */ export type _ZUSDBorrowing<T> = { borrowZUSD: T };
-/** @internal */ export type _ZUSDRepayment<T> = { repayZUSD: T };
+/** @internal */ export type _ZSUSDBorrowing<T> = { borrowZSUSD: T };
+/** @internal */ export type _ZSUSDRepayment<T> = { repayZSUSD: T };
 
 /** @internal */ export type _NoCollateralDeposit = Partial<_CollateralDeposit<undefined>>;
 /** @internal */ export type _NoCollateralWithdrawal = Partial<_CollateralWithdrawal<undefined>>;
-/** @internal */ export type _NoZUSDBorrowing = Partial<_ZUSDBorrowing<undefined>>;
-/** @internal */ export type _NoZUSDRepayment = Partial<_ZUSDRepayment<undefined>>;
+/** @internal */ export type _NoZSUSDBorrowing = Partial<_ZSUSDBorrowing<undefined>>;
+/** @internal */ export type _NoZSUSDRepayment = Partial<_ZSUSDRepayment<undefined>>;
 
 /** @internal */
 export type _CollateralChange<T> =
@@ -29,11 +29,11 @@ export type _NoCollateralChange = _NoCollateralDeposit & _NoCollateralWithdrawal
 
 /** @internal */
 export type _DebtChange<T> =
-  | (_ZUSDBorrowing<T> & _NoZUSDRepayment)
-  | (_ZUSDRepayment<T> & _NoZUSDBorrowing);
+  | (_ZSUSDBorrowing<T> & _NoZSUSDRepayment)
+  | (_ZSUSDRepayment<T> & _NoZSUSDBorrowing);
 
 /** @internal */
-export type _NoDebtChange = _NoZUSDBorrowing & _NoZUSDRepayment;
+export type _NoDebtChange = _NoZSUSDBorrowing & _NoZSUSDRepayment;
 
 /**
  * Parameters of an {@link TransactableLiquity.openTrove | openTrove()} transaction.
@@ -59,9 +59,9 @@ export type _NoDebtChange = _NoZUSDBorrowing & _NoZUSDRepayment;
  *   </tr>
  *
  *   <tr>
- *     <td> borrowZUSD </td>
+ *     <td> borrowZSUSD </td>
  *     <td> T </td>
- *     <td> The amount of ZUSD that's borrowed. </td>
+ *     <td> The amount of ZSUSD that's borrowed. </td>
  *   </tr>
  *
  * </table>
@@ -70,8 +70,8 @@ export type _NoDebtChange = _NoZUSDBorrowing & _NoZUSDRepayment;
  */
 export type TroveCreationParams<T = unknown> = _CollateralDeposit<T> &
   _NoCollateralWithdrawal &
-  _ZUSDBorrowing<T> &
-  _NoZUSDRepayment;
+  _ZSUSDBorrowing<T> &
+  _NoZSUSDRepayment;
 
 /**
  * Parameters of a {@link TransactableLiquity.closeTrove | closeTrove()} transaction.
@@ -97,9 +97,9 @@ export type TroveCreationParams<T = unknown> = _CollateralDeposit<T> &
  *   </tr>
  *
  *   <tr>
- *     <td> repayZUSD? </td>
+ *     <td> repayZSUSD? </td>
  *     <td> T </td>
- *     <td> <i>(Optional)</i> The amount of ZUSD that's repaid. </td>
+ *     <td> <i>(Optional)</i> The amount of ZSUSD that's repaid. </td>
  *   </tr>
  *
  * </table>
@@ -108,8 +108,8 @@ export type TroveCreationParams<T = unknown> = _CollateralDeposit<T> &
  */
 export type TroveClosureParams<T> = _CollateralWithdrawal<T> &
   _NoCollateralDeposit &
-  Partial<_ZUSDRepayment<T>> &
-  _NoZUSDBorrowing;
+  Partial<_ZSUSDRepayment<T>> &
+  _NoZSUSDBorrowing;
 
 /**
  * Parameters of an {@link TransactableLiquity.adjustTrove | adjustTrove()} transaction.
@@ -121,7 +121,7 @@ export type TroveClosureParams<T> = _CollateralWithdrawal<T> &
  * Even though all properties are optional, a valid `TroveAdjustmentParams` object must define at
  * least one.
  *
- * Defining both `depositCollateral` and `withdrawCollateral`, or both `borrowZUSD` and `repayZUSD`
+ * Defining both `depositCollateral` and `withdrawCollateral`, or both `borrowZSUSD` and `repayZSUSD`
  * at the same time is disallowed, and will result in a type-checking error.
  *
  * <h2>Properties</h2>
@@ -147,15 +147,15 @@ export type TroveClosureParams<T> = _CollateralWithdrawal<T> &
  *   </tr>
  *
  *   <tr>
- *     <td> borrowZUSD? </td>
+ *     <td> borrowZSUSD? </td>
  *     <td> T </td>
- *     <td> <i>(Optional)</i> The amount of ZUSD that's borrowed. </td>
+ *     <td> <i>(Optional)</i> The amount of ZSUSD that's borrowed. </td>
  *   </tr>
  *
  *   <tr>
- *     <td> repayZUSD? </td>
+ *     <td> repayZSUSD? </td>
  *     <td> T </td>
- *     <td> <i>(Optional)</i> The amount of ZUSD that's repaid. </td>
+ *     <td> <i>(Optional)</i> The amount of ZSUSD that's repaid. </td>
  *   </tr>
  *
  * </table>
@@ -257,7 +257,7 @@ type AllowedKey<T> = Exclude<
 
 const allowedTroveCreationKeys: AllowedKey<TroveCreationParams>[] = [
   "depositCollateral",
-  "borrowZUSD"
+  "borrowZSUSD"
 ];
 
 function checkAllowedTroveCreationKeys<T>(
@@ -302,8 +302,8 @@ export const _normalizeTroveCreation = (
 const allowedTroveAdjustmentKeys: AllowedKey<TroveAdjustmentParams>[] = [
   "depositCollateral",
   "withdrawCollateral",
-  "borrowZUSD",
-  "repayZUSD"
+  "borrowZSUSD",
+  "repayZSUSD"
 ];
 
 function checkAllowedTroveAdjustmentKeys<T>(
@@ -339,21 +339,21 @@ const collateralChangeFrom = <T>({
 };
 
 const debtChangeFrom = <T>({
-  borrowZUSD,
-  repayZUSD
+  borrowZSUSD,
+  repayZSUSD
 }: Partial<Record<AllowedKey<TroveAdjustmentParams>, T>>): _DebtChange<T> | undefined => {
-  if (borrowZUSD !== undefined && repayZUSD !== undefined) {
+  if (borrowZSUSD !== undefined && repayZSUSD !== undefined) {
     throw new Error(
-      "TroveAdjustmentParams: 'borrowZUSD' and 'repayZUSD' can't be present at the same time"
+      "TroveAdjustmentParams: 'borrowZSUSD' and 'repayZSUSD' can't be present at the same time"
     );
   }
 
-  if (borrowZUSD !== undefined) {
-    return { borrowZUSD };
+  if (borrowZSUSD !== undefined) {
+    return { borrowZSUSD };
   }
 
-  if (repayZUSD !== undefined) {
-    return { repayZUSD };
+  if (repayZSUSD !== undefined) {
+    return { repayZSUSD };
   }
 };
 
@@ -410,7 +410,7 @@ export class Trove {
   /** Amount of native currency (e.g. Ether) collateralized. */
   readonly collateral: Decimal;
 
-  /** Amount of ZUSD owed. */
+  /** Amount of ZSUSD owed. */
   readonly debt: Decimal;
 
   /** @internal */
@@ -424,17 +424,17 @@ export class Trove {
   }
 
   /**
-   * Amount of ZUSD that must be repaid to close this Trove.
+   * Amount of ZSUSD that must be repaid to close this Trove.
    *
    * @remarks
    * This doesn't include the liquidation reserve, which is refunded in case of normal closure.
    */
   get netDebt(): Decimal {
-    if (this.debt.lt(ZUSD_LIQUIDATION_RESERVE)) {
-      throw new Error(`netDebt should not be used when debt < ${ZUSD_LIQUIDATION_RESERVE}`);
+    if (this.debt.lt(ZSUSD_LIQUIDATION_RESERVE)) {
+      throw new Error(`netDebt should not be used when debt < ${ZSUSD_LIQUIDATION_RESERVE}`);
     }
 
-    return this.debt.sub(ZUSD_LIQUIDATION_RESERVE);
+    return this.debt.sub(ZSUSD_LIQUIDATION_RESERVE);
   }
 
   /** @internal */
@@ -539,8 +539,8 @@ export class Trove {
 
   private _debtChange({ debt }: Trove, borrowingRate: Decimalish): _DebtChange<Decimal> {
     return debt.gt(this.debt)
-      ? { borrowZUSD: unapplyFee(borrowingRate, debt.sub(this.debt)) }
-      : { repayZUSD: this.debt.sub(debt) };
+      ? { borrowZSUSD: unapplyFee(borrowingRate, debt.sub(this.debt)) }
+      : { repayZSUSD: this.debt.sub(debt) };
   }
 
   private _collateralChange({ collateral }: Trove): _CollateralChange<Decimal> {
@@ -567,20 +567,20 @@ export class Trove {
     }
 
     if (this.isEmpty) {
-      if (that.debt.lt(ZUSD_LIQUIDATION_RESERVE)) {
+      if (that.debt.lt(ZSUSD_LIQUIDATION_RESERVE)) {
         return invalidTroveCreation(that, "missingLiquidationReserve");
       }
 
       return troveCreation({
         depositCollateral: that.collateral,
-        borrowZUSD: unapplyFee(borrowingRate, that.netDebt)
+        borrowZSUSD: unapplyFee(borrowingRate, that.netDebt)
       });
     }
 
     if (that.isEmpty) {
       return troveClosure(
         this.netDebt.nonZero
-          ? { withdrawCollateral: this.collateral, repayZUSD: this.netDebt }
+          ? { withdrawCollateral: this.collateral, repayZSUSD: this.netDebt }
           : { withdrawCollateral: this.collateral }
       );
     }
@@ -625,11 +625,11 @@ export class Trove {
           throw new Error("Can't create onto existing Trove");
         }
 
-        const { depositCollateral, borrowZUSD } = change.params;
+        const { depositCollateral, borrowZSUSD } = change.params;
 
         return new Trove(
           depositCollateral,
-          ZUSD_LIQUIDATION_RESERVE.add(applyFee(borrowingRate, borrowZUSD))
+          ZSUSD_LIQUIDATION_RESERVE.add(applyFee(borrowingRate, borrowZSUSD))
         );
       }
 
@@ -643,13 +643,13 @@ export class Trove {
       case "adjustment": {
         const {
           setToZero,
-          params: { depositCollateral, withdrawCollateral, borrowZUSD, repayZUSD }
+          params: { depositCollateral, withdrawCollateral, borrowZSUSD, repayZSUSD }
         } = change;
 
         const collateralDecrease = withdrawCollateral ?? Decimal.ZERO;
         const collateralIncrease = depositCollateral ?? Decimal.ZERO;
-        const debtDecrease = repayZUSD ?? Decimal.ZERO;
-        const debtIncrease = borrowZUSD ? applyFee(borrowingRate, borrowZUSD) : Decimal.ZERO;
+        const debtDecrease = repayZSUSD ?? Decimal.ZERO;
+        const debtIncrease = borrowZSUSD ? applyFee(borrowingRate, borrowZSUSD) : Decimal.ZERO;
 
         return setToZero === "collateral"
           ? this.setCollateral(Decimal.ZERO).addDebt(debtIncrease).subtractDebt(debtDecrease)

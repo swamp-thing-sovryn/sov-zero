@@ -23,7 +23,7 @@ Implemented by [EthersLiquity](./lib-ethers.ethersliquity.md)<!-- -->.
 |  [getCollateralSurplusBalance(address)](./lib-base.readableliquity.getcollateralsurplusbalance.md) | Get the amount of leftover collateral available for withdrawal by an address. |
 |  [getFees()](./lib-base.readableliquity.getfees.md) | Get a calculator for current fees. |
 |  [getFrontendStatus(address)](./lib-base.readableliquity.getfrontendstatus.md) | Check whether an address is registered as a Liquity frontend, and what its kickback rate is. |
-|  [getNUEBalance(address)](./lib-base.readableliquity.getnuebalance.md) | Get the amount of ZUSD held by an address. |
+|  [getNUEBalance(address)](./lib-base.readableliquity.getnuebalance.md) | Get the amount of ZSUSD held by an address. |
 |  [getNumberOfTroves()](./lib-base.readableliquity.getnumberoftroves.md) | Get number of Troves that are currently open. |
 |  [getPrice()](./lib-base.readableliquity.getprice.md) | Get the current price of the native currency (e.g. Ether) in USD. |
 |  [getRemainingStabilityPoolZEROReward()](./lib-base.readableliquity.getremainingstabilitypoolzeroreward.md) | Get the remaining ZERO that will be collectively rewarded to stability depositors. |
@@ -36,6 +36,6 @@ Implemented by [EthersLiquity](./lib-ethers.ethersliquity.md)<!-- -->.
 |  [getTroves(params)](./lib-base.readableliquity.gettroves_1.md) | Get a slice from the list of Troves. |
 |  [getZEROBalance(address)](./lib-base.readableliquity.getzerobalance.md) | Get the amount of ZERO held by an address. |
 |  [getZEROStake(address)](./lib-base.readableliquity.getzerostake.md) | Get the current state of an ZERO Stake. |
-|  [getZUSDBalance(address)](./lib-base.readableliquity.getzusdbalance.md) | Get the amount of ZUSD held by an address. |
-|  [getZUSDInStabilityPool()](./lib-base.readableliquity.getzusdinstabilitypool.md) | Get the total amount of ZUSD currently deposited in the Stability Pool. |
+|  [getZSUSDBalance(address)](./lib-base.readableliquity.getzsusdbalance.md) | Get the amount of ZSUSD held by an address. |
+|  [getZSUSDInStabilityPool()](./lib-base.readableliquity.getzsusdinstabilitypool.md) | Get the total amount of ZSUSD currently deposited in the Stability Pool. |
 

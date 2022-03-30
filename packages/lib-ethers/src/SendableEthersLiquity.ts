@@ -81,21 +81,21 @@ export class SendableEthersLiquity
     return this._populate.withdrawCollateral(amount, overrides).then(sendTransaction);
   }
 
-  /** {@inheritDoc @liquity/lib-base#SendableLiquity.borrowZUSD} */
-  borrowZUSD(
+  /** {@inheritDoc @liquity/lib-base#SendableLiquity.borrowZSUSD} */
+  borrowZSUSD(
     amount: Decimalish,
     maxBorrowingRate?: Decimalish,
     overrides?: EthersTransactionOverrides
   ): Promise<SentEthersLiquityTransaction<TroveAdjustmentDetails>> {
-    return this._populate.borrowZUSD(amount, maxBorrowingRate, overrides).then(sendTransaction);
+    return this._populate.borrowZSUSD(amount, maxBorrowingRate, overrides).then(sendTransaction);
   }
 
-  /** {@inheritDoc @liquity/lib-base#SendableLiquity.repayZUSD} */
-  repayZUSD(
+  /** {@inheritDoc @liquity/lib-base#SendableLiquity.repayZSUSD} */
+  repayZSUSD(
     amount: Decimalish,
     overrides?: EthersTransactionOverrides
   ): Promise<SentEthersLiquityTransaction<TroveAdjustmentDetails>> {
-    return this._populate.repayZUSD(amount, overrides).then(sendTransaction);
+    return this._populate.repayZSUSD(amount, overrides).then(sendTransaction);
   }
 
   /** @internal */
@@ -124,23 +124,23 @@ export class SendableEthersLiquity
       .then(sendTransaction);
   }
 
-  /** {@inheritDoc @liquity/lib-base#SendableLiquity.depositZUSDInStabilityPool} */
-  depositZUSDInStabilityPool(
+  /** {@inheritDoc @liquity/lib-base#SendableLiquity.depositZSUSDInStabilityPool} */
+  depositZSUSDInStabilityPool(
     amount: Decimalish,
     frontendTag?: string,
     overrides?: EthersTransactionOverrides
   ): Promise<SentEthersLiquityTransaction<StabilityDepositChangeDetails>> {
     return this._populate
-      .depositZUSDInStabilityPool(amount, frontendTag, overrides)
+      .depositZSUSDInStabilityPool(amount, frontendTag, overrides)
       .then(sendTransaction);
   }
 
-  /** {@inheritDoc @liquity/lib-base#SendableLiquity.withdrawZUSDFromStabilityPool} */
-  withdrawZUSDFromStabilityPool(
+  /** {@inheritDoc @liquity/lib-base#SendableLiquity.withdrawZSUSDFromStabilityPool} */
+  withdrawZSUSDFromStabilityPool(
     amount: Decimalish,
     overrides?: EthersTransactionOverrides
   ): Promise<SentEthersLiquityTransaction<StabilityDepositChangeDetails>> {
-    return this._populate.withdrawZUSDFromStabilityPool(amount, overrides).then(sendTransaction);
+    return this._populate.withdrawZSUSDFromStabilityPool(amount, overrides).then(sendTransaction);
   }
 
   /** {@inheritDoc @liquity/lib-base#SendableLiquity.withdrawGainsFromStabilityPool} */
@@ -157,13 +157,13 @@ export class SendableEthersLiquity
     return this._populate.transferCollateralGainToTrove(overrides).then(sendTransaction);
   }
 
-  /** {@inheritDoc @liquity/lib-base#SendableLiquity.sendZUSD} */
-  sendZUSD(
+  /** {@inheritDoc @liquity/lib-base#SendableLiquity.sendZSUSD} */
+  sendZSUSD(
     toAddress: string,
     amount: Decimalish,
     overrides?: EthersTransactionOverrides
   ): Promise<SentEthersLiquityTransaction<void>> {
-    return this._populate.sendZUSD(toAddress, amount, overrides).then(sendTransaction);
+    return this._populate.sendZSUSD(toAddress, amount, overrides).then(sendTransaction);
   }
 
   /** {@inheritDoc @liquity/lib-base#SendableLiquity.sendZERO} */
@@ -175,13 +175,13 @@ export class SendableEthersLiquity
     return this._populate.sendZERO(toAddress, amount, overrides).then(sendTransaction);
   }
 
-  /** {@inheritDoc @liquity/lib-base#SendableLiquity.redeemZUSD} */
-  redeemZUSD(
+  /** {@inheritDoc @liquity/lib-base#SendableLiquity.redeemZSUSD} */
+  redeemZSUSD(
     amount: Decimalish,
     maxRedemptionRate?: Decimalish,
     overrides?: EthersTransactionOverrides
   ): Promise<SentEthersLiquityTransaction<RedemptionDetails>> {
-    return this._populate.redeemZUSD(amount, maxRedemptionRate, overrides).then(sendTransaction);
+    return this._populate.redeemZSUSD(amount, maxRedemptionRate, overrides).then(sendTransaction);
   }
 
   /** {@inheritDoc @liquity/lib-base#SendableLiquity.claimCollateralSurplus} */

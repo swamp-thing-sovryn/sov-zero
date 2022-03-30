@@ -18,24 +18,24 @@ import { InfoIcon } from "../InfoIcon";
 
 const mcrPercent = new Percent(MINIMUM_COLLATERAL_RATIO).toString(0);
 
-const select = ({ price, fees, total, zusdBalance }: LiquityStoreState) => ({
+const select = ({ price, fees, total, zsusdBalance }: LiquityStoreState) => ({
   price,
   fees,
   total,
-  zusdBalance
+  zsusdBalance
 });
 
 const transactionId = "redemption";
 
 export const RedemptionManager: React.FC = () => {
-  const { price, fees, total, zusdBalance } = useLiquitySelector(select);
-  const [zusdAmount, setZUSDAmount] = useState(Decimal.ZERO);
+  const { price, fees, total, zsusdBalance } = useLiquitySelector(select);
+  const [zsusdAmount, setZSUSDAmount] = useState(Decimal.ZERO);
   const [changePending, setChangePending] = useState(false);
   const editingState = useState<string>();
 
-  const dirty = !zusdAmount.isZero;
-  const ethAmount = zusdAmount.div(price);
-  const redemptionRate = fees.redemptionRate(zusdAmount.div(total.debt));
+  const dirty = !zsusdAmount.isZero;
+  const ethAmount = zsusdAmount.div(price);
+  const redemptionRate = fees.redemptionRate(zsusdAmount.div(total.debt));
   const feePct = new Percent(redemptionRate);
   const ethFee = ethAmount.mul(redemptionRate);
   const maxRedemptionRate = redemptionRate.add(0.001); // TODO slippage tolerance
@@ -51,26 +51,26 @@ export const RedemptionManager: React.FC = () => {
     } else if (myTransactionState.type === "failed" || myTransactionState.type === "cancelled") {
       setChangePending(false);
     } else if (myTransactionState.type === "confirmed") {
-      setZUSDAmount(Decimal.ZERO);
+      setZSUSDAmount(Decimal.ZERO);
       setChangePending(false);
     }
-  }, [myTransactionState.type, setChangePending, setZUSDAmount]);
+  }, [myTransactionState.type, setChangePending, setZSUSDAmount]);
 
   const [canRedeem, description] = total.collateralRatioIsBelowMinimum(price)
     ? [
         false,
         <ErrorDescription>
-          You can't redeem ZUSD when the total collateral ratio is less than{" "}
+          You can't redeem ZSUSD when the total collateral ratio is less than{" "}
           <Amount>{mcrPercent}</Amount>. Please try again later.
         </ErrorDescription>
       ]
-    : zusdAmount.gt(zusdBalance)
+    : zsusdAmount.gt(zsusdBalance)
     ? [
         false,
         <ErrorDescription>
           The amount you're trying to redeem exceeds your balance by{" "}
           <Amount>
-            {zusdAmount.sub(zusdBalance).prettify()} {COIN}
+            {zsusdAmount.sub(zsusdBalance).prettify()} {COIN}
           </Amount>
           .
         </ErrorDescription>
@@ -80,7 +80,7 @@ export const RedemptionManager: React.FC = () => {
         <ActionDescription>
           You will receive <Amount>{ethAmount.sub(ethFee).prettify(4)} RBTC</Amount> in exchange for{" "}
           <Amount>
-            {zusdAmount.prettify()} {COIN}
+            {zsusdAmount.prettify()} {COIN}
           </Amount>
           .
         </ActionDescription>
@@ -94,7 +94,7 @@ export const RedemptionManager: React.FC = () => {
           <Button
             variant="titleIcon"
             sx={{ ":enabled:hover": { color: "danger" } }}
-            onClick={() => setZUSDAmount(Decimal.ZERO)}
+            onClick={() => setZSUSDAmount(Decimal.ZERO)}
           >
             <Icon name="history" size="lg" />
           </Button>
@@ -104,14 +104,14 @@ export const RedemptionManager: React.FC = () => {
       <Box sx={{ p: [2, 3] }}>
         <EditableRow
           label="Redeem"
-          inputId="redeem-zusd"
-          amount={zusdAmount.prettify()}
-          maxAmount={zusdBalance.toString()}
-          maxedOut={zusdAmount.eq(zusdBalance)}
+          inputId="redeem-zsusd"
+          amount={zsusdAmount.prettify()}
+          maxAmount={zsusdBalance.toString()}
+          maxedOut={zsusdAmount.eq(zsusdBalance)}
           unit={COIN}
           {...{ editingState }}
-          editedAmount={zusdAmount.toString(2)}
-          setEditedAmount={amount => setZUSDAmount(Decimal.from(amount))}
+          editedAmount={zsusdAmount.toString(2)}
+          setEditedAmount={amount => setZSUSDAmount(Decimal.from(amount))}
         />
 
         <StaticRow
@@ -125,7 +125,7 @@ export const RedemptionManager: React.FC = () => {
               tooltip={
                 <Card variant="tooltip" sx={{ minWidth: "240px" }}>
                   The Redemption Fee is charged as a percentage of the redeemed RBTC. The Redemption
-                  Fee depends on ZUSD redemption volumes and is 0.5% at minimum.
+                  Fee depends on ZSUSD redemption volumes and is 0.5% at minimum.
                 </Card>
               }
             />
@@ -140,7 +140,7 @@ export const RedemptionManager: React.FC = () => {
           <RedemptionAction
             transactionId={transactionId}
             disabled={!dirty || !canRedeem}
-            zusdAmount={zusdAmount}
+            zsusdAmount={zsusdAmount}
             maxRedemptionRate={maxRedemptionRate}
           />
         </Flex>

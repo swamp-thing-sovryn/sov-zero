@@ -7,7 +7,7 @@ import "./Interfaces/IZEROStaking.sol";
 import "./Interfaces/IBorrowerOperations.sol";
 import "./Interfaces/ITroveManager.sol";
 import "./Interfaces/IWrbtc.sol";
-import "./Interfaces/IZUSDToken.sol";
+import "./Interfaces/IZSUSDToken.sol";
 import "./Dependencies/Ownable.sol";
 
 import "./Dependencies/IERC20.sol";
@@ -27,7 +27,7 @@ contract FeeDistributorStorage is Ownable {
 
     IWrbtc public wrbtc;
 
-    IZUSDToken public zusdToken;
+    IZSUSDToken public zsusdToken;
 
     IERC20 public sovToken;
 

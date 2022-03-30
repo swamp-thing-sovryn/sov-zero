@@ -5,7 +5,7 @@ pragma solidity 0.6.11;
 import "./Interfaces/ITroveManager.sol";
 import "./Interfaces/IStabilityPool.sol";
 import "./Interfaces/ICollSurplusPool.sol";
-import "./Interfaces/IZUSDToken.sol";
+import "./Interfaces/IZSUSDToken.sol";
 import "./Interfaces/ISortedTroves.sol";
 import "./Interfaces/IZEROToken.sol";
 import "./Interfaces/IZEROStaking.sol";
@@ -24,7 +24,7 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
     event LiquityBaseParamsAddressChanges(address _borrowerOperationsAddress);
     event BorrowerOperationsAddressChanged(address _newBorrowerOperationsAddress);
     event PriceFeedAddressChanged(address _newPriceFeedAddress);
-    event ZUSDTokenAddressChanged(address _newZUSDTokenAddress);
+    event ZSUSDTokenAddressChanged(address _newZSUSDTokenAddress);
     event ActivePoolAddressChanged(address _activePoolAddress);
     event DefaultPoolAddressChanged(address _defaultPoolAddress);
     event StabilityPoolAddressChanged(address _stabilityPoolAddress);
@@ -52,7 +52,7 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
      *  _gasPoolAddress GasPool contract address
      *  _collSurplusPoolAddress CollSurplusPool contract address
      *  _priceFeedAddress PriceFeed contract address
-     *  _zusdTokenAddress ZUSDToken contract address
+     *  _zsusdTokenAddress ZSUSDToken contract address
      *  _sortedTrovesAddress SortedTroves contract address
      *  _zeroTokenAddress ZEROToken contract address
      *  _zeroStakingAddress ZEROStaking contract address
@@ -90,7 +90,7 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
         gasPoolAddress = _setupAddresses[8];
         collSurplusPool = ICollSurplusPool(_setupAddresses[9]);
         priceFeed = IPriceFeed(_setupAddresses[10]);
-        _zusdToken = IZUSDToken(_setupAddresses[11]);
+        _zsusdToken = IZSUSDToken(_setupAddresses[11]);
         sortedTroves = ISortedTroves(_setupAddresses[12]);
         _zeroToken = IZEROToken(_setupAddresses[13]);
         _zeroStaking = IZEROStaking(_setupAddresses[14]);     
@@ -106,7 +106,7 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
         emit GasPoolAddressChanged(_setupAddresses[8]);
         emit CollSurplusPoolAddressChanged(_setupAddresses[9]);
         emit PriceFeedAddressChanged(_setupAddresses[10]);
-        emit ZUSDTokenAddressChanged(_setupAddresses[11]);
+        emit ZSUSDTokenAddressChanged(_setupAddresses[11]);
         emit SortedTrovesAddressChanged(_setupAddresses[12]);
         emit ZEROTokenAddressChanged(_setupAddresses[13]);
         emit ZEROStakingAddressChanged(_setupAddresses[14]);
@@ -141,7 +141,7 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
         IActivePool _activePool,
         IDefaultPool _defaultPool,
         address _borrower,
-        uint256 _ZUSDInStabPool
+        uint256 _ZSUSDInStabPool
     ) internal returns (LiquidationValues memory singleLiquidation) {
         LocalVariables_InnerSingleLiquidateFunction memory vars;
 
@@ -163,7 +163,7 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
         singleLiquidation.collGasCompensation = _getCollGasCompensation(
             singleLiquidation.entireTroveColl
         );
-        singleLiquidation.ZUSDGasCompensation = ZUSD_GAS_COMPENSATION;
+        singleLiquidation.ZSUSDGasCompensation = ZSUSD_GAS_COMPENSATION;
         uint256 collToLiquidate = singleLiquidation.entireTroveColl.sub(
             singleLiquidation.collGasCompensation
         );
@@ -176,7 +176,7 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
         ) = _getOffsetAndRedistributionVals(
             singleLiquidation.entireTroveDebt,
             collToLiquidate,
-            _ZUSDInStabPool
+            _ZSUSDInStabPool
         );
 
         _closeTrove(_borrower, Status.closedByLiquidation);
@@ -196,7 +196,7 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
         IDefaultPool _defaultPool,
         address _borrower,
         uint256 _ICR,
-        uint256 _ZUSDInStabPool,
+        uint256 _ZSUSDInStabPool,
         uint256 _TCR,
         uint256 _price
     ) internal returns (LiquidationValues memory singleLiquidation) {
@@ -214,7 +214,7 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
         singleLiquidation.collGasCompensation = _getCollGasCompensation(
             singleLiquidation.entireTroveColl
         );
-        singleLiquidation.ZUSDGasCompensation = ZUSD_GAS_COMPENSATION;
+        singleLiquidation.ZSUSDGasCompensation = ZSUSD_GAS_COMPENSATION;
         vars.collToLiquidate = singleLiquidation.entireTroveColl.sub(
             singleLiquidation.collGasCompensation
         );
@@ -261,7 +261,7 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
             ) = _getOffsetAndRedistributionVals(
                 singleLiquidation.entireTroveDebt,
                 vars.collToLiquidate,
-                _ZUSDInStabPool
+                _ZSUSDInStabPool
             );
 
             _closeTrove(_borrower, Status.closedByLiquidation);
@@ -274,14 +274,14 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
             emit TroveUpdated(_borrower, 0, 0, 0, TroveManagerOperation.liquidateInRecoveryMode);
             /*
              * If 110% <= ICR < current TCR (accounting for the preceding liquidations in the current sequence)
-             * and there is ZUSD in the Stability Pool, only offset, with no redistribution,
+             * and there is ZSUSD in the Stability Pool, only offset, with no redistribution,
              * but at a capped rate of 1.1 and only if the whole debt can be liquidated.
              * The remainder due to the capped rate will be claimable as collateral surplus.
              */
         } else if (
             (_ICR >= liquityBaseParams.MCR()) &&
             (_ICR < _TCR) &&
-            (singleLiquidation.entireTroveDebt <= _ZUSDInStabPool)
+            (singleLiquidation.entireTroveDebt <= _ZSUSDInStabPool)
         ) {
             _movePendingTroveRewardsToActivePool(
                 _activePool,
@@ -289,7 +289,7 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
                 vars.pendingDebtReward,
                 vars.pendingCollReward
             );
-            assert(_ZUSDInStabPool != 0);
+            assert(_ZSUSDInStabPool != 0);
 
             _removeStake(_borrower);
             singleLiquidation = _getCappedOffsetVals(
@@ -311,7 +311,7 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
             );
             emit TroveUpdated(_borrower, 0, 0, 0, TroveManagerOperation.liquidateInRecoveryMode);
         } else {
-            // if (_ICR >= liquityBaseParams.MCR() && ( _ICR >= _TCR || singleLiquidation.entireTroveDebt > _ZUSDInStabPool))
+            // if (_ICR >= liquityBaseParams.MCR() && ( _ICR >= _TCR || singleLiquidation.entireTroveDebt > _ZSUSDInStabPool))
             LiquidationValues memory zeroVals;
             return zeroVals;
         }
@@ -325,7 +325,7 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
     function _getOffsetAndRedistributionVals(
         uint256 _debt,
         uint256 _coll,
-        uint256 _ZUSDInStabPool
+        uint256 _ZSUSDInStabPool
     )
         internal
         pure
@@ -336,18 +336,18 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
             uint256 collToRedistribute
         )
     {
-        if (_ZUSDInStabPool > 0) {
+        if (_ZSUSDInStabPool > 0) {
             /*
              * Offset as much debt & collateral as possible against the Stability Pool, and redistribute the remainder
              * between all active troves.
              *
-             *  If the trove's debt is larger than the deposited ZUSD in the Stability Pool:
+             *  If the trove's debt is larger than the deposited ZSUSD in the Stability Pool:
              *
-             *  - Offset an amount of the trove's debt equal to the ZUSD in the Stability Pool
+             *  - Offset an amount of the trove's debt equal to the ZSUSD in the Stability Pool
              *  - Send a fraction of the trove's collateral to the Stability Pool, equal to the fraction of its offset debt
              *
              */
-            debtToOffset = LiquityMath._min(_debt, _ZUSDInStabPool);
+            debtToOffset = LiquityMath._min(_debt, _ZSUSDInStabPool);
             collToSendToSP = _coll.mul(debtToOffset).div(_debt);
             debtToRedistribute = _debt.sub(debtToOffset);
             collToRedistribute = _coll.sub(collToSendToSP);
@@ -372,7 +372,7 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
         uint256 collToOffset = _entireTroveDebt.mul(liquityBaseParams.MCR()).div(_price);
 
         singleLiquidation.collGasCompensation = _getCollGasCompensation(collToOffset);
-        singleLiquidation.ZUSDGasCompensation = ZUSD_GAS_COMPENSATION;
+        singleLiquidation.ZSUSDGasCompensation = ZSUSD_GAS_COMPENSATION;
 
         singleLiquidation.debtToOffset = _entireTroveDebt;
         singleLiquidation.collToSendToSP = collToOffset.sub(singleLiquidation.collGasCompensation);
@@ -389,7 +389,7 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
         ContractsCache memory contractsCache = ContractsCache(
             activePool,
             defaultPool,
-            IZUSDToken(address(0)),
+            IZSUSDToken(address(0)),
             IZEROStaking(address(0)),
             sortedTroves,
             ICollSurplusPool(address(0)),
@@ -402,7 +402,7 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
         LiquidationTotals memory totals;
 
         vars.price = priceFeed.fetchPrice();
-        vars.ZUSDInStabPool = stabilityPoolCached.getTotalZUSDDeposits();
+        vars.ZSUSDInStabPool = stabilityPoolCached.getTotalZSUSDDeposits();
         vars.recoveryModeAtStart = _checkRecoveryMode(vars.price);
 
         // Perform the appropriate liquidation sequence - tally the values, and obtain their totals
@@ -410,7 +410,7 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
             totals = _getTotalsFromLiquidateTrovesSequence_RecoveryMode(
                 contractsCache,
                 vars.price,
-                vars.ZUSDInStabPool,
+                vars.ZSUSDInStabPool,
                 _n
             );
         } else {
@@ -419,14 +419,14 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
                 contractsCache.activePool,
                 contractsCache.defaultPool,
                 vars.price,
-                vars.ZUSDInStabPool,
+                vars.ZSUSDInStabPool,
                 _n
             );
         }
 
         require(totals.totalDebtInSequence > 0, "TroveManager: nothing to liquidate");
 
-        // Move liquidated SOV and ZUSD to the appropriate pools
+        // Move liquidated SOV and ZSUSD to the appropriate pools
         stabilityPoolCached.offset(totals.totalDebtToOffset, totals.totalCollToSendToSP);
         _redistributeDebtAndColl(
             contractsCache.activePool,
@@ -452,14 +452,14 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
             vars.liquidatedDebt,
             vars.liquidatedColl,
             totals.totalCollGasCompensation,
-            totals.totalZUSDGasCompensation
+            totals.totalZSUSDGasCompensation
         );
 
         // Send gas compensation to caller
         _sendGasCompensation(
             contractsCache.activePool,
             msg.sender,
-            totals.totalZUSDGasCompensation,
+            totals.totalZSUSDGasCompensation,
             totals.totalCollGasCompensation
         );
     }
@@ -471,13 +471,13 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
     function _getTotalsFromLiquidateTrovesSequence_RecoveryMode(
         ContractsCache memory _contractsCache,
         uint256 _price,
-        uint256 _ZUSDInStabPool,
+        uint256 _ZSUSDInStabPool,
         uint256 _n
     ) internal returns (LiquidationTotals memory totals) {
         LocalVariables_LiquidationSequence memory vars;
         LiquidationValues memory singleLiquidation;
 
-        vars.remainingZUSDInStabPool = _ZUSDInStabPool;
+        vars.remainingZSUSDInStabPool = _ZSUSDInStabPool;
         vars.backToNormalMode = false;
         vars.entireSystemDebt = getEntireSystemDebt();
         vars.entireSystemColl = getEntireSystemColl();
@@ -492,7 +492,7 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
 
             if (!vars.backToNormalMode) {
                 // Break the loop if ICR is greater than liquityBaseParams.MCR() and Stability Pool is empty
-                if (vars.ICR >= liquityBaseParams.MCR() && vars.remainingZUSDInStabPool == 0) {
+                if (vars.ICR >= liquityBaseParams.MCR() && vars.remainingZSUSDInStabPool == 0) {
                     break;
                 }
 
@@ -507,13 +507,13 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
                     _contractsCache.defaultPool,
                     vars.user,
                     vars.ICR,
-                    vars.remainingZUSDInStabPool,
+                    vars.remainingZSUSDInStabPool,
                     TCR,
                     _price
                 );
 
                 // Update aggregate trackers
-                vars.remainingZUSDInStabPool = vars.remainingZUSDInStabPool.sub(
+                vars.remainingZSUSDInStabPool = vars.remainingZSUSDInStabPool.sub(
                     singleLiquidation.debtToOffset
                 );
                 vars.entireSystemDebt = vars.entireSystemDebt.sub(singleLiquidation.debtToOffset);
@@ -535,10 +535,10 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
                     _contractsCache.activePool,
                     _contractsCache.defaultPool,
                     vars.user,
-                    vars.remainingZUSDInStabPool
+                    vars.remainingZSUSDInStabPool
                 );
 
-                vars.remainingZUSDInStabPool = vars.remainingZUSDInStabPool.sub(
+                vars.remainingZSUSDInStabPool = vars.remainingZSUSDInStabPool.sub(
                     singleLiquidation.debtToOffset
                 );
 
@@ -554,14 +554,14 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
         IActivePool _activePool,
         IDefaultPool _defaultPool,
         uint256 _price,
-        uint256 _ZUSDInStabPool,
+        uint256 _ZSUSDInStabPool,
         uint256 _n
     ) internal returns (LiquidationTotals memory totals) {
         LocalVariables_LiquidationSequence memory vars;
         LiquidationValues memory singleLiquidation;
         ISortedTroves sortedTrovesCached = sortedTroves;
 
-        vars.remainingZUSDInStabPool = _ZUSDInStabPool;
+        vars.remainingZSUSDInStabPool = _ZSUSDInStabPool;
 
         for (vars.i = 0; vars.i < _n; vars.i++) {
             vars.user = sortedTrovesCached.getLast();
@@ -572,10 +572,10 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
                     _activePool,
                     _defaultPool,
                     vars.user,
-                    vars.remainingZUSDInStabPool
+                    vars.remainingZSUSDInStabPool
                 );
 
-                vars.remainingZUSDInStabPool = vars.remainingZUSDInStabPool.sub(
+                vars.remainingZSUSDInStabPool = vars.remainingZSUSDInStabPool.sub(
                     singleLiquidation.debtToOffset
                 );
 
@@ -599,7 +599,7 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
         LiquidationTotals memory totals;
 
         vars.price = priceFeed.fetchPrice();
-        vars.ZUSDInStabPool = stabilityPoolCached.getTotalZUSDDeposits();
+        vars.ZSUSDInStabPool = stabilityPoolCached.getTotalZSUSDDeposits();
         vars.recoveryModeAtStart = _checkRecoveryMode(vars.price);
 
         // Perform the appropriate liquidation sequence - tally values and obtain their totals.
@@ -608,7 +608,7 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
                 activePoolCached,
                 defaultPoolCached,
                 vars.price,
-                vars.ZUSDInStabPool,
+                vars.ZSUSDInStabPool,
                 _troveArray
             );
         } else {
@@ -617,14 +617,14 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
                 activePoolCached,
                 defaultPoolCached,
                 vars.price,
-                vars.ZUSDInStabPool,
+                vars.ZSUSDInStabPool,
                 _troveArray
             );
         }
 
         require(totals.totalDebtInSequence > 0, "TroveManager: nothing to liquidate");
 
-        // Move liquidated SOV and ZUSD to the appropriate pools
+        // Move liquidated SOV and ZSUSD to the appropriate pools
         stabilityPoolCached.offset(totals.totalDebtToOffset, totals.totalCollToSendToSP);
         _redistributeDebtAndColl(
             activePoolCached,
@@ -650,14 +650,14 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
             vars.liquidatedDebt,
             vars.liquidatedColl,
             totals.totalCollGasCompensation,
-            totals.totalZUSDGasCompensation
+            totals.totalZSUSDGasCompensation
         );
 
         // Send gas compensation to caller
         _sendGasCompensation(
             activePoolCached,
             msg.sender,
-            totals.totalZUSDGasCompensation,
+            totals.totalZSUSDGasCompensation,
             totals.totalCollGasCompensation
         );
     }
@@ -670,13 +670,13 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
         IActivePool _activePool,
         IDefaultPool _defaultPool,
         uint256 _price,
-        uint256 _ZUSDInStabPool,
+        uint256 _ZSUSDInStabPool,
         address[] memory _troveArray
     ) internal returns (LiquidationTotals memory totals) {
         LocalVariables_LiquidationSequence memory vars;
         LiquidationValues memory singleLiquidation;
 
-        vars.remainingZUSDInStabPool = _ZUSDInStabPool;
+        vars.remainingZSUSDInStabPool = _ZSUSDInStabPool;
         vars.backToNormalMode = false;
         vars.entireSystemDebt = getEntireSystemDebt();
         vars.entireSystemColl = getEntireSystemColl();
@@ -691,7 +691,7 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
 
             if (!vars.backToNormalMode) {
                 // Skip this trove if ICR is greater than liquityBaseParams.MCR() and Stability Pool is empty
-                if (vars.ICR >= liquityBaseParams.MCR() && vars.remainingZUSDInStabPool == 0) {
+                if (vars.ICR >= liquityBaseParams.MCR() && vars.remainingZSUSDInStabPool == 0) {
                     continue;
                 }
 
@@ -706,13 +706,13 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
                     _defaultPool,
                     vars.user,
                     vars.ICR,
-                    vars.remainingZUSDInStabPool,
+                    vars.remainingZSUSDInStabPool,
                     TCR,
                     _price
                 );
 
                 // Update aggregate trackers
-                vars.remainingZUSDInStabPool = vars.remainingZUSDInStabPool.sub(
+                vars.remainingZSUSDInStabPool = vars.remainingZSUSDInStabPool.sub(
                     singleLiquidation.debtToOffset
                 );
                 vars.entireSystemDebt = vars.entireSystemDebt.sub(singleLiquidation.debtToOffset);
@@ -731,9 +731,9 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
                     _activePool,
                     _defaultPool,
                     vars.user,
-                    vars.remainingZUSDInStabPool
+                    vars.remainingZSUSDInStabPool
                 );
-                vars.remainingZUSDInStabPool = vars.remainingZUSDInStabPool.sub(
+                vars.remainingZSUSDInStabPool = vars.remainingZSUSDInStabPool.sub(
                     singleLiquidation.debtToOffset
                 );
 
@@ -747,13 +747,13 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
         IActivePool _activePool,
         IDefaultPool _defaultPool,
         uint256 _price,
-        uint256 _ZUSDInStabPool,
+        uint256 _ZSUSDInStabPool,
         address[] memory _troveArray
     ) internal returns (LiquidationTotals memory totals) {
         LocalVariables_LiquidationSequence memory vars;
         LiquidationValues memory singleLiquidation;
 
-        vars.remainingZUSDInStabPool = _ZUSDInStabPool;
+        vars.remainingZSUSDInStabPool = _ZSUSDInStabPool;
 
         for (vars.i = 0; vars.i < _troveArray.length; vars.i++) {
             vars.user = _troveArray[vars.i];
@@ -764,9 +764,9 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
                     _activePool,
                     _defaultPool,
                     vars.user,
-                    vars.remainingZUSDInStabPool
+                    vars.remainingZSUSDInStabPool
                 );
-                vars.remainingZUSDInStabPool = vars.remainingZUSDInStabPool.sub(
+                vars.remainingZSUSDInStabPool = vars.remainingZSUSDInStabPool.sub(
                     singleLiquidation.debtToOffset
                 );
 
@@ -786,8 +786,8 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
         newTotals.totalCollGasCompensation = oldTotals.totalCollGasCompensation.add(
             singleLiquidation.collGasCompensation
         );
-        newTotals.totalZUSDGasCompensation = oldTotals.totalZUSDGasCompensation.add(
-            singleLiquidation.ZUSDGasCompensation
+        newTotals.totalZSUSDGasCompensation = oldTotals.totalZSUSDGasCompensation.add(
+            singleLiquidation.ZSUSDGasCompensation
         );
         newTotals.totalDebtInSequence = oldTotals.totalDebtInSequence.add(
             singleLiquidation.entireTroveDebt
@@ -815,11 +815,11 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
     function _sendGasCompensation(
         IActivePool _activePool,
         address _liquidator,
-        uint256 _ZUSD,
+        uint256 _ZSUSD,
         uint256 _SOV
     ) internal {
-        if (_ZUSD > 0) {
-            _zusdToken.returnFromPool(gasPoolAddress, _liquidator, _ZUSD);
+        if (_ZSUSD > 0) {
+            _zsusdToken.returnFromPool(gasPoolAddress, _liquidator, _ZSUSD);
         }
 
         if (_SOV > 0) {
@@ -831,9 +831,9 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
 
     /// @return the nominal collateral ratio (ICR) of a given Trove, without the price. Takes a trove's pending coll and debt rewards from redistributions into account.
     function getNominalICR(address _borrower) public view override returns (uint256) {
-        (uint256 currentSOV, uint256 currentZUSDDebt) = _getCurrentTroveAmounts(_borrower);
+        (uint256 currentSOV, uint256 currentZSUSDDebt) = _getCurrentTroveAmounts(_borrower);
 
-        uint256 NICR = LiquityMath._computeNominalCR(currentSOV, currentZUSDDebt);
+        uint256 NICR = LiquityMath._computeNominalCR(currentSOV, currentZSUSDDebt);
         return NICR;
     }
 
@@ -842,7 +842,7 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
         return _applyPendingRewards(activePool, defaultPool, _borrower);
     }
 
-    /// Update borrower's snapshots of L_SOV and L_ZUSDDebt to reflect the current values
+    /// Update borrower's snapshots of L_SOV and L_ZSUSDDebt to reflect the current values
     function updateTroveRewardSnapshots(address _borrower) external override {
         _requireCallerIsBorrowerOperations();
         return _updateTroveRewardSnapshots(_borrower);
@@ -856,17 +856,17 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
         returns (
             uint256 debt,
             uint256 coll,
-            uint256 pendingZUSDDebtReward,
+            uint256 pendingZSUSDDebtReward,
             uint256 pendingSOVReward
         )
     {
         debt = Troves[_borrower].debt;
         coll = Troves[_borrower].coll;
 
-        pendingZUSDDebtReward = getPendingZUSDDebtReward(_borrower);
+        pendingZSUSDDebtReward = getPendingZSUSDDebtReward(_borrower);
         pendingSOVReward = getPendingSOVReward(_borrower);
 
-        debt = debt.add(pendingZUSDDebtReward);
+        debt = debt.add(pendingZSUSDDebtReward);
         coll = coll.add(pendingSOVReward);
     }
 
@@ -892,7 +892,7 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
 
         /*
          * Add distributed coll and debt rewards-per-unit-staked to the running totals. Division uses a "feedback"
-         * error correction, to keep the cumulative error low in the running totals L_SOV and L_ZUSDDebt:
+         * error correction, to keep the cumulative error low in the running totals L_SOV and L_ZSUSDDebt:
          *
          * 1) Form numerators which compensate for the floor division errors that occurred the last time this
          * function was called.
@@ -902,28 +902,28 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
          * 5) Note: static analysis tools complain about this "division before multiplication", however, it is intended.
          */
         uint256 SOVNumerator = _coll.mul(DECIMAL_PRECISION).add(lastSOVError_Redistribution);
-        uint256 ZUSDDebtNumerator = _debt.mul(DECIMAL_PRECISION).add(
-            lastZUSDDebtError_Redistribution
+        uint256 ZSUSDDebtNumerator = _debt.mul(DECIMAL_PRECISION).add(
+            lastZSUSDDebtError_Redistribution
         );
 
         // Get the per-unit-staked terms
         uint256 SOVRewardPerUnitStaked = SOVNumerator.div(totalStakes);
-        uint256 ZUSDDebtRewardPerUnitStaked = ZUSDDebtNumerator.div(totalStakes);
+        uint256 ZSUSDDebtRewardPerUnitStaked = ZSUSDDebtNumerator.div(totalStakes);
 
         lastSOVError_Redistribution = SOVNumerator.sub(SOVRewardPerUnitStaked.mul(totalStakes));
-        lastZUSDDebtError_Redistribution = ZUSDDebtNumerator.sub(
-            ZUSDDebtRewardPerUnitStaked.mul(totalStakes)
+        lastZSUSDDebtError_Redistribution = ZSUSDDebtNumerator.sub(
+            ZSUSDDebtRewardPerUnitStaked.mul(totalStakes)
         );
 
         // Add per-unit-staked terms to the running totals
         L_SOV = L_SOV.add(SOVRewardPerUnitStaked);
-        L_ZUSDDebt = L_ZUSDDebt.add(ZUSDDebtRewardPerUnitStaked);
+        L_ZSUSDDebt = L_ZSUSDDebt.add(ZSUSDDebtRewardPerUnitStaked);
 
-        emit LTermsUpdated(L_SOV, L_ZUSDDebt);
+        emit LTermsUpdated(L_SOV, L_ZSUSDDebt);
 
         // Transfer coll and debt from ActivePool to DefaultPool
-        _activePool.decreaseZUSDDebt(_debt);
-        _defaultPool.increaseZUSDDebt(_debt);
+        _activePool.decreaseZSUSDDebt(_debt);
+        _defaultPool.increaseZSUSDDebt(_debt);
         _activePool.sendSOV(address(_defaultPool), _coll);
     }
 
@@ -962,8 +962,8 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
     }
 
     function _addTroveOwnerToArray(address _borrower) internal returns (uint128 index) {
-        /* Max array size is 2**128 - 1, i.e. ~3e30 troves. No risk of overflow, since troves have minimum ZUSD
-        debt of liquidation reserve plus MIN_NET_DEBT. 3e30 ZUSD dwarfs the value of all wealth in the world ( which is < 1e15 USD). */
+        /* Max array size is 2**128 - 1, i.e. ~3e30 troves. No risk of overflow, since troves have minimum ZSUSD
+        debt of liquidation reserve plus MIN_NET_DEBT. 3e30 ZSUSD dwarfs the value of all wealth in the world ( which is < 1e15 USD). */
 
         // Push the Troveowner to the array
         TroveOwners.push(_borrower);
@@ -1030,23 +1030,23 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
             );
     }
 
-    function getBorrowingFee(uint256 _ZUSDDebt) external view override returns (uint256) {
-        return _calcBorrowingFee(getBorrowingRate(), _ZUSDDebt);
+    function getBorrowingFee(uint256 _ZSUSDDebt) external view override returns (uint256) {
+        return _calcBorrowingFee(getBorrowingRate(), _ZSUSDDebt);
     }
 
-    function getBorrowingFeeWithDecay(uint256 _ZUSDDebt) external view override returns (uint256) {
-        return _calcBorrowingFee(getBorrowingRateWithDecay(), _ZUSDDebt);
+    function getBorrowingFeeWithDecay(uint256 _ZSUSDDebt) external view override returns (uint256) {
+        return _calcBorrowingFee(getBorrowingRateWithDecay(), _ZSUSDDebt);
     }
 
-    function _calcBorrowingFee(uint256 _borrowingRate, uint256 _ZUSDDebt)
+    function _calcBorrowingFee(uint256 _borrowingRate, uint256 _ZSUSDDebt)
         internal
         pure
         returns (uint256)
     {
-        return _borrowingRate.mul(_ZUSDDebt).div(DECIMAL_PRECISION);
+        return _borrowingRate.mul(_ZSUSDDebt).div(DECIMAL_PRECISION);
     }
 
-    /// Updates the baseRate state variable based on time elapsed since the last redemption or ZUSD borrowing operation.
+    /// Updates the baseRate state variable based on time elapsed since the last redemption or ZSUSD borrowing operation.
     function decayBaseRateFromBorrowing() external override {
         _requireCallerIsBorrowerOperations();
 
@@ -1143,8 +1143,8 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
         return _getPendingSOVReward(_borrower);
     }
 
-    function getPendingZUSDDebtReward(address _borrower) public view override returns (uint256) {
-        return _getPendingZUSDDebtReward(_borrower);
+    function getPendingZSUSDDebtReward(address _borrower) public view override returns (uint256) {
+        return _getPendingZSUSDDebtReward(_borrower);
     }
 
     function hasPendingRewards(address _borrower) public view override returns (bool) {
@@ -1158,7 +1158,7 @@ contract TroveManager is TroveManagerBase, CheckContract, ITroveManager {
     /// @dev    this function forwards the call to the troveManagerRedeemOps in a delegate call fashion
     ///         so the parameters are not needed
     function redeemCollateral(
-        uint256 _ZUSDamount,
+        uint256 _ZSUSDamount,
         address _firstRedemptionHint,
         address _upperPartialRedemptionHint,
         address _lowerPartialRedemptionHint,

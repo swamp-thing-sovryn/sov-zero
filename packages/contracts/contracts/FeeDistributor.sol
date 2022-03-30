@@ -18,10 +18,10 @@ contract FeeDistributor is CheckContract, FeeDistributorStorage, IFeeDistributor
     event BorrowerOperationsAddressChanged(address _borrowerOperationsAddress);
     event TroveManagerAddressChanged(address _troveManagerAddress);
     event WrbtcAddressChanged(address _wrbtcAddress);
-    event ZUSDTokenAddressChanged(address _zusdTokenAddress);
+    event ZSUSDTokenAddressChanged(address _zsusdTokenAddress);
     event ActivePoolAddressSet(address _activePoolAddress);
 
-    event ZUSDDistributed(uint256 _zusdDistributedAmount);
+    event ZSUSDDistributed(uint256 _zsusdDistributedAmount);
     event SOVDistributed(uint256 _rbtcDistributedAmount);
 
     // --- Dependency setters ---
@@ -33,7 +33,7 @@ contract FeeDistributor is CheckContract, FeeDistributorStorage, IFeeDistributor
         address _borrowerOperationsAddress,
         address _troveManagerAddress,
         address _wrbtcAddress,
-        address _zusdTokenAddress,
+        address _zsusdTokenAddress,
         address _activePoolAddress
     )
         external
@@ -46,7 +46,7 @@ contract FeeDistributor is CheckContract, FeeDistributorStorage, IFeeDistributor
         checkContract(_borrowerOperationsAddress);
         checkContract(_troveManagerAddress);
         checkContract(_wrbtcAddress);
-        checkContract(_zusdTokenAddress);
+        checkContract(_zsusdTokenAddress);
         checkContract(_activePoolAddress);
         
         sovToken = IERC20(_sovTokenAddress);
@@ -55,7 +55,7 @@ contract FeeDistributor is CheckContract, FeeDistributorStorage, IFeeDistributor
         borrowerOperations = IBorrowerOperations(_borrowerOperationsAddress);
         troveManager = ITroveManager(_troveManagerAddress);
         wrbtc = IWrbtc(_wrbtcAddress);
-        zusdToken = IZUSDToken(_zusdTokenAddress);
+        zsusdToken = IZSUSDToken(_zsusdTokenAddress);
         activePoolAddress = _activePoolAddress;
 
         FEE_TO_SOV_COLLECTOR = LiquityMath.DECIMAL_PRECISION; // 100%
@@ -66,7 +66,7 @@ contract FeeDistributor is CheckContract, FeeDistributorStorage, IFeeDistributor
         emit BorrowerOperationsAddressChanged(_borrowerOperationsAddress);
         emit TroveManagerAddressChanged(_troveManagerAddress);
         emit WrbtcAddressChanged(_wrbtcAddress);
-        emit ZUSDTokenAddressChanged(_zusdTokenAddress);
+        emit ZSUSDTokenAddressChanged(_zsusdTokenAddress);
         emit ActivePoolAddressSet(_activePoolAddress);
     }
 
@@ -76,28 +76,28 @@ contract FeeDistributor is CheckContract, FeeDistributorStorage, IFeeDistributor
 
     function distributeFees() public override {
         require(msg.sender == address(borrowerOperations) || msg.sender == address(troveManager),"FeeDistributor: invalid caller");
-        uint256 zusdtoDistribute = zusdToken.balanceOf(address(this));
+        uint256 zsusdtoDistribute = zsusdToken.balanceOf(address(this));
         uint256 sovToDistribute = sovToken.balanceOf(address(this)); 
-        if(zusdtoDistribute != 0) {
-            distributeZUSD(zusdtoDistribute);
+        if(zsusdtoDistribute != 0) {
+            distributeZSUSD(zsusdtoDistribute);
         }
         if(sovToDistribute != 0) {
             distributeSOV(sovToDistribute);
         }
     }
 
-    function distributeZUSD(uint256 toDistribute) internal {
+    function distributeZSUSD(uint256 toDistribute) internal {
         // Send fee to the SOVFeeCollector address
         uint256 feeToSovCollector = toDistribute.mul(FEE_TO_SOV_COLLECTOR).div(LiquityMath.DECIMAL_PRECISION);
-        zusdToken.approve(address(sovFeeCollector), feeToSovCollector);
-        sovFeeCollector.transferTokens(address(zusdToken), uint96(feeToSovCollector));
+        zsusdToken.approve(address(sovFeeCollector), feeToSovCollector);
+        sovFeeCollector.transferTokens(address(zsusdToken), uint96(feeToSovCollector));
 
         // Send fee to ZERO staking contract
         uint256 feeToZeroStaking = toDistribute.sub(feeToSovCollector);
-        zusdToken.transfer(address(zeroStaking), feeToZeroStaking);
-        zeroStaking.increaseF_ZUSD(feeToZeroStaking);
+        zsusdToken.transfer(address(zeroStaking), feeToZeroStaking);
+        zeroStaking.increaseF_ZSUSD(feeToZeroStaking);
 
-        emit ZUSDDistributed(toDistribute);
+        emit ZSUSDDistributed(toDistribute);
 
     }
 

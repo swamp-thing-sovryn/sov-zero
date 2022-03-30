@@ -54,7 +54,7 @@ const reduce = (
         const changeCommitted =
           !updatedStake.stakedZERO.eq(oldStake.stakedZERO) ||
           updatedStake.collateralGain.lt(oldStake.collateralGain) ||
-          updatedStake.zusdGain.lt(oldStake.zusdGain);
+          updatedStake.zsusdGain.lt(oldStake.zsusdGain);
 
         return {
           ...state,

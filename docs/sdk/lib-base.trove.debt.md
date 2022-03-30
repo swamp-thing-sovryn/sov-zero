@@ -4,7 +4,7 @@
 
 ## Trove.debt property
 
-Amount of ZUSD owed.
+Amount of ZSUSD owed.
 
 <b>Signature:</b>
 

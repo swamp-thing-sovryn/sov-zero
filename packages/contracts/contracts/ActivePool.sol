@@ -10,9 +10,9 @@ import "./ActivePoolStorage.sol";
 
 /**
  * @title Active Pool
- * @notice The Active Pool holds the SOV collateral and ZUSD debt (but not ZUSD tokens) for all active troves.
+ * @notice The Active Pool holds the SOV collateral and ZSUSD debt (but not ZSUSD tokens) for all active troves.
  * 
- * When a trove is liquidated, it's SOV and ZUSD debt are transferred from the Active Pool, to either the
+ * When a trove is liquidated, it's SOV and ZSUSD debt are transferred from the Active Pool, to either the
  * Stability Pool, the Default Pool, or both, depending on the liquidation conditions.
  */
 contract ActivePool is CheckContract, IActivePool, ActivePoolStorage {
@@ -21,7 +21,7 @@ contract ActivePool is CheckContract, IActivePool, ActivePoolStorage {
     event SOVTokenAddressChanged(address _sovTokenAddress);
     event BorrowerOperationsAddressChanged(address _newBorrowerOperationsAddress);
     event TroveManagerAddressChanged(address _newTroveManagerAddress);
-    event ActivePoolZUSDDebtUpdated(uint _ZUSDDebt);
+    event ActivePoolZSUSDDebtUpdated(uint _ZSUSDDebt);
 
     // --- Contract setters ---
     /// @notice initializer function that sets required addresses
@@ -66,9 +66,9 @@ contract ActivePool is CheckContract, IActivePool, ActivePoolStorage {
         return sovToken.balanceOf(address(this));
     }
 
-    /// @return the ZUSD debt state variable
-    function getZUSDDebt() external view override returns (uint) {
-        return ZUSDDebt;
+    /// @return the ZSUSD debt state variable
+    function getZSUSDDebt() external view override returns (uint) {
+        return ZSUSDDebt;
     }
 
     // --- Pool functionality ---
@@ -83,20 +83,20 @@ contract ActivePool is CheckContract, IActivePool, ActivePoolStorage {
         sovToken.transfer(_account, _amount);
     }
 
-    /// @notice Increases ZUSD debt of the active pool. Only callable by BorrowerOperations, TroveManager or StabilityPool.
-    /// @param _amount ZUSD amount to add to the pool debt
-    function increaseZUSDDebt(uint _amount) external override {
+    /// @notice Increases ZSUSD debt of the active pool. Only callable by BorrowerOperations, TroveManager or StabilityPool.
+    /// @param _amount ZSUSD amount to add to the pool debt
+    function increaseZSUSDDebt(uint _amount) external override {
         _requireCallerIsBOorTroveM();
-        ZUSDDebt = ZUSDDebt.add(_amount);
-        ActivePoolZUSDDebtUpdated(ZUSDDebt);
+        ZSUSDDebt = ZSUSDDebt.add(_amount);
+        ActivePoolZSUSDDebtUpdated(ZSUSDDebt);
     }
 
-    /// @notice Decreases ZUSD debt of the active pool. Only callable by BorrowerOperations, TroveManager or StabilityPool.
-    /// @param _amount ZUSD amount to sub to the pool debt
-    function decreaseZUSDDebt(uint _amount) external override {
+    /// @notice Decreases ZSUSD debt of the active pool. Only callable by BorrowerOperations, TroveManager or StabilityPool.
+    /// @param _amount ZSUSD amount to sub to the pool debt
+    function decreaseZSUSDDebt(uint _amount) external override {
         _requireCallerIsBOorTroveMorSP();
-        ZUSDDebt = ZUSDDebt.sub(_amount);
-        ActivePoolZUSDDebtUpdated(ZUSDDebt);
+        ZSUSDDebt = ZSUSDDebt.sub(_amount);
+        ActivePoolZSUSDDebtUpdated(ZSUSDDebt);
     }
 
     // --- 'require' functions ---

@@ -10,7 +10,7 @@ const selectZEROStake = ({ zeroStake }: LiquityStoreState) => zeroStake;
 
 export const StakingGainsAction: React.FC = () => {
   const { liquity } = useLiquity();
-  const { collateralGain, zusdGain } = useLiquitySelector(selectZEROStake);
+  const { collateralGain, zsusdGain } = useLiquitySelector(selectZEROStake);
 
   const [sendTransaction] = useTransactionFunction(
     "stake",
@@ -18,7 +18,7 @@ export const StakingGainsAction: React.FC = () => {
   );
 
   return (
-    <Button onClick={sendTransaction} disabled={collateralGain.isZero && zusdGain.isZero}>
+    <Button onClick={sendTransaction} disabled={collateralGain.isZero && zsusdGain.isZero}>
       Claim gains
     </Button>
   );

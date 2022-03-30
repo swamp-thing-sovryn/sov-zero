@@ -140,7 +140,7 @@ const deployContracts = async (
   return {
     addresses: {
       ...addresses,
-      zusdToken: await deployContractWithProxy(deployer, getContractFactory, "ZUSDToken", { ...overrides }),
+      zsusdToken: await deployContractWithProxy(deployer, getContractFactory, "ZSUSDToken", { ...overrides }),
 
       zeroToken: await deployContractWithProxy(deployer, getContractFactory, "ZEROToken", { ...overrides }),
 
@@ -159,7 +159,7 @@ const connectContracts = async (
     borrowerOperations,
     troveManager,
     troveManagerRedeemOps,
-    zusdToken,
+    zsusdToken,
     collSurplusPool,
     communityIssuance,
     defaultPool,
@@ -191,7 +191,7 @@ const connectContracts = async (
 
   const connections: ((nonce: number) => Promise<ContractTransaction>)[] = [
     nonce => 
-      zusdToken.initialize(troveManager.address, stabilityPool.address, borrowerOperations.address, {
+      zsusdToken.initialize(troveManager.address, stabilityPool.address, borrowerOperations.address, {
         ...overrides,
         nonce
       }),
@@ -233,7 +233,7 @@ const connectContracts = async (
         gasPool.address,
         collSurplusPool.address,
         priceFeed.address,
-        zusdToken.address,
+        zsusdToken.address,
         sortedTroves.address,
         zeroToken.address,
         zeroStaking.address
@@ -254,7 +254,7 @@ const connectContracts = async (
         collSurplusPool.address,
         priceFeed.address,
         sortedTroves.address,
-        zusdToken.address,
+        zsusdToken.address,
         zeroStaking.address,
         { ...overrides, nonce }
       ),
@@ -266,7 +266,7 @@ const connectContracts = async (
         borrowerOperations.address,
         troveManager.address,
         activePool.address,
-        zusdToken.address,
+        zsusdToken.address,
         sortedTroves.address,
         priceFeed.address,
         communityIssuance.address,
@@ -308,7 +308,7 @@ const connectContracts = async (
       zeroStaking.setAddresses(
         sovTokenAddress,
         zeroToken.address,
-        zusdToken.address,
+        zsusdToken.address,
         feeDistributor.address,
         activePool.address,
         { ...overrides, nonce }
@@ -334,7 +334,7 @@ const connectContracts = async (
         borrowerOperations.address,
         troveManager.address,
         wrbtcAddress,
-        zusdToken.address,
+        zsusdToken.address,
         activePool.address,
         { ...overrides, nonce }
       ),

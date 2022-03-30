@@ -108,17 +108,17 @@ export class _CachedReadableLiquity<T extends unknown[]>
     );
   }
 
-  async getZUSDInStabilityPool(...extraParams: T): Promise<Decimal> {
+  async getZSUSDInStabilityPool(...extraParams: T): Promise<Decimal> {
     return (
-      this._cache.getZUSDInStabilityPool(...extraParams) ??
-      this._readable.getZUSDInStabilityPool(...extraParams)
+      this._cache.getZSUSDInStabilityPool(...extraParams) ??
+      this._readable.getZSUSDInStabilityPool(...extraParams)
     );
   }
 
-  async getZUSDBalance(address?: string, ...extraParams: T): Promise<Decimal> {
+  async getZSUSDBalance(address?: string, ...extraParams: T): Promise<Decimal> {
     return (
-      this._cache.getZUSDBalance(address, ...extraParams) ??
-      this._readable.getZUSDBalance(address, ...extraParams)
+      this._cache.getZSUSDBalance(address, ...extraParams) ??
+      this._readable.getZSUSDBalance(address, ...extraParams)
     );
   }
 

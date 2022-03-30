@@ -31,10 +31,10 @@
 |  [PopulatedLiquityTransaction](./lib-base.populatedliquitytransaction.md) | A transaction that has been prepared for sending. |
 |  [PopulatedRedemption](./lib-base.populatedredemption.md) | A redemption transaction that has been prepared for sending. |
 |  [ReadableLiquity](./lib-base.readableliquity.md) | Read the state of the Liquity protocol. |
-|  [RedemptionDetails](./lib-base.redemptiondetails.md) | Details of a [redeemZUSD()](./lib-base.transactableliquity.redeemzusd.md) transaction. |
+|  [RedemptionDetails](./lib-base.redemptiondetails.md) | Details of a [redeemZSUSD()](./lib-base.transactableliquity.redeemzsusd.md) transaction. |
 |  [SendableLiquity](./lib-base.sendableliquity.md) | Send Liquity transactions. |
 |  [SentLiquityTransaction](./lib-base.sentliquitytransaction.md) | A transaction that has already been sent. |
-|  [StabilityDepositChangeDetails](./lib-base.stabilitydepositchangedetails.md) | Details of a [depositZUSDInStabilityPool()](./lib-base.transactableliquity.depositzusdinstabilitypool.md) or [withdrawZUSDFromStabilityPool()](./lib-base.transactableliquity.withdrawzusdfromstabilitypool.md) transaction. |
+|  [StabilityDepositChangeDetails](./lib-base.stabilitydepositchangedetails.md) | Details of a [depositZSUSDInStabilityPool()](./lib-base.transactableliquity.depositzsusdinstabilitypool.md) or [withdrawZSUSDFromStabilityPool()](./lib-base.transactableliquity.withdrawzsusdfromstabilitypool.md) transaction. |
 |  [StabilityPoolGainsWithdrawalDetails](./lib-base.stabilitypoolgainswithdrawaldetails.md) | Details of a [withdrawGainsFromStabilityPool()](./lib-base.transactableliquity.withdrawgainsfromstabilitypool.md) transaction. |
 |  [TransactableLiquity](./lib-base.transactableliquity.md) | Send Liquity transactions and wait for them to succeed. |
 |  [TroveAdjustmentDetails](./lib-base.troveadjustmentdetails.md) | Details of an [adjustTrove()](./lib-base.transactableliquity.adjusttrove.md) transaction. |
@@ -51,9 +51,9 @@
 |  [MINIMUM\_BORROWING\_RATE](./lib-base.minimum_borrowing_rate.md) | Value that the [borrowing rate](./lib-base.fees.borrowingrate.md) will never decay below. |
 |  [MINIMUM\_COLLATERAL\_RATIO](./lib-base.minimum_collateral_ratio.md) | Collateral ratio below which a Trove can be liquidated in normal mode. |
 |  [MINIMUM\_REDEMPTION\_RATE](./lib-base.minimum_redemption_rate.md) | Value that the [redemption rate](./lib-base.fees.redemptionrate.md) will never decay below. |
-|  [ZUSD\_LIQUIDATION\_RESERVE](./lib-base.zusd_liquidation_reserve.md) | Amount of ZUSD that's reserved for compensating the liquidator of a Trove. |
-|  [ZUSD\_MINIMUM\_DEBT](./lib-base.zusd_minimum_debt.md) | A Trove must always have at least this much debt. |
-|  [ZUSD\_MINIMUM\_NET\_DEBT](./lib-base.zusd_minimum_net_debt.md) | A Trove must always have at least this much debt on top of the [liquidation reserve](./lib-base.zusd_liquidation_reserve.md)<!-- -->. |
+|  [ZSUSD\_LIQUIDATION\_RESERVE](./lib-base.zsusd_liquidation_reserve.md) | Amount of ZSUSD that's reserved for compensating the liquidator of a Trove. |
+|  [ZSUSD\_MINIMUM\_DEBT](./lib-base.zsusd_minimum_debt.md) | A Trove must always have at least this much debt. |
+|  [ZSUSD\_MINIMUM\_NET\_DEBT](./lib-base.zsusd_minimum_net_debt.md) | A Trove must always have at least this much debt on top of the [liquidation reserve](./lib-base.zsusd_liquidation_reserve.md)<!-- -->. |
 
 ## Type Aliases
 

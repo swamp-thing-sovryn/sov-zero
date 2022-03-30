@@ -93,7 +93,7 @@
         {
           "indexed": false,
           "internalType": "address",
-          "name": "_zusdTokenAddress",
+          "name": "_zsusdTokenAddress",
           "type": "address"
         }
       ],
@@ -268,7 +268,7 @@
         },
         {
           "internalType": "address",
-          "name": "_zusdTokenAddress",
+          "name": "_zsusdTokenAddress",
           "type": "address"
         },
         {

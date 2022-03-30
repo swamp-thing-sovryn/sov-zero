@@ -101,15 +101,15 @@ export class Fees {
    * By default, the fee is calculated at the time of the latest block. This can be overridden using
    * the `when` parameter.
    *
-   * To calculate the borrowing fee in ZUSD, multiply the borrowed ZUSD amount by the borrowing rate.
+   * To calculate the borrowing fee in ZSUSD, multiply the borrowed ZSUSD amount by the borrowing rate.
    *
    * @example
    * ```typescript
    * const fees = await liquity.getFees();
    *
-   * const borrowedZUSDAmount = 100;
+   * const borrowedZSUSDAmount = 100;
    * const borrowingRate = fees.borrowingRate();
-   * const borrowingFeeZUSD = borrowingRate.mul(borrowedZUSDAmount);
+   * const borrowingFeeZSUSD = borrowingRate.mul(borrowedZSUSDAmount);
    * ```
    */
   borrowingRate(when?: Date): Decimal {
@@ -121,7 +121,7 @@ export class Fees {
   /**
    * Calculate the current redemption rate.
    *
-   * @param redeemedFractionOfSupply - The amount of ZUSD being redeemed divided by the total supply.
+   * @param redeemedFractionOfSupply - The amount of ZSUSD being redeemed divided by the total supply.
    * @param when - Optional timestamp that can be used to calculate what the redemption rate would
    *               decay to at a point of time in the future.
    *
@@ -130,10 +130,10 @@ export class Fees {
    * the `when` parameter.
 
    * Unlike the borrowing rate, the redemption rate depends on the amount being redeemed. To be more
-   * precise, it depends on the fraction of the redeemed amount compared to the total ZUSD supply,
+   * precise, it depends on the fraction of the redeemed amount compared to the total ZSUSD supply,
    * which must be passed as a parameter.
    *
-   * To calculate the redemption fee in ZUSD, multiply the redeemed ZUSD amount with the redemption
+   * To calculate the redemption fee in ZSUSD, multiply the redeemed ZSUSD amount with the redemption
    * rate.
    *
    * @example
@@ -141,10 +141,10 @@ export class Fees {
    * const fees = await liquity.getFees();
    * const total = await liquity.getTotal();
    *
-   * const redeemedZUSDAmount = Decimal.from(100);
-   * const redeemedFractionOfSupply = redeemedZUSDAmount.div(total.debt);
+   * const redeemedZSUSDAmount = Decimal.from(100);
+   * const redeemedFractionOfSupply = redeemedZSUSDAmount.div(total.debt);
    * const redemptionRate = fees.redemptionRate(redeemedFractionOfSupply);
-   * const redemptionFeeZUSD = redemptionRate.mul(redeemedZUSDAmount);
+   * const redemptionFeeZSUSD = redemptionRate.mul(redeemedZSUSDAmount);
    * ```
    */
   redemptionRate(redeemedFractionOfSupply: Decimalish = Decimal.ZERO, when?: Date): Decimal {

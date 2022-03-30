@@ -2,7 +2,7 @@ const { TestHelper: { dec } } = require("../utils/testHelpers.js")
 
 const EchidnaTester = artifacts.require('EchidnaTester')
 const TroveManager = artifacts.require('TroveManager')
-const ZUSDToken = artifacts.require('ZUSDToken')
+const ZSUSDToken = artifacts.require('ZSUSDToken')
 const ActivePool = artifacts.require('ActivePool')
 const DefaultPool = artifacts.require('DefaultPool')
 const StabilityPool = artifacts.require('StabilityPool')
@@ -13,7 +13,7 @@ const StabilityPool = artifacts.require('StabilityPool')
 contract('Echidna debugger', async accounts => {
   let echidnaTester
   let troveManager
-  let zusdToken
+  let zsusdToken
   let activePool
   let defaultPool
   let stabilityPool
@@ -22,7 +22,7 @@ contract('Echidna debugger', async accounts => {
   before(async () => {
     echidnaTester = await EchidnaTester.new({ value: dec(11, 25) })
     troveManager = await TroveManager.at(await echidnaTester.troveManager())
-    zusdToken = await ZUSDToken.at(await echidnaTester.zusdToken())
+    zsusdToken = await ZSUSDToken.at(await echidnaTester.zsusdToken())
     activePool = await ActivePool.at(await echidnaTester.activePool())
     defaultPool = await DefaultPool.at(await echidnaTester.defaultPool())
     stabilityPool = await StabilityPool.at(await echidnaTester.stabilityPool())
@@ -65,16 +65,16 @@ contract('Echidna debugger', async accounts => {
     console.log('Trove 2', icr2_after_price, icr2_after_price.toString())
   })
 
-  it.only('ZUSD balance', async () => {
+  it.only('ZSUSD balance', async () => {
     await echidnaTester.openTroveExt('0', '0', '4210965169908805439447313562489173090')
 
-    const totalSupply = await zusdToken.totalSupply();
-    const gasPoolBalance = await zusdToken.balanceOf(GAS_POOL_ADDRESS);
-    const activePoolBalance = await activePool.getZUSDDebt();
-    const defaultPoolBalance = await defaultPool.getZUSDDebt();
-    const stabilityPoolBalance = await stabilityPool.getTotalZUSDDeposits();
+    const totalSupply = await zsusdToken.totalSupply();
+    const gasPoolBalance = await zsusdToken.balanceOf(GAS_POOL_ADDRESS);
+    const activePoolBalance = await activePool.getZSUSDDebt();
+    const defaultPoolBalance = await defaultPool.getZSUSDDebt();
+    const stabilityPoolBalance = await stabilityPool.getTotalZSUSDDeposits();
     const currentTrove = await echidnaTester.echidnaProxies(0);
-    const troveBalance = zusdToken.balanceOf(currentTrove);
+    const troveBalance = zsusdToken.balanceOf(currentTrove);
 
     console.log('totalSupply', totalSupply.toString());
     console.log('gasPoolBalance', gasPoolBalance.toString());

@@ -22,7 +22,7 @@ contract("PoolManager - random liquidations/deposits, then check all depositors 
   const bountyAddress = accounts[998]
 
   let priceFeed
-  let zusdToken
+  let zsusdToken
   let troveManager
   let stabilityPool
   let sortedTroves
@@ -41,7 +41,7 @@ contract("PoolManager - random liquidations/deposits, then check all depositors 
     const randomDefaulterIndex = Math.floor(Math.random() * (remainingDefaulters.length))
     const randomDefaulter = remainingDefaulters[randomDefaulterIndex]
 
-    const liquidatedZUSD = (await troveManager.Troves(randomDefaulter))[0]
+    const liquidatedZSUSD = (await troveManager.Troves(randomDefaulter))[0]
     const liquidatedETH = (await troveManager.Troves(randomDefaulter))[1]
 
     const price = await priceFeed.getPrice()
@@ -49,9 +49,9 @@ contract("PoolManager - random liquidations/deposits, then check all depositors 
     const ICRPercent = ICR.slice(0, ICR.length - 16)
 
     console.log(`SP address: ${stabilityPool.address}`)
-    const ZUSDinPoolBefore = await stabilityPool.getTotalZUSDDeposits()
+    const ZSUSDinPoolBefore = await stabilityPool.getTotalZSUSDDeposits()
     const liquidatedTx = await troveManager.liquidate(randomDefaulter, { from: accounts[0] })
-    const ZUSDinPoolAfter = await stabilityPool.getTotalZUSDDeposits()
+    const ZSUSDinPoolAfter = await stabilityPool.getTotalZSUSDDeposits()
 
     assert.isTrue(liquidatedTx.receipt.status)
 
@@ -61,19 +61,19 @@ contract("PoolManager - random liquidations/deposits, then check all depositors 
     }
     if (await troveManager.checkRecoveryMode(price)) { console.log("recovery mode: TRUE") }
 
-    console.log(`Liquidation. addr: ${th.squeezeAddr(randomDefaulter)} ICR: ${ICRPercent}% coll: ${liquidatedETH} debt: ${liquidatedZUSD} SP ZUSD before: ${ZUSDinPoolBefore} SP ZUSD after: ${ZUSDinPoolAfter} tx success: ${liquidatedTx.receipt.status}`)
+    console.log(`Liquidation. addr: ${th.squeezeAddr(randomDefaulter)} ICR: ${ICRPercent}% coll: ${liquidatedETH} debt: ${liquidatedZSUSD} SP ZSUSD before: ${ZSUSDinPoolBefore} SP ZSUSD after: ${ZSUSDinPoolAfter} tx success: ${liquidatedTx.receipt.status}`)
   }
 
   const performSPDeposit = async (depositorAccounts, currentDepositors, currentDepositorsDict) => {
     const randomIndex = Math.floor(Math.random() * (depositorAccounts.length))
     const randomDepositor = depositorAccounts[randomIndex]
 
-    const userBalance = (await zusdToken.balanceOf(randomDepositor))
-    const maxZUSDDeposit = userBalance.div(toBN(dec(1, 18)))
+    const userBalance = (await zsusdToken.balanceOf(randomDepositor))
+    const maxZSUSDDeposit = userBalance.div(toBN(dec(1, 18)))
 
-    const randomZUSDAmount = th.randAmountInWei(1, maxZUSDDeposit)
+    const randomZSUSDAmount = th.randAmountInWei(1, maxZSUSDDeposit)
 
-    const depositTx = await stabilityPool.provideToSP(randomZUSDAmount, ZERO_ADDRESS, { from: randomDepositor })
+    const depositTx = await stabilityPool.provideToSP(randomZSUSDAmount, ZERO_ADDRESS, { from: randomDepositor })
 
     assert.isTrue(depositTx.receipt.status)
 
@@ -82,7 +82,7 @@ contract("PoolManager - random liquidations/deposits, then check all depositors 
       currentDepositors.push(randomDepositor)
     }
 
-    console.log(`SP deposit. addr: ${th.squeezeAddr(randomDepositor)} amount: ${randomZUSDAmount} tx success: ${depositTx.receipt.status} `)
+    console.log(`SP deposit. addr: ${th.squeezeAddr(randomDepositor)} amount: ${randomZSUSDAmount} tx success: ${depositTx.receipt.status} `)
   }
 
   const randomOperation = async (depositorAccounts,
@@ -147,7 +147,7 @@ contract("PoolManager - random liquidations/deposits, then check all depositors 
       const lowestTrove = await sortedTroves.getLast()
       const lastTroveDebt = (await troveManager.getEntireDebtAndColl(trove))[0]
       await borrowerOperations.adjustTrove(0, 0 , lastTroveDebt, true, whale, {from: whale})
-      await zusdToken.transfer(lowestTrove, lowestTroveDebt, {from: whale})
+      await zsusdToken.transfer(lowestTrove, lowestTroveDebt, {from: whale})
       await borrowerOperations.closeTrove({from: lowestTrove})
     }
 
@@ -172,18 +172,18 @@ contract("PoolManager - random liquidations/deposits, then check all depositors 
 
     for (depositor of currentDepositors) {
       const initialDeposit = (await stabilityPool.deposits(depositor))[0]
-      const finalDeposit = await stabilityPool.getCompoundedZUSDDeposit(depositor)
+      const finalDeposit = await stabilityPool.getCompoundedZSUSDDeposit(depositor)
       const ETHGain = await stabilityPool.getDepositorETHGain(depositor)
       const ETHinSP = (await stabilityPool.getETH()).toString()
-      const ZUSDinSP = (await stabilityPool.getTotalZUSDDeposits()).toString()
+      const ZSUSDinSP = (await stabilityPool.getTotalZSUSDDeposits()).toString()
 
       // Attempt to withdraw
       const withdrawalTx = await stabilityPool.withdrawFromSP(dec(1, 36), { from: depositor })
 
       const ETHinSPAfter = (await stabilityPool.getETH()).toString()
-      const ZUSDinSPAfter = (await stabilityPool.getTotalZUSDDeposits()).toString()
-      const ZUSDBalanceSPAfter = (await zusdToken.balanceOf(stabilityPool.address))
-      const depositAfter = await stabilityPool.getCompoundedZUSDDeposit(depositor)
+      const ZSUSDinSPAfter = (await stabilityPool.getTotalZSUSDDeposits()).toString()
+      const ZSUSDBalanceSPAfter = (await zsusdToken.balanceOf(stabilityPool.address))
+      const depositAfter = await stabilityPool.getCompoundedZSUSDDeposit(depositor)
 
       console.log(`--Before withdrawal--
                     withdrawer addr: ${th.squeezeAddr(depositor)}
@@ -191,14 +191,14 @@ contract("PoolManager - random liquidations/deposits, then check all depositors 
                      ETH gain: ${ETHGain}
                      ETH in SP: ${ETHinSP}
                      compounded deposit: ${finalDeposit} 
-                     ZUSD in SP: ${ZUSDinSP}
+                     ZSUSD in SP: ${ZSUSDinSP}
                     
                     --After withdrawal--
                      Withdrawal tx success: ${withdrawalTx.receipt.status} 
                      Deposit after: ${depositAfter}
                      ETH remaining in SP: ${ETHinSPAfter}
-                     SP ZUSD deposits tracker after: ${ZUSDinSPAfter}
-                     SP ZUSD balance after: ${ZUSDBalanceSPAfter}
+                     SP ZSUSD deposits tracker after: ${ZSUSDinSPAfter}
+                     SP ZSUSD balance after: ${ZSUSDBalanceSPAfter}
                      `)
       // Check each deposit can be withdrawn
       assert.isTrue(withdrawalTx.receipt.status)
@@ -218,7 +218,7 @@ contract("PoolManager - random liquidations/deposits, then check all depositors 
 
       stabilityPool = contracts.stabilityPool
       priceFeed = contracts.priceFeedTestnet
-      zusdToken = contracts.zusdToken
+      zsusdToken = contracts.zsusdToken
       stabilityPool = contracts.stabilityPool
       troveManager = contracts.troveManager
       borrowerOperations = contracts.borrowerOperations
@@ -247,13 +247,13 @@ contract("PoolManager - random liquidations/deposits, then check all depositors 
 
       const defaulterCollMin = 1
       const defaulterCollMax = 100000000
-      const defaulterZUSDProportionMin = 91
-      const defaulterZUSDProportionMax = 180
+      const defaulterZSUSDProportionMin = 91
+      const defaulterZSUSDProportionMax = 180
 
       const depositorCollMin = 1
       const depositorCollMax = 100000000
-      const depositorZUSDProportionMin = 100
-      const depositorZUSDProportionMax = 100
+      const depositorZSUSDProportionMin = 100
+      const depositorZSUSDProportionMax = 100
 
       const remainingDefaulters = [...defaulterAccounts]
       const currentDepositors = []
@@ -261,22 +261,22 @@ contract("PoolManager - random liquidations/deposits, then check all depositors 
       const currentDepositorsDict = {}
 
       // setup:
-      // account set L all add coll and withdraw ZUSD
-      await th.openTrove_allAccounts_randomETH_randomZUSD(defaulterCollMin,
+      // account set L all add coll and withdraw ZSUSD
+      await th.openTrove_allAccounts_randomETH_randomZSUSD(defaulterCollMin,
         defaulterCollMax,
         defaulterAccounts,
         contracts,
-        defaulterZUSDProportionMin,
-        defaulterZUSDProportionMax,
+        defaulterZSUSDProportionMin,
+        defaulterZSUSDProportionMax,
         true)
 
-      // account set S all add coll and withdraw ZUSD
-      await th.openTrove_allAccounts_randomETH_randomZUSD(depositorCollMin,
+      // account set S all add coll and withdraw ZSUSD
+      await th.openTrove_allAccounts_randomETH_randomZSUSD(depositorCollMin,
         depositorCollMax,
         depositorAccounts,
         contracts,
-        depositorZUSDProportionMin,
-        depositorZUSDProportionMax,
+        depositorZSUSDProportionMin,
+        depositorZSUSDProportionMax,
         true)
 
       // price drops, all L liquidateable
@@ -293,18 +293,18 @@ contract("PoolManager - random liquidations/deposits, then check all depositors 
 
       await skyrocketPriceAndCheckAllTrovesSafe()
 
-      const totalZUSDDepositsBeforeWithdrawals = await stabilityPool.getTotalZUSDDeposits()
+      const totalZSUSDDepositsBeforeWithdrawals = await stabilityPool.getTotalZSUSDDeposits()
       const totalETHRewardsBeforeWithdrawals = await stabilityPool.getETH()
 
       await attemptWithdrawAllDeposits(currentDepositors)
 
-      const totalZUSDDepositsAfterWithdrawals = await stabilityPool.getTotalZUSDDeposits()
+      const totalZSUSDDepositsAfterWithdrawals = await stabilityPool.getTotalZSUSDDeposits()
       const totalETHRewardsAfterWithdrawals = await stabilityPool.getETH()
 
-      console.log(`Total ZUSD deposits before any withdrawals: ${totalZUSDDepositsBeforeWithdrawals}`)
+      console.log(`Total ZSUSD deposits before any withdrawals: ${totalZSUSDDepositsBeforeWithdrawals}`)
       console.log(`Total ETH rewards before any withdrawals: ${totalETHRewardsBeforeWithdrawals}`)
 
-      console.log(`Remaining ZUSD deposits after withdrawals: ${totalZUSDDepositsAfterWithdrawals}`)
+      console.log(`Remaining ZSUSD deposits after withdrawals: ${totalZSUSDDepositsAfterWithdrawals}`)
       console.log(`Remaining ETH rewards after withdrawals: ${totalETHRewardsAfterWithdrawals}`)
 
       console.log(`current depositors length: ${currentDepositors.length}`)
@@ -321,13 +321,13 @@ contract("PoolManager - random liquidations/deposits, then check all depositors 
 
       const defaulterCollMin = 1
       const defaulterCollMax = 10
-      const defaulterZUSDProportionMin = 91
-      const defaulterZUSDProportionMax = 180
+      const defaulterZSUSDProportionMin = 91
+      const defaulterZSUSDProportionMax = 180
 
       const depositorCollMin = 1000000
       const depositorCollMax = 100000000
-      const depositorZUSDProportionMin = 100
-      const depositorZUSDProportionMax = 100
+      const depositorZSUSDProportionMin = 100
+      const depositorZSUSDProportionMax = 100
 
       const remainingDefaulters = [...defaulterAccounts]
       const currentDepositors = []
@@ -335,21 +335,21 @@ contract("PoolManager - random liquidations/deposits, then check all depositors 
       const currentDepositorsDict = {}
 
       // setup:
-      // account set L all add coll and withdraw ZUSD
-      await th.openTrove_allAccounts_randomETH_randomZUSD(defaulterCollMin,
+      // account set L all add coll and withdraw ZSUSD
+      await th.openTrove_allAccounts_randomETH_randomZSUSD(defaulterCollMin,
         defaulterCollMax,
         defaulterAccounts,
         contracts,
-        defaulterZUSDProportionMin,
-        defaulterZUSDProportionMax)
+        defaulterZSUSDProportionMin,
+        defaulterZSUSDProportionMax)
 
-      // account set S all add coll and withdraw ZUSD
-      await th.openTrove_allAccounts_randomETH_randomZUSD(depositorCollMin,
+      // account set S all add coll and withdraw ZSUSD
+      await th.openTrove_allAccounts_randomETH_randomZSUSD(depositorCollMin,
         depositorCollMax,
         depositorAccounts,
         contracts,
-        depositorZUSDProportionMin,
-        depositorZUSDProportionMax)
+        depositorZSUSDProportionMin,
+        depositorZSUSDProportionMax)
 
       // price drops, all L liquidateable
       await priceFeed.setPrice(dec(100, 18));
@@ -365,18 +365,18 @@ contract("PoolManager - random liquidations/deposits, then check all depositors 
 
       await skyrocketPriceAndCheckAllTrovesSafe()
 
-      const totalZUSDDepositsBeforeWithdrawals = await stabilityPool.getTotalZUSDDeposits()
+      const totalZSUSDDepositsBeforeWithdrawals = await stabilityPool.getTotalZSUSDDeposits()
       const totalETHRewardsBeforeWithdrawals = await stabilityPool.getETH()
 
       await attemptWithdrawAllDeposits(currentDepositors)
 
-      const totalZUSDDepositsAfterWithdrawals = await stabilityPool.getTotalZUSDDeposits()
+      const totalZSUSDDepositsAfterWithdrawals = await stabilityPool.getTotalZSUSDDeposits()
       const totalETHRewardsAfterWithdrawals = await stabilityPool.getETH()
 
-      console.log(`Total ZUSD deposits before any withdrawals: ${totalZUSDDepositsBeforeWithdrawals}`)
+      console.log(`Total ZSUSD deposits before any withdrawals: ${totalZSUSDDepositsBeforeWithdrawals}`)
       console.log(`Total ETH rewards before any withdrawals: ${totalETHRewardsBeforeWithdrawals}`)
 
-      console.log(`Remaining ZUSD deposits after withdrawals: ${totalZUSDDepositsAfterWithdrawals}`)
+      console.log(`Remaining ZSUSD deposits after withdrawals: ${totalZSUSDDepositsAfterWithdrawals}`)
       console.log(`Remaining ETH rewards after withdrawals: ${totalETHRewardsAfterWithdrawals}`)
 
       console.log(`current depositors length: ${currentDepositors.length}`)
@@ -393,13 +393,13 @@ contract("PoolManager - random liquidations/deposits, then check all depositors 
 
       const defaulterCollMin = 1000000
       const defaulterCollMax = 100000000
-      const defaulterZUSDProportionMin = 91
-      const defaulterZUSDProportionMax = 180
+      const defaulterZSUSDProportionMin = 91
+      const defaulterZSUSDProportionMax = 180
 
       const depositorCollMin = 1
       const depositorCollMax = 10
-      const depositorZUSDProportionMin = 100
-      const depositorZUSDProportionMax = 100
+      const depositorZSUSDProportionMin = 100
+      const depositorZSUSDProportionMax = 100
 
       const remainingDefaulters = [...defaulterAccounts]
       const currentDepositors = []
@@ -407,21 +407,21 @@ contract("PoolManager - random liquidations/deposits, then check all depositors 
       const currentDepositorsDict = {}
 
       // setup:
-      // account set L all add coll and withdraw ZUSD
-      await th.openTrove_allAccounts_randomETH_randomZUSD(defaulterCollMin,
+      // account set L all add coll and withdraw ZSUSD
+      await th.openTrove_allAccounts_randomETH_randomZSUSD(defaulterCollMin,
         defaulterCollMax,
         defaulterAccounts,
         contracts,
-        defaulterZUSDProportionMin,
-        defaulterZUSDProportionMax)
+        defaulterZSUSDProportionMin,
+        defaulterZSUSDProportionMax)
 
-      // account set S all add coll and withdraw ZUSD
-      await th.openTrove_allAccounts_randomETH_randomZUSD(depositorCollMin,
+      // account set S all add coll and withdraw ZSUSD
+      await th.openTrove_allAccounts_randomETH_randomZSUSD(depositorCollMin,
         depositorCollMax,
         depositorAccounts,
         contracts,
-        depositorZUSDProportionMin,
-        depositorZUSDProportionMax)
+        depositorZSUSDProportionMin,
+        depositorZSUSDProportionMax)
 
       // price drops, all L liquidateable
       await priceFeed.setPrice(dec(100, 18));
@@ -437,18 +437,18 @@ contract("PoolManager - random liquidations/deposits, then check all depositors 
 
       await skyrocketPriceAndCheckAllTrovesSafe()
 
-      const totalZUSDDepositsBeforeWithdrawals = await stabilityPool.getTotalZUSDDeposits()
+      const totalZSUSDDepositsBeforeWithdrawals = await stabilityPool.getTotalZSUSDDeposits()
       const totalETHRewardsBeforeWithdrawals = await stabilityPool.getETH()
 
       await attemptWithdrawAllDeposits(currentDepositors)
 
-      const totalZUSDDepositsAfterWithdrawals = await stabilityPool.getTotalZUSDDeposits()
+      const totalZSUSDDepositsAfterWithdrawals = await stabilityPool.getTotalZSUSDDeposits()
       const totalETHRewardsAfterWithdrawals = await stabilityPool.getETH()
 
-      console.log(`Total ZUSD deposits before any withdrawals: ${totalZUSDDepositsBeforeWithdrawals}`)
+      console.log(`Total ZSUSD deposits before any withdrawals: ${totalZSUSDDepositsBeforeWithdrawals}`)
       console.log(`Total ETH rewards before any withdrawals: ${totalETHRewardsBeforeWithdrawals}`)
 
-      console.log(`Remaining ZUSD deposits after withdrawals: ${totalZUSDDepositsAfterWithdrawals}`)
+      console.log(`Remaining ZSUSD deposits after withdrawals: ${totalZSUSDDepositsAfterWithdrawals}`)
       console.log(`Remaining ETH rewards after withdrawals: ${totalETHRewardsAfterWithdrawals}`)
 
       console.log(`current depositors length: ${currentDepositors.length}`)
@@ -466,13 +466,13 @@ contract("PoolManager - random liquidations/deposits, then check all depositors 
 
       const defaulterCollMin = 1000000
       const defaulterCollMax = 100000000
-      const defaulterZUSDProportionMin = 91
-      const defaulterZUSDProportionMax = 180
+      const defaulterZSUSDProportionMin = 91
+      const defaulterZSUSDProportionMax = 180
 
       const depositorCollMin = 1000000
       const depositorCollMax = 100000000
-      const depositorZUSDProportionMin = 100
-      const depositorZUSDProportionMax = 100
+      const depositorZSUSDProportionMin = 100
+      const depositorZSUSDProportionMax = 100
 
       const remainingDefaulters = [...defaulterAccounts]
       const currentDepositors = []
@@ -480,21 +480,21 @@ contract("PoolManager - random liquidations/deposits, then check all depositors 
       const currentDepositorsDict = {}
 
       // setup:
-      // account set L all add coll and withdraw ZUSD
-      await th.openTrove_allAccounts_randomETH_randomZUSD(defaulterCollMin,
+      // account set L all add coll and withdraw ZSUSD
+      await th.openTrove_allAccounts_randomETH_randomZSUSD(defaulterCollMin,
         defaulterCollMax,
         defaulterAccounts,
         contracts,
-        defaulterZUSDProportionMin,
-        defaulterZUSDProportionMax)
+        defaulterZSUSDProportionMin,
+        defaulterZSUSDProportionMax)
 
-      // account set S all add coll and withdraw ZUSD
-      await th.openTrove_allAccounts_randomETH_randomZUSD(depositorCollMin,
+      // account set S all add coll and withdraw ZSUSD
+      await th.openTrove_allAccounts_randomETH_randomZSUSD(depositorCollMin,
         depositorCollMax,
         depositorAccounts,
         contracts,
-        depositorZUSDProportionMin,
-        depositorZUSDProportionMax)
+        depositorZSUSDProportionMin,
+        depositorZSUSDProportionMax)
 
       // price drops, all L liquidateable
       await priceFeed.setPrice(dec(100, 18));
@@ -510,18 +510,18 @@ contract("PoolManager - random liquidations/deposits, then check all depositors 
 
       await skyrocketPriceAndCheckAllTrovesSafe()
 
-      const totalZUSDDepositsBeforeWithdrawals = await stabilityPool.getTotalZUSDDeposits()
+      const totalZSUSDDepositsBeforeWithdrawals = await stabilityPool.getTotalZSUSDDeposits()
       const totalETHRewardsBeforeWithdrawals = await stabilityPool.getETH()
 
       await attemptWithdrawAllDeposits(currentDepositors)
 
-      const totalZUSDDepositsAfterWithdrawals = await stabilityPool.getTotalZUSDDeposits()
+      const totalZSUSDDepositsAfterWithdrawals = await stabilityPool.getTotalZSUSDDeposits()
       const totalETHRewardsAfterWithdrawals = await stabilityPool.getETH()
 
-      console.log(`Total ZUSD deposits before any withdrawals: ${totalZUSDDepositsBeforeWithdrawals}`)
+      console.log(`Total ZSUSD deposits before any withdrawals: ${totalZSUSDDepositsBeforeWithdrawals}`)
       console.log(`Total ETH rewards before any withdrawals: ${totalETHRewardsBeforeWithdrawals}`)
 
-      console.log(`Remaining ZUSD deposits after withdrawals: ${totalZUSDDepositsAfterWithdrawals}`)
+      console.log(`Remaining ZSUSD deposits after withdrawals: ${totalZSUSDDepositsAfterWithdrawals}`)
       console.log(`Remaining ETH rewards after withdrawals: ${totalETHRewardsAfterWithdrawals}`)
 
       console.log(`current depositors length: ${currentDepositors.length}`)

@@ -15,22 +15,22 @@ export const CRITICAL_COLLATERAL_RATIO = Decimal.from(1.5);
 export const MINIMUM_COLLATERAL_RATIO = Decimal.from(1.1);
 
 /**
- * Amount of ZUSD that's reserved for compensating the liquidator of a Trove.
+ * Amount of ZSUSD that's reserved for compensating the liquidator of a Trove.
  *
  * @public
  */
-export const ZUSD_LIQUIDATION_RESERVE = Decimal.from(20);
+export const ZSUSD_LIQUIDATION_RESERVE = Decimal.from(20);
 
 /**
  * A Trove must always have at least this much debt on top of the
- * {@link ZUSD_LIQUIDATION_RESERVE | liquidation reserve}.
+ * {@link ZSUSD_LIQUIDATION_RESERVE | liquidation reserve}.
  *
  * @remarks
  * Any transaction that would result in a Trove with less net debt than this will be reverted.
  *
  * @public
  */
-export const ZUSD_MINIMUM_NET_DEBT = Decimal.from(180);
+export const ZSUSD_MINIMUM_NET_DEBT = Decimal.from(180);
 
 /**
  * A Trove must always have at least this much debt.
@@ -40,7 +40,7 @@ export const ZUSD_MINIMUM_NET_DEBT = Decimal.from(180);
  *
  * @public
  */
-export const ZUSD_MINIMUM_DEBT = ZUSD_LIQUIDATION_RESERVE.add(ZUSD_MINIMUM_NET_DEBT);
+export const ZSUSD_MINIMUM_DEBT = ZSUSD_LIQUIDATION_RESERVE.add(ZSUSD_MINIMUM_NET_DEBT);
 
 /**
  * Value that the {@link Fees.borrowingRate | borrowing rate} will never decay below.

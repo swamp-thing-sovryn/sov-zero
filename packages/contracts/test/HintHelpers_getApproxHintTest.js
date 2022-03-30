@@ -8,7 +8,7 @@ const moneyVals = testHelpers.MoneyValues
 let latestRandomSeed = 31337
 
 const TroveManagerTester = artifacts.require("TroveManagerTester")
-const ZUSDToken = artifacts.require("ZUSDToken")
+const ZSUSDToken = artifacts.require("ZSUSDToken")
 
 contract('HintHelpers', async accounts => {
  
@@ -30,19 +30,19 @@ contract('HintHelpers', async accounts => {
 
   const getNetBorrowingAmount = async (debtWithFee) => th.getNetBorrowingAmount(contracts, debtWithFee)
 
-  /* Open a Trove for each account. ZUSD debt is 200 ZUSD each, with collateral beginning at
+  /* Open a Trove for each account. ZSUSD debt is 200 ZSUSD each, with collateral beginning at
   1.5 ether, and rising by 0.01 ether per Trove.  Hence, the ICR of account (i + 1) is always 1% greater than the ICR of account i. 
  */
 
- // Open Troves in parallel, then withdraw ZUSD in parallel
+ // Open Troves in parallel, then withdraw ZSUSD in parallel
  const makeTrovesInParallel = async (accounts, n) => {
   activeAccounts = accounts.slice(0,n)
   // console.log(`number of accounts used is: ${activeAccounts.length}`)
   // console.time("makeTrovesInParallel")
   const openTrovepromises = activeAccounts.map((account, index) => openTrove(account, index))
   await Promise.all(openTrovepromises)
-  const withdrawZUSDpromises = activeAccounts.map(account => withdrawZUSDfromTrove(account))
-  await Promise.all(withdrawZUSDpromises)
+  const withdrawZSUSDpromises = activeAccounts.map(account => withdrawZSUSDfromTrove(account))
+  await Promise.all(withdrawZSUSDpromises)
   // console.timeEnd("makeTrovesInParallel")
  }
 
@@ -53,11 +53,11 @@ contract('HintHelpers', async accounts => {
    await borrowerOperations.openTrove(th._100pct, 0, account, account, coll, { from: account })
  }
 
- const withdrawZUSDfromTrove = async (account) => {
-  await borrowerOperations.withdrawZUSD(th._100pct, '100000000000000000000', account, account, { from: account })
+ const withdrawZSUSDfromTrove = async (account) => {
+  await borrowerOperations.withdrawZSUSD(th._100pct, '100000000000000000000', account, account, { from: account })
  }
 
- // Sequentially add coll and withdraw ZUSD, 1 account at a time
+ // Sequentially add coll and withdraw ZSUSD, 1 account at a time
   const makeTrovesInSequence = async (accounts, n) => {
     activeAccounts = accounts.slice(0,n)
     // console.log(`number of accounts used is: ${activeAccounts.length}`)
@@ -67,7 +67,7 @@ contract('HintHelpers', async accounts => {
     // console.time('makeTrovesInSequence')
     for (const account of activeAccounts) {
       const ICR_BN = toBN(ICR.toString().concat('0'.repeat(16)))
-      await th.openTrove(contracts, { extraZUSDAmount: toBN(dec(10000, 18)), ICR: ICR_BN, extraParams: { from: account } })
+      await th.openTrove(contracts, { extraZSUSDAmount: toBN(dec(10000, 18)), ICR: ICR_BN, extraParams: { from: account } })
 
       ICR += 1
     }
@@ -77,8 +77,8 @@ contract('HintHelpers', async accounts => {
   before(async () => {
     contracts = await deploymentHelper.deployLiquityCore()
     contracts.troveManager = await TroveManagerTester.new()
-    contracts.zusdToken = await ZUSDToken.new()
-    await contracts.zusdToken.initialize(
+    contracts.zsusdToken = await ZSUSDToken.new()
+    await contracts.zsusdToken.initialize(
       contracts.troveManager.address,
       contracts.stabilityPool.address,
       contracts.borrowerOperations.address

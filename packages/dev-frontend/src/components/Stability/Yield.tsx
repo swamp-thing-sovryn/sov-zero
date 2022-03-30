@@ -7,8 +7,8 @@ import { useLiquity } from "../../hooks/LiquityContext";
 import { Badge } from "../Badge";
 import { fetchZeroPrice } from "./context/fetchZeroPrice";
 
-const selector = ({ zusdInStabilityPool, remainingStabilityPoolZEROReward }: LiquityStoreState) => ({
-  zusdInStabilityPool,
+const selector = ({ zsusdInStabilityPool, remainingStabilityPoolZEROReward }: LiquityStoreState) => ({
+  zsusdInStabilityPool,
   remainingStabilityPoolZEROReward
 });
 
@@ -18,10 +18,10 @@ export const Yield: React.FC = () => {
       connection: { addresses }
     }
   } = useLiquity();
-  const { zusdInStabilityPool, remainingStabilityPoolZEROReward } = useLiquitySelector(selector);
+  const { zsusdInStabilityPool, remainingStabilityPoolZEROReward } = useLiquitySelector(selector);
 
   const [zeroPrice, setZeroPrice] = useState<Decimal | undefined>(undefined);
-  const hasZeroValue = remainingStabilityPoolZEROReward.isZero || zusdInStabilityPool.isZero;
+  const hasZeroValue = remainingStabilityPoolZEROReward.isZero || zsusdInStabilityPool.isZero;
   const zeroTokenAddress = addresses["zeroToken"];
 
   useEffect(() => {
@@ -40,7 +40,7 @@ export const Yield: React.FC = () => {
   const yearlyHalvingSchedule = 0.5; // 50% see ZERO distribution schedule for more info
   const remainingZeroOneYear = remainingStabilityPoolZEROReward.mul(yearlyHalvingSchedule);
   const remainingZeroOneYearInUSD = remainingZeroOneYear.mul(zeroPrice);
-  const aprPercentage = remainingZeroOneYearInUSD.div(zusdInStabilityPool).mul(100);
+  const aprPercentage = remainingZeroOneYearInUSD.div(zsusdInStabilityPool).mul(100);
   const remainingZeroInUSD = remainingStabilityPoolZEROReward.mul(zeroPrice);
 
   if (aprPercentage.isZero) return null;
@@ -52,17 +52,17 @@ export const Yield: React.FC = () => {
         tooltip={
           <Card variant="tooltip" sx={{ width: ["220px", "518px"] }}>
             <Paragraph>
-              An <Text sx={{ fontWeight: "bold" }}>estimate</Text> of the ZERO return on the ZUSD
+              An <Text sx={{ fontWeight: "bold" }}>estimate</Text> of the ZERO return on the ZSUSD
               deposited to the Stability Pool over the next year, not including your RBTC gains from
               liquidations.
             </Paragraph>
             <Paragraph sx={{ fontSize: "12px", fontFamily: "monospace", mt: 2 }}>
-              (($ZERO_REWARDS * YEARLY_DISTRIBUTION%) / DEPOSITED_ZUSD) * 100 ={" "}
+              (($ZERO_REWARDS * YEARLY_DISTRIBUTION%) / DEPOSITED_ZSUSD) * 100 ={" "}
               <Text sx={{ fontWeight: "bold" }}> APR</Text>
             </Paragraph>
             <Paragraph sx={{ fontSize: "12px", fontFamily: "monospace" }}>
               ($
-              {remainingZeroInUSD.shorten()} * 50% / ${zusdInStabilityPool.shorten()}) * 100 =
+              {remainingZeroInUSD.shorten()} * 50% / ${zsusdInStabilityPool.shorten()}) * 100 =
               <Text sx={{ fontWeight: "bold" }}> {aprPercentage.toString(2)}%</Text>
             </Paragraph>
           </Card>

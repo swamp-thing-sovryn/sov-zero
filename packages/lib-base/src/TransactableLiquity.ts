@@ -31,7 +31,7 @@ export interface TroveCreationDetails {
   /** The Trove that was created by the transaction. */
   newTrove: Trove;
 
-  /** Amount of ZUSD added to the Trove's debt as borrowing fee. */
+  /** Amount of ZSUSD added to the Trove's debt as borrowing fee. */
   fee: Decimal;
 }
 
@@ -47,7 +47,7 @@ export interface TroveAdjustmentDetails {
   /** New state of the adjusted Trove directly after the transaction. */
   newTrove: Trove;
 
-  /** Amount of ZUSD added to the Trove's debt as borrowing fee. */
+  /** Amount of ZSUSD added to the Trove's debt as borrowing fee. */
   fee: Decimal;
 }
 
@@ -74,32 +74,32 @@ export interface LiquidationDetails {
   /** Total collateral liquidated and debt cleared by the transaction. */
   totalLiquidated: Trove;
 
-  /** Amount of ZUSD paid to the liquidator as gas compensation. */
-  zusdGasCompensation: Decimal;
+  /** Amount of ZSUSD paid to the liquidator as gas compensation. */
+  zsusdGasCompensation: Decimal;
 
   /** Amount of native currency (e.g. Ether) paid to the liquidator as gas compensation. */
   collateralGasCompensation: Decimal;
 }
 
 /**
- * Details of a {@link TransactableLiquity.redeemZUSD | redeemZUSD()} transaction.
+ * Details of a {@link TransactableLiquity.redeemZSUSD | redeemZSUSD()} transaction.
  *
  * @public
  */
 export interface RedemptionDetails {
-  /** Amount of ZUSD the redeemer tried to redeem. */
-  attemptedZUSDAmount: Decimal;
+  /** Amount of ZSUSD the redeemer tried to redeem. */
+  attemptedZSUSDAmount: Decimal;
 
   /**
-   * Amount of ZUSD that was actually redeemed by the transaction.
+   * Amount of ZSUSD that was actually redeemed by the transaction.
    *
    * @remarks
-   * This can end up being lower than `attemptedZUSDAmount` due to interference from another
+   * This can end up being lower than `attemptedZSUSDAmount` due to interference from another
    * transaction that modifies the list of Troves.
    *
    * @public
    */
-  actualZUSDAmount: Decimal;
+  actualZSUSDAmount: Decimal;
 
   /** Amount of collateral (e.g. Ether) taken from Troves by the transaction. */
   collateralTaken: Decimal;
@@ -116,11 +116,11 @@ export interface RedemptionDetails {
  * @public
  */
 export interface StabilityPoolGainsWithdrawalDetails {
-  /** Amount of ZUSD burned from the deposit by liquidations since the last modification. */
-  zusdLoss: Decimal;
+  /** Amount of ZSUSD burned from the deposit by liquidations since the last modification. */
+  zsusdLoss: Decimal;
 
-  /** Amount of ZUSD in the deposit directly after this transaction. */
-  newZUSDDeposit: Decimal;
+  /** Amount of ZSUSD in the deposit directly after this transaction. */
+  newZSUSDDeposit: Decimal;
 
   /** Amount of native currency (e.g. Ether) paid out to the depositor in this transaction. */
   collateralGain: Decimal;
@@ -131,8 +131,8 @@ export interface StabilityPoolGainsWithdrawalDetails {
 
 /**
  * Details of a
- * {@link TransactableLiquity.depositZUSDInStabilityPool | depositZUSDInStabilityPool()} or
- * {@link TransactableLiquity.withdrawZUSDFromStabilityPool | withdrawZUSDFromStabilityPool()}
+ * {@link TransactableLiquity.depositZSUSDInStabilityPool | depositZSUSDInStabilityPool()} or
+ * {@link TransactableLiquity.withdrawZSUSDFromStabilityPool | withdrawZSUSDFromStabilityPool()}
  * transaction.
  *
  * @public
@@ -167,7 +167,7 @@ export interface CollateralGainTransferDetails extends StabilityPoolGainsWithdra
  */
 export interface TransactableLiquity {
   /**
-   * Open a new Trove by depositing collateral and borrowing ZUSD.
+   * Open a new Trove by depositing collateral and borrowing ZSUSD.
    *
    * @param params - How much to deposit and borrow.
    * @param maxBorrowingRate - Maximum acceptable
@@ -199,14 +199,14 @@ export interface TransactableLiquity {
    * @param params - Parameters of the adjustment.
    * @param maxBorrowingRate - Maximum acceptable
    *                           {@link @liquity/lib-base#Fees.borrowingRate | borrowing rate} if
-   *                           `params` includes `borrowZUSD`.
+   *                           `params` includes `borrowZSUSD`.
    *
    * @throws
    * Throws {@link TransactionFailedError} in case of transaction failure.
    *
    * @remarks
    * The transaction will fail if the Trove's debt would fall below
-   * {@link @liquity/lib-base#ZUSD_MINIMUM_DEBT}.
+   * {@link @liquity/lib-base#ZSUSD_MINIMUM_DEBT}.
    *
    * If `maxBorrowingRate` is omitted, the current borrowing rate plus 0.5% is used as maximum
    * acceptable rate.
@@ -251,9 +251,9 @@ export interface TransactableLiquity {
   withdrawCollateral(amount: Decimalish): Promise<TroveAdjustmentDetails>;
 
   /**
-   * Adjust existing Trove by borrowing more ZUSD.
+   * Adjust existing Trove by borrowing more ZSUSD.
    *
-   * @param amount - The amount of ZUSD to borrow.
+   * @param amount - The amount of ZSUSD to borrow.
    * @param maxBorrowingRate - Maximum acceptable
    *                           {@link @liquity/lib-base#Fees.borrowingRate | borrowing rate}.
    *
@@ -264,15 +264,15 @@ export interface TransactableLiquity {
    * Equivalent to:
    *
    * ```typescript
-   * adjustTrove({ borrowZUSD: amount }, maxBorrowingRate)
+   * adjustTrove({ borrowZSUSD: amount }, maxBorrowingRate)
    * ```
    */
-  borrowZUSD(amount: Decimalish, maxBorrowingRate?: Decimalish): Promise<TroveAdjustmentDetails>;
+  borrowZSUSD(amount: Decimalish, maxBorrowingRate?: Decimalish): Promise<TroveAdjustmentDetails>;
 
   /**
    * Adjust existing Trove by repaying some of its debt.
    *
-   * @param amount - The amount of ZUSD to repay.
+   * @param amount - The amount of ZSUSD to repay.
    *
    * @throws
    * Throws {@link TransactionFailedError} in case of transaction failure.
@@ -281,10 +281,10 @@ export interface TransactableLiquity {
    * Equivalent to:
    *
    * ```typescript
-   * adjustTrove({ repayZUSD: amount })
+   * adjustTrove({ repayZSUSD: amount })
    * ```
    */
-  repayZUSD(amount: Decimalish): Promise<TroveAdjustmentDetails>;
+  repayZSUSD(amount: Decimalish): Promise<TroveAdjustmentDetails>;
 
   /** @internal */
   setPrice(price: Decimalish): Promise<void>;
@@ -312,7 +312,7 @@ export interface TransactableLiquity {
   /**
    * Make a new Stability Deposit, or top up existing one.
    *
-   * @param amount - Amount of ZUSD to add to new or existing deposit.
+   * @param amount - Amount of ZSUSD to add to new or existing deposit.
    * @param frontendTag - Address that should receive a share of this deposit's ZERO rewards.
    *
    * @throws
@@ -325,15 +325,15 @@ export interface TransactableLiquity {
    * {@link @liquity/lib-base#StabilityDeposit.collateralGain | collateral gain} and
    * {@link @liquity/lib-base#StabilityDeposit.zeroReward | ZERO reward}.
    */
-  depositZUSDInStabilityPool(
+  depositZSUSDInStabilityPool(
     amount: Decimalish,
     frontendTag?: string
   ): Promise<StabilityDepositChangeDetails>;
 
   /**
-   * Withdraw ZUSD from Stability Deposit.
+   * Withdraw ZSUSD from Stability Deposit.
    *
-   * @param amount - Amount of ZUSD to withdraw.
+   * @param amount - Amount of ZSUSD to withdraw.
    *
    * @throws
    * Throws {@link TransactionFailedError} in case of transaction failure.
@@ -343,7 +343,7 @@ export interface TransactableLiquity {
    * {@link @liquity/lib-base#StabilityDeposit.collateralGain | collateral gain} and
    * {@link @liquity/lib-base#StabilityDeposit.zeroReward | ZERO reward}.
    */
-  withdrawZUSDFromStabilityPool(amount: Decimalish): Promise<StabilityDepositChangeDetails>;
+  withdrawZSUSDFromStabilityPool(amount: Decimalish): Promise<StabilityDepositChangeDetails>;
 
   /**
    * Withdraw {@link @liquity/lib-base#StabilityDeposit.collateralGain | collateral gain} and
@@ -370,15 +370,15 @@ export interface TransactableLiquity {
   transferCollateralGainToTrove(): Promise<CollateralGainTransferDetails>;
 
   /**
-   * Send ZUSD tokens to an address.
+   * Send ZSUSD tokens to an address.
    *
    * @param toAddress - Address of receipient.
-   * @param amount - Amount of ZUSD to send.
+   * @param amount - Amount of ZSUSD to send.
    *
    * @throws
    * Throws {@link TransactionFailedError} in case of transaction failure.
    */
-  sendZUSD(toAddress: string, amount: Decimalish): Promise<void>;
+  sendZSUSD(toAddress: string, amount: Decimalish): Promise<void>;
 
   /**
    * Send ZERO tokens to an address.
@@ -392,9 +392,9 @@ export interface TransactableLiquity {
   sendZERO(toAddress: string, amount: Decimalish): Promise<void>;
 
   /**
-   * Redeem ZUSD to native currency (e.g. Ether) at face value.
+   * Redeem ZSUSD to native currency (e.g. Ether) at face value.
    *
-   * @param amount - Amount of ZUSD to be redeemed.
+   * @param amount - Amount of ZSUSD to be redeemed.
    * @param maxRedemptionRate - Maximum acceptable
    *                            {@link @liquity/lib-base#Fees.redemptionRate | redemption rate}.
    *
@@ -405,7 +405,7 @@ export interface TransactableLiquity {
    * If `maxRedemptionRate` is omitted, the current redemption rate (based on `amount`) plus 0.1%
    * is used as maximum acceptable rate.
    */
-  redeemZUSD(amount: Decimalish, maxRedemptionRate?: Decimalish): Promise<RedemptionDetails>;
+  redeemZSUSD(amount: Decimalish, maxRedemptionRate?: Decimalish): Promise<RedemptionDetails>;
 
   /**
    * Claim leftover collateral after a liquidation or redemption.
@@ -430,7 +430,7 @@ export interface TransactableLiquity {
    * @remarks
    * As a side-effect, the transaction will also pay out an existing ZERO stake's
    * {@link @liquity/lib-base#ZEROStake.collateralGain | collateral gain} and
-   * {@link @liquity/lib-base#ZEROStake.zusdGain | ZUSD gain}.
+   * {@link @liquity/lib-base#ZEROStake.zsusdGain | ZSUSD gain}.
    */
   stakeZERO(amount: Decimalish): Promise<void>;
 
@@ -445,13 +445,13 @@ export interface TransactableLiquity {
    * @remarks
    * As a side-effect, the transaction will also pay out the ZERO stake's
    * {@link @liquity/lib-base#ZEROStake.collateralGain | collateral gain} and
-   * {@link @liquity/lib-base#ZEROStake.zusdGain | ZUSD gain}.
+   * {@link @liquity/lib-base#ZEROStake.zsusdGain | ZSUSD gain}.
    */
   unstakeZERO(amount: Decimalish): Promise<void>;
 
   /**
    * Withdraw {@link @liquity/lib-base#ZEROStake.collateralGain | collateral gain} and
-   * {@link @liquity/lib-base#ZEROStake.zusdGain | ZUSD gain} from ZERO stake.
+   * {@link @liquity/lib-base#ZEROStake.zsusdGain | ZSUSD gain} from ZERO stake.
    *
    * @throws
    * Throws {@link TransactionFailedError} in case of transaction failure.

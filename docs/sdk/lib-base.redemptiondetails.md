@@ -4,7 +4,7 @@
 
 ## RedemptionDetails interface
 
-Details of a [redeemZUSD()](./lib-base.transactableliquity.redeemzusd.md) transaction.
+Details of a [redeemZSUSD()](./lib-base.transactableliquity.redeemzsusd.md) transaction.
 
 <b>Signature:</b>
 
@@ -16,8 +16,8 @@ export interface RedemptionDetails
 
 |  Property | Type | Description |
 |  --- | --- | --- |
-|  [actualZUSDAmount](./lib-base.redemptiondetails.actualzusdamount.md) | [Decimal](./lib-base.decimal.md) | Amount of ZUSD that was actually redeemed by the transaction. |
-|  [attemptedZUSDAmount](./lib-base.redemptiondetails.attemptedzusdamount.md) | [Decimal](./lib-base.decimal.md) | Amount of ZUSD the redeemer tried to redeem. |
+|  [actualZSUSDAmount](./lib-base.redemptiondetails.actualzsusdamount.md) | [Decimal](./lib-base.decimal.md) | Amount of ZSUSD that was actually redeemed by the transaction. |
+|  [attemptedZSUSDAmount](./lib-base.redemptiondetails.attemptedzsusdamount.md) | [Decimal](./lib-base.decimal.md) | Amount of ZSUSD the redeemer tried to redeem. |
 |  [collateralTaken](./lib-base.redemptiondetails.collateraltaken.md) | [Decimal](./lib-base.decimal.md) | Amount of collateral (e.g. Ether) taken from Troves by the transaction. |
 |  [fee](./lib-base.redemptiondetails.fee.md) | [Decimal](./lib-base.decimal.md) | Amount of native currency (e.g. Ether) deducted as fee from collateral taken. |
 

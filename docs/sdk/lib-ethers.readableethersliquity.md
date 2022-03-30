@@ -31,7 +31,7 @@ The constructor for this class is marked as internal. Third-party code should no
 |  [getCollateralSurplusBalance(address, overrides)](./lib-ethers.readableethersliquity.getcollateralsurplusbalance.md) |  | Get the amount of leftover collateral available for withdrawal by an address. |
 |  [getFees(overrides)](./lib-ethers.readableethersliquity.getfees.md) |  | Get a calculator for current fees. |
 |  [getFrontendStatus(address, overrides)](./lib-ethers.readableethersliquity.getfrontendstatus.md) |  | Check whether an address is registered as a Liquity frontend, and what its kickback rate is. |
-|  [getNUEBalance(address, overrides)](./lib-ethers.readableethersliquity.getnuebalance.md) |  | Get the amount of ZUSD held by an address. |
+|  [getNUEBalance(address, overrides)](./lib-ethers.readableethersliquity.getnuebalance.md) |  | Get the amount of ZSUSD held by an address. |
 |  [getNumberOfTroves(overrides)](./lib-ethers.readableethersliquity.getnumberoftroves.md) |  | Get number of Troves that are currently open. |
 |  [getPrice(overrides)](./lib-ethers.readableethersliquity.getprice.md) |  | Get the current price of the native currency (e.g. Ether) in USD. |
 |  [getRemainingStabilityPoolZEROReward(overrides)](./lib-ethers.readableethersliquity.getremainingstabilitypoolzeroreward.md) |  | Get the remaining ZERO that will be collectively rewarded to stability depositors. |
@@ -44,8 +44,8 @@ The constructor for this class is marked as internal. Third-party code should no
 |  [getTroves(params, overrides)](./lib-ethers.readableethersliquity.gettroves_1.md) |  | Get a slice from the list of Troves. |
 |  [getZEROBalance(address, overrides)](./lib-ethers.readableethersliquity.getzerobalance.md) |  | Get the amount of ZERO held by an address. |
 |  [getZEROStake(address, overrides)](./lib-ethers.readableethersliquity.getzerostake.md) |  | Get the current state of an ZERO Stake. |
-|  [getZUSDBalance(address, overrides)](./lib-ethers.readableethersliquity.getzusdbalance.md) |  | Get the amount of ZUSD held by an address. |
-|  [getZUSDInStabilityPool(overrides)](./lib-ethers.readableethersliquity.getzusdinstabilitypool.md) |  | Get the total amount of ZUSD currently deposited in the Stability Pool. |
+|  [getZSUSDBalance(address, overrides)](./lib-ethers.readableethersliquity.getzsusdbalance.md) |  | Get the amount of ZSUSD held by an address. |
+|  [getZSUSDInStabilityPool(overrides)](./lib-ethers.readableethersliquity.getzsusdinstabilitypool.md) |  | Get the total amount of ZSUSD currently deposited in the Stability Pool. |
 |  [hasStore()](./lib-ethers.readableethersliquity.hasstore.md) |  | Check whether this <code>ReadableEthersLiquity</code> is a [ReadableEthersLiquityWithStore](./lib-ethers.readableethersliquitywithstore.md)<!-- -->. |
 |  [hasStore(store)](./lib-ethers.readableethersliquity.hasstore_1.md) |  | Check whether this <code>ReadableEthersLiquity</code> is a [ReadableEthersLiquityWithStore](./lib-ethers.readableethersliquitywithstore.md)<!-- -->&lt;[BlockPolledLiquityStore](./lib-ethers.blockpolledliquitystore.md)<!-- -->&gt;<!-- -->. |
 

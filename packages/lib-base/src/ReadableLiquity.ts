@@ -107,19 +107,19 @@ export interface ReadableLiquity {
   getRemainingStabilityPoolZEROReward(): Promise<Decimal>;
 
   /**
-   * Get the total amount of ZUSD currently deposited in the Stability Pool.
+   * Get the total amount of ZSUSD currently deposited in the Stability Pool.
    */
-  getZUSDInStabilityPool(): Promise<Decimal>;
+  getZSUSDInStabilityPool(): Promise<Decimal>;
 
   /**
-   * Get the amount of ZUSD held by an address.
+   * Get the amount of ZSUSD held by an address.
    *
    * @param address - Address whose balance should be retrieved.
    */
-  getZUSDBalance(address?: string): Promise<Decimal>;
+  getZSUSDBalance(address?: string): Promise<Decimal>;
 
   /**
-   * Get the amount of ZUSD held by an address.
+   * Get the amount of ZSUSD held by an address.
    *
    * @param address - Address whose balance should be retrieved.
    */

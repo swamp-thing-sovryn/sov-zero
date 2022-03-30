@@ -52,9 +52,9 @@ export const ReadOnlyStake: React.FC = () => {
 
         <StaticRow
           label="Issuance gain"
-          inputId="stake-gain-zusd"
-          amount={zeroStake.zusdGain.prettify()}
-          color={zeroStake.zusdGain.nonZero && "success"}
+          inputId="stake-gain-zsusd"
+          amount={zeroStake.zsusdGain.prettify()}
+          color={zeroStake.zsusdGain.nonZero && "success"}
           unit={COIN}
         />
 

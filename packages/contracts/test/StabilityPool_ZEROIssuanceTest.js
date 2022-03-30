@@ -8,7 +8,7 @@ const toBN = th.toBN
 const getDifference = th.getDifference
 
 const TroveManagerTester = artifacts.require("TroveManagerTester")
-const ZUSDToken = artifacts.require("ZUSDToken")
+const ZSUSDToken = artifacts.require("ZSUSDToken")
 
 contract('StabilityPool - ZERO Rewards', async accounts => {
 
@@ -44,7 +44,7 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
 
   const ZERO_ADDRESS = th.ZERO_ADDRESS
 
-  const getOpenTroveZUSDAmount = async (totalDebt) => th.getOpenTroveZUSDAmount(contracts, totalDebt)
+  const getOpenTroveZSUSDAmount = async (totalDebt) => th.getOpenTroveZSUSDAmount(contracts, totalDebt)
 
   const openTrove = async (params) => th.openTrove(contracts, params)
   describe("ZERO Rewards", async () => {
@@ -52,8 +52,8 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
     before(async () => {
       contracts = await deploymentHelper.deployLiquityCore()
       contracts.troveManager = await TroveManagerTester.new()
-      contracts.zusdToken = await ZUSDToken.new()
-      await contracts.zusdToken.initialize(
+      contracts.zsusdToken = await ZSUSDToken.new()
+      await contracts.zsusdToken.initialize(
         contracts.troveManager.address,
         contracts.stabilityPool.address,
         contracts.borrowerOperations.address
@@ -61,7 +61,7 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
       const ZEROContracts = await deploymentHelper.deployZEROTesterContractsHardhat(multisig)
 
       priceFeed = contracts.priceFeedTestnet
-      zusdToken = contracts.zusdToken
+      zsusdToken = contracts.zsusdToken
       stabilityPool = contracts.stabilityPool
       sortedTroves = contracts.sortedTroves
       troveManager = contracts.troveManager
@@ -124,8 +124,8 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
     it("liquidation < 1 minute after a deposit does not change totalZEROIssued", async () => {
       
       
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: {from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: {from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: {from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: {from: B } })
 
       // A, B provide to SP
       await stabilityPool.provideToSP(dec(10000, 18), ZERO_ADDRESS, { from: A })
@@ -180,7 +180,7 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
 
       // defaulter opens trove
       await sovToken.approve(borrowerOperations.address, dec(1000, 'ether'), { from: defaulter_1 })
-      await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(10000, 18)), defaulter_1, defaulter_1, dec(100, 'ether'), { from: defaulter_1 })
+      await borrowerOperations.openTrove(th._100pct, await getOpenTroveZSUSDAmount(dec(10000, 18)), defaulter_1, defaulter_1, dec(100, 'ether'), { from: defaulter_1 })
 
       // SOV drops
       await priceFeed.setPrice(dec(100, 18))
@@ -303,7 +303,7 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
 
       // Whale opens Trove with 10k SOV
       await sovToken.approve(borrowerOperations.address, dec(10000, 'ether'), { from: whale })
-      await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(10000, 18)), whale, whale, dec(10000, 'ether'), { from: whale })
+      await borrowerOperations.openTrove(th._100pct, await getOpenTroveZSUSDAmount(dec(10000, 18)), whale, whale, dec(10000, 'ether'), { from: whale })
 
       await sovToken.approve(borrowerOperations.address, dec(200, 'ether'), { from: A })
       await borrowerOperations.openTrove(th._100pct, dec(10000, 18), A, A, dec(200, 'ether'), { from: A })
@@ -404,7 +404,7 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
       await borrowerOperations.openTrove(th._100pct, dec(40000, 18), E, E, dec(600, 'ether'), { from: E })
 
       await sovToken.approve(borrowerOperations.address, dec(300, 'ether'), { from: defaulter_1 })
-      await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(30000, 18)), defaulter_1, defaulter_1, dec(300, 'ether'), { from: defaulter_1 })
+      await borrowerOperations.openTrove(th._100pct, await getOpenTroveZSUSDAmount(dec(30000, 18)), defaulter_1, defaulter_1, dec(300, 'ether'), { from: defaulter_1 })
 
       // Check all ZERO balances are initially 0
       assert.equal(await zeroToken.balanceOf(A), 0)
@@ -420,7 +420,7 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
       // Year 1 passes
       await th.fastForwardTime(await getDuration(timeValues.SECONDS_IN_ONE_YEAR), web3.currentProvider)
 
-      assert.equal(await stabilityPool.getTotalZUSDDeposits(), dec(60000, 18))
+      assert.equal(await stabilityPool.getTotalZSUSDDeposits(), dec(60000, 18))
 
       // Price Drops, defaulter1 liquidated. Stability Pool size drops by 50%
       await priceFeed.setPrice(dec(100, 18))
@@ -429,7 +429,7 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
       assert.isFalse(await sortedTroves.contains(defaulter_1))
 
       // Confirm SP dropped from 60k to 30k
-      assert.isAtMost(getDifference(await stabilityPool.getTotalZUSDDeposits(), dec(30000, 18)), 1000)
+      assert.isAtMost(getDifference(await stabilityPool.getTotalZSUSDDeposits(), dec(30000, 18)), 1000)
 
       // Expected gains for each depositor after 1 year (50% total issued)
       const A_expectedZEROGain_Y1 = toBN('0')
@@ -511,18 +511,18 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
 
       // Whale opens Trove with 10k SOV
       await sovToken.approve(borrowerOperations.address, dec(10000, 'ether'), { from: whale })
-      await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(10000, 18)), whale, whale, dec(10000, 'ether'), { from: whale })
+      await borrowerOperations.openTrove(th._100pct, await getOpenTroveZSUSDAmount(dec(10000, 18)), whale, whale, dec(10000, 'ether'), { from: whale })
 
       const allDepositors = [A, B, C, D, E, F, G, H]
-      // 4 Defaulters open trove with 200ZUSD debt, and 200% ICR
+      // 4 Defaulters open trove with 200ZSUSD debt, and 200% ICR
       await sovToken.approve(borrowerOperations.address, dec(200, 'ether'), { from: defaulter_1 })
-      await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(20000, 18)), defaulter_1, defaulter_1, dec(200, 'ether'), { from: defaulter_1 })
+      await borrowerOperations.openTrove(th._100pct, await getOpenTroveZSUSDAmount(dec(20000, 18)), defaulter_1, defaulter_1, dec(200, 'ether'), { from: defaulter_1 })
       await sovToken.approve(borrowerOperations.address, dec(200, 'ether'), { from: defaulter_2 })
-      await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(20000, 18)), defaulter_2, defaulter_2, dec(200, 'ether'), { from: defaulter_2 })
+      await borrowerOperations.openTrove(th._100pct, await getOpenTroveZSUSDAmount(dec(20000, 18)), defaulter_2, defaulter_2, dec(200, 'ether'), { from: defaulter_2 })
       await sovToken.approve(borrowerOperations.address, dec(200, 'ether'), { from: defaulter_3 })
-      await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(20000, 18)), defaulter_3, defaulter_3, dec(200, 'ether'), { from: defaulter_3 })
+      await borrowerOperations.openTrove(th._100pct, await getOpenTroveZSUSDAmount(dec(20000, 18)), defaulter_3, defaulter_3, dec(200, 'ether'), { from: defaulter_3 })
       await sovToken.approve(borrowerOperations.address, dec(200, 'ether'), { from: defaulter_4 })
-      await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(20000, 18)), defaulter_4, defaulter_4, dec(200, 'ether'), { from: defaulter_4 })
+      await borrowerOperations.openTrove(th._100pct, await getOpenTroveZSUSDAmount(dec(20000, 18)), defaulter_4, defaulter_4, dec(200, 'ether'), { from: defaulter_4 })
 
       // price drops by 50%: defaulter ICR falls to 100%
       await priceFeed.setPrice(dec(100, 18));
@@ -532,7 +532,7 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
         assert.equal(await zeroToken.balanceOf(depositor), '0')
       }
 
-      // A, B each deposit 10k ZUSD
+      // A, B each deposit 10k ZSUSD
       const depositors_1 = [A, B]
       for (account of depositors_1) {
         await sovToken.approve(borrowerOperations.address, dec(200, 'ether'), { from: account })
@@ -543,10 +543,10 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
       // 1 month passes
       await th.fastForwardTime(await getDuration(timeValues.SECONDS_IN_ONE_MONTH), web3.currentProvider)
 
-      // Defaulter 1 liquidated. 20k ZUSD fully offset with pool.
+      // Defaulter 1 liquidated. 20k ZSUSD fully offset with pool.
       await troveManager.liquidate(defaulter_1, { from: owner });
 
-      // C, D each deposit 10k ZUSD
+      // C, D each deposit 10k ZSUSD
       const depositors_2 = [C, D]
       for (account of depositors_2) {
         await sovToken.approve(borrowerOperations.address, dec(200, 'ether'), { from: account })
@@ -557,10 +557,10 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
       // 1 month passes
       await th.fastForwardTime(timeValues.SECONDS_IN_ONE_MONTH, web3.currentProvider)
 
-      // Defaulter 2 liquidated. 10k ZUSD offset
+      // Defaulter 2 liquidated. 10k ZSUSD offset
       await troveManager.liquidate(defaulter_2, { from: owner });
 
-      // Erin, Flyn each deposit 100 ZUSD
+      // Erin, Flyn each deposit 100 ZSUSD
       const depositors_3 = [E, F]
       for (account of depositors_3) {
         await sovToken.approve(borrowerOperations.address, dec(200, 'ether'), { from: account })
@@ -571,10 +571,10 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
       // 1 month passes
       await th.fastForwardTime(timeValues.SECONDS_IN_ONE_MONTH, web3.currentProvider)
 
-      // Defaulter 3 liquidated. 100 ZUSD offset
+      // Defaulter 3 liquidated. 100 ZSUSD offset
       await troveManager.liquidate(defaulter_3, { from: owner });
 
-      // Graham, Harriet each deposit 10k ZUSD
+      // Graham, Harriet each deposit 10k ZSUSD
       const depositors_4 = [G, H]
       for (account of depositors_4) {
         await sovToken.approve(borrowerOperations.address, dec(200, 'ether'), { from: account })
@@ -585,7 +585,7 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
       // 1 month passes
       await th.fastForwardTime(timeValues.SECONDS_IN_ONE_MONTH, web3.currentProvider)
 
-      // Defaulter 4 liquidated. 100 ZUSD offset
+      // Defaulter 4 liquidated. 100 ZSUSD offset
       await troveManager.liquidate(defaulter_4, { from: owner });
 
       // All depositors withdraw from SP
@@ -725,25 +725,25 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
 
     /* Serial scale changes
 
-    A make deposit 10k ZUSD
-    1 month passes. L1 decreases P: P = 1e-5 P. L1:   9999.9 ZUSD, 100 SOV
+    A make deposit 10k ZSUSD
+    1 month passes. L1 decreases P: P = 1e-5 P. L1:   9999.9 ZSUSD, 100 SOV
     B makes deposit 9999.9
-    1 month passes. L2 decreases P: P =  1e-5 P. L2:  9999.9 ZUSD, 100 SOV
+    1 month passes. L2 decreases P: P =  1e-5 P. L2:  9999.9 ZSUSD, 100 SOV
     C makes deposit  9999.9
-    1 month passes. L3 decreases P: P = 1e-5 P. L3:  9999.9 ZUSD, 100 SOV
+    1 month passes. L3 decreases P: P = 1e-5 P. L3:  9999.9 ZSUSD, 100 SOV
     D makes deposit  9999.9
-    1 month passes. L4 decreases P: P = 1e-5 P. L4:  9999.9 ZUSD, 100 SOV
+    1 month passes. L4 decreases P: P = 1e-5 P. L4:  9999.9 ZSUSD, 100 SOV
     E makes deposit  9999.9
-    1 month passes. L5 decreases P: P = 1e-5 P. L5:  9999.9 ZUSD, 100 SOV
+    1 month passes. L5 decreases P: P = 1e-5 P. L5:  9999.9 ZSUSD, 100 SOV
     =========
     F makes deposit 100
-    1 month passes. L6 empties the Pool. L6:  10000 ZUSD, 100 SOV
+    1 month passes. L6 empties the Pool. L6:  10000 ZSUSD, 100 SOV
 
     expect A, B, C, D each withdraw ~1 month's worth of ZERO */
-    it("withdrawFromSP(): Several deposits of 100 ZUSD span one scale factor change. Depositors withdraw correct ZERO gains", async () => {
+    it("withdrawFromSP(): Several deposits of 100 ZSUSD span one scale factor change. Depositors withdraw correct ZERO gains", async () => {
       // Whale opens Trove with 100 SOV
       await sovToken.approve(borrowerOperations.address, dec(100, 'ether'), { from: whale })
-      await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(10000, 18)), whale, whale, dec(100, 'ether'), { from: whale })
+      await borrowerOperations.openTrove(th._100pct, await getOpenTroveZSUSDAmount(dec(10000, 18)), whale, whale, dec(100, 'ether'), { from: whale })
 
       const fiveDefaulters = [defaulter_1, defaulter_2, defaulter_3, defaulter_4, defaulter_5]
 
@@ -763,12 +763,12 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
       for (const defaulter of fiveDefaulters) {
         // Defaulters 1-5 each withdraw to 9999.9 debt (including gas comp)
         await sovToken.approve(borrowerOperations.address, dec(100, 'ether'), { from: defaulter })
-        await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount('9999900000000000000000'), defaulter, defaulter, dec(100, 'ether'), { from: defaulter })
+        await borrowerOperations.openTrove(th._100pct, await getOpenTroveZSUSDAmount('9999900000000000000000'), defaulter, defaulter, dec(100, 'ether'), { from: defaulter })
       }
 
       // Defaulter 6 withdraws to 10k debt (inc. gas comp)
       await sovToken.approve(borrowerOperations.address, dec(100, 'ether'), { from: defaulter_6 })
-      await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(10000, 18)), defaulter_6, defaulter_6, dec(100, 'ether'), { from: defaulter_6 })
+      await borrowerOperations.openTrove(th._100pct, await getOpenTroveZSUSDAmount(dec(10000, 18)), defaulter_6, defaulter_6, dec(100, 'ether'), { from: defaulter_6 })
 
       // Confirm all depositors have 0 ZERO
       for (const depositor of [A, B, C, D, E, F]) {
@@ -1081,11 +1081,11 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
 
       // D1, D2, D3 open troves with total debt 50k, 30k, 10k respectively (inc. gas comp)
       await sovToken.approve(borrowerOperations.address, dec(500, 'ether'), { from: defaulter_1 })
-      await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(50000, 18)), defaulter_1, defaulter_1, dec(500, 'ether'), { from: defaulter_1 })
+      await borrowerOperations.openTrove(th._100pct, await getOpenTroveZSUSDAmount(dec(50000, 18)), defaulter_1, defaulter_1, dec(500, 'ether'), { from: defaulter_1 })
       await sovToken.approve(borrowerOperations.address, dec(200, 'ether'), { from: defaulter_2 })
-      await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(20000, 18)), defaulter_2, defaulter_2, dec(200, 'ether'), { from: defaulter_2 })
+      await borrowerOperations.openTrove(th._100pct, await getOpenTroveZSUSDAmount(dec(20000, 18)), defaulter_2, defaulter_2, dec(200, 'ether'), { from: defaulter_2 })
       await sovToken.approve(borrowerOperations.address, dec(100, 'ether'), { from: defaulter_3 })
-      await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(10000, 18)), defaulter_3, defaulter_3, dec(100, 'ether'), { from: defaulter_3 })
+      await borrowerOperations.openTrove(th._100pct, await getOpenTroveZSUSDAmount(dec(10000, 18)), defaulter_3, defaulter_3, dec(100, 'ether'), { from: defaulter_3 })
 
       // Check all ZERO balances are initially 0
       assert.equal(await zeroToken.balanceOf(A), 0)
@@ -1115,13 +1115,13 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
       // Month 1 passes
       await th.fastForwardTime(await getDuration(timeValues.SECONDS_IN_ONE_MONTH), web3.currentProvider)
 
-      assert.equal(await stabilityPool.getTotalZUSDDeposits(), dec(100000, 18)) // total 100k
+      assert.equal(await stabilityPool.getTotalZSUSDDeposits(), dec(100000, 18)) // total 100k
 
       // LIQUIDATION 1
       await troveManager.liquidate(defaulter_1)
       assert.isFalse(await sortedTroves.contains(defaulter_1))
 
-      th.assertIsApproximatelyEqual(await stabilityPool.getTotalZUSDDeposits(), dec(50000, 18))  // 50k
+      th.assertIsApproximatelyEqual(await stabilityPool.getTotalZSUSDDeposits(), dec(50000, 18))  // 50k
 
       // --- CHECK GAINS AFTER L1 ---
 
@@ -1164,7 +1164,7 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
       // E deposits 30k via F1
       await stabilityPool.provideToSP(dec(30000, 18), frontEnd_1, { from: E })
 
-      th.assertIsApproximatelyEqual(await stabilityPool.getTotalZUSDDeposits(), dec(80000, 18))
+      th.assertIsApproximatelyEqual(await stabilityPool.getTotalZSUSDDeposits(), dec(80000, 18))
 
       // Month 2 passes
       await th.fastForwardTime(timeValues.SECONDS_IN_ONE_MONTH, web3.currentProvider)
@@ -1173,7 +1173,7 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
       await troveManager.liquidate(defaulter_2)
       assert.isFalse(await sortedTroves.contains(defaulter_2))
 
-      th.assertIsApproximatelyEqual(await stabilityPool.getTotalZUSDDeposits(), dec(60000, 18))
+      th.assertIsApproximatelyEqual(await stabilityPool.getTotalZSUSDDeposits(), dec(60000, 18))
 
       const startTime = await communityIssuanceTester.deploymentTime()
       const currentTime = await th.getLatestBlockTimestamp(web3)
@@ -1234,7 +1234,7 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
       // B tops up 40k via F2
       await stabilityPool.provideToSP(dec(40000, 18), frontEnd_2, { from: B })
 
-      th.assertIsApproximatelyEqual(await stabilityPool.getTotalZUSDDeposits(), dec(100000, 18))
+      th.assertIsApproximatelyEqual(await stabilityPool.getTotalZSUSDDeposits(), dec(100000, 18))
 
       // Month 3 passes
       await th.fastForwardTime(timeValues.SECONDS_IN_ONE_MONTH, web3.currentProvider)
@@ -1243,7 +1243,7 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
       await troveManager.liquidate(defaulter_3)
       assert.isFalse(await sortedTroves.contains(defaulter_3))
 
-      th.assertIsApproximatelyEqual(await stabilityPool.getTotalZUSDDeposits(), dec(90000, 18))
+      th.assertIsApproximatelyEqual(await stabilityPool.getTotalZSUSDDeposits(), dec(90000, 18))
 
       // --- CHECK GAINS AFTER L3 ---
 
@@ -1309,17 +1309,17 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
       const F2_ZEROBalance_After_M3 = await zeroToken.balanceOf(frontEnd_2)
       assert.isAtMost(getDifference(F2_ZEROBalance_After_M3, F2_expectedZEROGain_M2.add(F2_expectedZEROGain_M1)), 1e15)
 
-      // Expect deposit C now to be 10125 ZUSD
-      const C_compoundedZUSDDeposit = await stabilityPool.getCompoundedZUSDDeposit(C)
-      assert.isAtMost(getDifference(C_compoundedZUSDDeposit, dec(10125, 18)), 1000)
+      // Expect deposit C now to be 10125 ZSUSD
+      const C_compoundedZSUSDDeposit = await stabilityPool.getCompoundedZSUSDDeposit(C)
+      assert.isAtMost(getDifference(C_compoundedZSUSDDeposit, dec(10125, 18)), 1000)
 
       // --- C withdraws ---
 
-      th.assertIsApproximatelyEqual(await stabilityPool.getTotalZUSDDeposits(), dec(90000, 18))
+      th.assertIsApproximatelyEqual(await stabilityPool.getTotalZSUSDDeposits(), dec(90000, 18))
 
       await stabilityPool.withdrawFromSP(dec(10000, 18), { from: C })
 
-      th.assertIsApproximatelyEqual(await stabilityPool.getTotalZUSDDeposits(), dec(80000, 18))
+      th.assertIsApproximatelyEqual(await stabilityPool.getTotalZSUSDDeposits(), dec(80000, 18))
 
       // Month 4 passes
       await th.fastForwardTime(timeValues.SECONDS_IN_ONE_MONTH, web3.currentProvider)
@@ -1327,8 +1327,8 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
       // All depositors fully withdraw
       for (depositor of [A, B, C, D, E]) {
         await stabilityPool.withdrawFromSP(dec(100000, 18), { from: depositor })
-        const compoundedZUSDDeposit = await stabilityPool.getCompoundedZUSDDeposit(depositor)
-        assert.equal(compoundedZUSDDeposit, '0')
+        const compoundedZSUSDDeposit = await stabilityPool.getCompoundedZSUSDDeposit(depositor)
+        assert.equal(compoundedZSUSDDeposit, '0')
       }
 
       // During month 4, deposit sizes: A:3375, B:42750, C:125, D:13500, E:20250, Total: 80000
@@ -1411,20 +1411,20 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
 
     F1 kickbackRate: 80%
 
-    A, B make deposit 5000 ZUSD via F1
-    1 month passes. L1 depletes P: P = 1e-5*P L1:  9999.9 ZUSD, 1 SOV.  scale = 0
+    A, B make deposit 5000 ZSUSD via F1
+    1 month passes. L1 depletes P: P = 1e-5*P L1:  9999.9 ZSUSD, 1 SOV.  scale = 0
     C makes deposit 10000  via F1
-    1 month passes. L2 depletes P: P = 1e-5*P L2:  9999.9 ZUSD, 1 SOV  scale = 1
+    1 month passes. L2 depletes P: P = 1e-5*P L2:  9999.9 ZSUSD, 1 SOV  scale = 1
     D makes deposit 10000 via F1
-    1 month passes. L3 depletes P: P = 1e-5*P L3:  9999.9 ZUSD, 1 SOV scale = 1
+    1 month passes. L3 depletes P: P = 1e-5*P L3:  9999.9 ZSUSD, 1 SOV scale = 1
     E makes deposit 10000 via F1
-    1 month passes. L3 depletes P: P = 1e-5*P L4:  9999.9 ZUSD, 1 SOV scale = 2
+    1 month passes. L3 depletes P: P = 1e-5*P L4:  9999.9 ZSUSD, 1 SOV scale = 2
     A, B, C, D, E withdraw
 
     =========
     Expect front end withdraws ~3 month's worth of ZERO */
 
-    it("withdrawFromSP(): Several deposits of 10k ZUSD span one scale factor change. Depositors withdraw correct ZERO gains", async () => {
+    it("withdrawFromSP(): Several deposits of 10k ZSUSD span one scale factor change. Depositors withdraw correct ZERO gains", async () => {
       const kickbackRate = toBN(dec(80, 16)) // F1 kicks 80% back to depositor
       await stabilityPool.registerFrontEnd(kickbackRate, { from: frontEnd_1 })
 
@@ -1437,7 +1437,7 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
       for (const defaulter of _4_Defaulters) {
         // Defaulters 1-4 each withdraw to 9999.9 debt (including gas comp)
         await sovToken.approve(borrowerOperations.address, dec(100, 'ether'), { from: defaulter })
-        await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(99999, 17)), defaulter, defaulter, dec(100, 'ether'), { from: defaulter })
+        await borrowerOperations.openTrove(th._100pct, await getOpenTroveZSUSDAmount(dec(99999, 17)), defaulter, defaulter, dec(100, 'ether'), { from: defaulter })
       }
 
       // Confirm all would-be depositors have 0 ZERO
@@ -1452,7 +1452,7 @@ contract('StabilityPool - ZERO Rewards', async accounts => {
       // Check scale is 0
       assert.equal(await stabilityPool.currentScale(), '0')
 
-      // A, B provides 5000 ZUSD to SP
+      // A, B provides 5000 ZSUSD to SP
       await sovToken.approve(borrowerOperations.address, dec(200, 'ether'), { from: A })
       await borrowerOperations.openTrove(th._100pct, dec(5000, 18), A, A, dec(200, 'ether'), { from: A })
       await stabilityPool.provideToSP(dec(5000, 18), frontEnd_1, { from: A })

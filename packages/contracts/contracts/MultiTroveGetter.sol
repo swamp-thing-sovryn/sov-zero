@@ -17,7 +17,7 @@ contract MultiTroveGetter is MultiTroveGetterStorage {
         uint stake;
 
         uint snapshotSOV;
-        uint snapshotZUSDDebt;
+        uint snapshotZSUSDDebt;
     }
 
     function setAddresses(TroveManager _troveManager, ISortedTroves _sortedTroves) public onlyOwner {
@@ -80,7 +80,7 @@ contract MultiTroveGetter is MultiTroveGetterStorage {
             ) = troveManager.Troves(currentTroveowner);
             (
                 _troves[idx].snapshotSOV,
-                _troves[idx].snapshotZUSDDebt
+                _troves[idx].snapshotZSUSDDebt
             ) = troveManager.rewardSnapshots(currentTroveowner);
 
             currentTroveowner = sortedTroves.getNext(currentTroveowner);
@@ -109,7 +109,7 @@ contract MultiTroveGetter is MultiTroveGetterStorage {
             ) = troveManager.Troves(currentTroveowner);
             (
                 _troves[idx].snapshotSOV,
-                _troves[idx].snapshotZUSDDebt
+                _troves[idx].snapshotZSUSDDebt
             ) = troveManager.rewardSnapshots(currentTroveowner);
 
             currentTroveowner = sortedTroves.getPrev(currentTroveowner);

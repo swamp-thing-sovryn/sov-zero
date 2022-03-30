@@ -9,7 +9,7 @@ import { JsonRpcProvider } from "@ethersproject/providers";
 import {
   Decimal,
   Difference,
-  ZUSD_LIQUIDATION_RESERVE,
+  ZSUSD_LIQUIDATION_RESERVE,
   Trove,
   TroveWithPendingRedistribution
 } from "@liquity/lib-base";
@@ -63,7 +63,7 @@ yargs
       for (let i = 1; i <= troves; ++i) {
         const user = Wallet.createRandom().connect(provider);
         const userAddress = await user.getAddress();
-        const debt = ZUSD_LIQUIDATION_RESERVE.add(99999 * Math.random());
+        const debt = ZSUSD_LIQUIDATION_RESERVE.add(99999 * Math.random());
         const collateral = debt.mul(price).mul(1.11 + 3 * Math.random());
 
         const liquity = await Liquity.connect(user);
@@ -79,8 +79,8 @@ yargs
         });
 
         if (i % 4 === 0) {
-          const zusdBalance = await liquity.getZUSDBalance();
-          await liquity.depositZUSDInStabilityPool(zusdBalance);
+          const zsusdBalance = await liquity.getZSUSDBalance();
+          await liquity.depositZSUSDInStabilityPool(zsusdBalance);
         }
 
         if (i % 10 === 0) {
@@ -162,7 +162,7 @@ yargs
           } else if (x < 0.7) {
             const deposit = await liquity.getStabilityDeposit();
 
-            if (deposit.initialZUSD.isZero || x < 0.6) {
+            if (deposit.initialZSUSD.isZero || x < 0.6) {
               await fixture.depositRandomAmountInStabilityPool(user.address, liquity);
             } else {
               await fixture.withdrawRandomAmountFromStabilityPool(user.address, liquity, deposit);
@@ -179,7 +179,7 @@ yargs
             await fixture.redeemRandomAmount(user.address, liquity);
           }
 
-          // await fixture.sweepZUSD(liquity);
+          // await fixture.sweepZSUSD(liquity);
           await fixture.sweepZERO(liquity);
 
           const listOfTroves = await getListOfTrovesBeforeRedistribution(deployerLiquity);
@@ -219,16 +219,16 @@ yargs
           trove = await funderLiquity.getTrove();
         }
 
-        const zusdBalance = await funderLiquity.getZUSDBalance();
+        const zsusdBalance = await funderLiquity.getZSUSDBalance();
 
-        if (zusdBalance.lt(trove.netDebt)) {
+        if (zsusdBalance.lt(trove.netDebt)) {
           const [randomUser] = createRandomWallets(1, provider);
           const randomLiquity = await Liquity.connect(randomUser);
 
-          const zusdNeeded = trove.netDebt.sub(zusdBalance);
+          const zsusdNeeded = trove.netDebt.sub(zsusdBalance);
           const tempTrove = {
-            depositCollateral: ZUSD_LIQUIDATION_RESERVE.add(zusdNeeded).div(initialPrice).mul(3),
-            borrowZUSD: zusdNeeded
+            depositCollateral: ZSUSD_LIQUIDATION_RESERVE.add(zsusdNeeded).div(initialPrice).mul(3),
+            borrowZSUSD: zsusdNeeded
           };
 
           await funder.sendTransaction({
@@ -238,10 +238,10 @@ yargs
 
           await randomLiquity.openTrove(tempTrove, { gasPrice: 0 });
           initialNumberOfTroves++;
-          await randomLiquity.sendZUSD(funder.address, zusdNeeded, { gasPrice: 0 });
+          await randomLiquity.sendZSUSD(funder.address, zsusdNeeded, { gasPrice: 0 });
         }
 
-        await funderLiquity.repayZUSD(trove.netDebt);
+        await funderLiquity.repayZSUSD(trove.netDebt);
       }
 
       [[firstTroveOwner]] = await funderLiquity.getTroves({

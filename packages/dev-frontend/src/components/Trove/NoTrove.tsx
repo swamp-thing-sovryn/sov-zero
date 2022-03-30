@@ -14,8 +14,8 @@ export const NoTrove: React.FC = props => {
     <Card>
       <Heading>Line of Credit</Heading>
       <Box sx={{ p: [2, 3] }}>
-        <InfoMessage title="You haven't borrowed any ZUSD yet.">
-          You can borrow ZUSD by opening a Line of Credit.
+        <InfoMessage title="You haven't borrowed any ZSUSD yet.">
+          You can borrow ZSUSD by opening a Line of Credit.
         </InfoMessage>
 
         <Flex variant="layout.actions">

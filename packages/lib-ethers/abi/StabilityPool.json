@@ -271,7 +271,7 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "_ZUSDLoss",
+        "name": "_ZSUSDLoss",
         "type": "uint256"
       }
     ],
@@ -384,7 +384,7 @@
         "type": "uint256"
       }
     ],
-    "name": "StabilityPoolZUSDBalanceUpdated",
+    "name": "StabilityPoolZSUSDBalanceUpdated",
     "type": "event"
   },
   {
@@ -463,11 +463,11 @@
       {
         "indexed": false,
         "internalType": "address",
-        "name": "_newZUSDTokenAddress",
+        "name": "_newZSUSDTokenAddress",
         "type": "address"
       }
     ],
-    "name": "ZUSDTokenAddressChanged",
+    "name": "ZSUSDTokenAddressChanged",
     "type": "event"
   },
   {
@@ -537,7 +537,7 @@
   },
   {
     "inputs": [],
-    "name": "ZUSD_GAS_COMPENSATION",
+    "name": "ZSUSD_GAS_COMPENSATION",
     "outputs": [
       {
         "internalType": "uint256",
@@ -859,7 +859,7 @@
         "type": "address"
       }
     ],
-    "name": "getCompoundedZUSDDeposit",
+    "name": "getCompoundedZSUSDDeposit",
     "outputs": [
       {
         "internalType": "uint256",
@@ -943,7 +943,7 @@
   },
   {
     "inputs": [],
-    "name": "getTotalZUSDDeposits",
+    "name": "getTotalZSUSDDeposits",
     "outputs": [
       {
         "internalType": "uint256",
@@ -982,7 +982,7 @@
   },
   {
     "inputs": [],
-    "name": "lastZUSDLossError_Offset",
+    "name": "lastZSUSDLossError_Offset",
     "outputs": [
       {
         "internalType": "uint256",
@@ -1097,7 +1097,7 @@
       },
       {
         "internalType": "address",
-        "name": "_zusdTokenAddress",
+        "name": "_zsusdTokenAddress",
         "type": "address"
       },
       {
@@ -1206,10 +1206,10 @@
   },
   {
     "inputs": [],
-    "name": "zusdToken",
+    "name": "zsusdToken",
     "outputs": [
       {
-        "internalType": "contract IZUSDToken",
+        "internalType": "contract IZSUSDToken",
         "name": "",
         "type": "address"
       }

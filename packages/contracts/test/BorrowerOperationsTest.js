@@ -5,7 +5,7 @@ const timeMachine = require('ganache-time-traveler');
 const BorrowerOperationsTester = artifacts.require("./BorrowerOperationsTester.sol")
 const NonPayable = artifacts.require('NonPayable.sol')
 const TroveManagerTester = artifacts.require("TroveManagerTester")
-const ZUSDTokenTester = artifacts.require("./ZUSDTokenTester")
+const ZSUSDTokenTester = artifacts.require("./ZSUSDTokenTester")
 const MassetTester = artifacts.require("MassetTester")
 const NueToken = artifacts.require("NueToken")
 
@@ -19,10 +19,10 @@ const timeValues = testHelpers.TimeValues
 const ZERO_ADDRESS = th.ZERO_ADDRESS
 const assertRevert = th.assertRevert
 
-/* NOTE: Some of the borrowing tests do not test for specific ZUSD fee values. They only test that the
+/* NOTE: Some of the borrowing tests do not test for specific ZSUSD fee values. They only test that the
  * fees are non-zero when they should occur, and that they decay over time.
  *
- * Specific ZUSD fee values will depend on the final fee schedule used, and the final choice for
+ * Specific ZSUSD fee values will depend on the final fee schedule used, and the final choice for
  *  the parameter MINUTE_DECAY_FACTOR in the TroveManager, which is still TBD based on economic
  * modelling.
  * 
@@ -41,7 +41,7 @@ contract('BorrowerOperations', async accounts => {
   // const frontEnds = [frontEnd_1, frontEnd_2, frontEnd_3]
 
   let priceFeed
-  let zusdToken
+  let zsusdToken
   let sortedTroves
   let troveManager
   let activePool
@@ -57,7 +57,7 @@ contract('BorrowerOperations', async accounts => {
 
   let sovToken
 
-  const getOpenTroveZUSDAmount = async (totalDebt) => th.getOpenTroveZUSDAmount(contracts, totalDebt)
+  const getOpenTroveZSUSDAmount = async (totalDebt) => th.getOpenTroveZSUSDAmount(contracts, totalDebt)
   const getNetBorrowingAmount = async (debtWithFee) => th.getNetBorrowingAmount(contracts, debtWithFee)
   const getActualDebtFromComposite = async (compositeDebt) => th.getActualDebtFromComposite(compositeDebt, contracts)
   const openTrove = async (params) => th.openTrove(contracts, params)
@@ -66,7 +66,7 @@ contract('BorrowerOperations', async accounts => {
   const getTroveEntireDebt = async (trove) => th.getTroveEntireDebt(contracts, trove)
   const getTroveStake = async (trove) => th.getTroveStake(contracts, trove)
 
-  let ZUSD_GAS_COMPENSATION
+  let ZSUSD_GAS_COMPENSATION
   let MIN_NET_DEBT
   let BORROWING_FEE_FLOOR
 
@@ -80,7 +80,7 @@ contract('BorrowerOperations', async accounts => {
       contracts.borrowerOperations = await BorrowerOperationsTester.new()
       contracts.masset = await MassetTester.new()
       contracts.troveManager = await TroveManagerTester.new()
-      contracts = await deploymentHelper.deployZUSDTokenTester(contracts)
+      contracts = await deploymentHelper.deployZSUSDTokenTester(contracts)
       const ZEROContracts = await deploymentHelper.deployZEROTesterContractsHardhat(multisig)
 
       await ZEROContracts.zeroToken.unprotectedMint(multisig, toBN(dec(20, 24)))
@@ -95,7 +95,7 @@ contract('BorrowerOperations', async accounts => {
       }
 
       priceFeed = contracts.priceFeedTestnet
-      zusdToken = contracts.zusdToken
+      zsusdToken = contracts.zsusdToken
       sortedTroves = contracts.sortedTroves
       troveManager = contracts.troveManager
       activePool = contracts.activePool
@@ -110,7 +110,7 @@ contract('BorrowerOperations', async accounts => {
       zeroToken = ZEROContracts.zeroToken
       communityIssuance = ZEROContracts.communityIssuance
 
-      ZUSD_GAS_COMPENSATION = await borrowerOperations.ZUSD_GAS_COMPENSATION()
+      ZSUSD_GAS_COMPENSATION = await borrowerOperations.ZSUSD_GAS_COMPENSATION()
       MIN_NET_DEBT = await borrowerOperations.MIN_NET_DEBT()
       BORROWING_FEE_FLOOR = await borrowerOperations.BORROWING_FEE_FLOOR()
       const nueTokenAddress = await masset.token()
@@ -261,16 +261,16 @@ contract('BorrowerOperations', async accounts => {
       assert.isTrue(totalStakes_After.eq(totalStakes_Before.add(toBN(dec(2, 'ether')))))
     })
 
-    it("addColl(), active Trove: applies pending rewards and updates user's L_SOV, L_ZUSDDebt snapshots", async () => {
+    it("addColl(), active Trove: applies pending rewards and updates user's L_SOV, L_ZSUSDDebt snapshots", async () => {
       // --- SETUP ---
 
-      const { collateral: aliceCollBefore, totalDebt: aliceDebtBefore } = await openTrove({ extraZUSDAmount: toBN(dec(15000, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      const { collateral: bobCollBefore, totalDebt: bobDebtBefore } = await openTrove({ extraZUSDAmount: toBN(dec(10000, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
-      await openTrove({ extraZUSDAmount: toBN(dec(5000, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: carol } })
+      const { collateral: aliceCollBefore, totalDebt: aliceDebtBefore } = await openTrove({ extraZSUSDAmount: toBN(dec(15000, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      const { collateral: bobCollBefore, totalDebt: bobDebtBefore } = await openTrove({ extraZSUSDAmount: toBN(dec(10000, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(5000, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: carol } })
 
       // --- TEST ---
 
-      // price drops to 1SOV:100ZUSD, reducing Carol's ICR below MCR
+      // price drops to 1SOV:100ZSUSD, reducing Carol's ICR below MCR
       await priceFeed.setPrice('1000000000000000000');
 
       // Liquidate Carol's Trove,
@@ -279,27 +279,27 @@ contract('BorrowerOperations', async accounts => {
       assert.isFalse(await sortedTroves.contains(carol))
 
       const L_SOV = await troveManager.L_SOV()
-      const L_ZUSDDebt = await troveManager.L_ZUSDDebt()
+      const L_ZSUSDDebt = await troveManager.L_ZSUSDDebt()
 
       // check Alice and Bob's reward snapshots are zero before they alter their Troves
       const alice_rewardSnapshot_Before = await troveManager.rewardSnapshots(alice)
       const alice_SOVrewardSnapshot_Before = alice_rewardSnapshot_Before[0]
-      const alice_ZUSDDebtRewardSnapshot_Before = alice_rewardSnapshot_Before[1]
+      const alice_ZSUSDDebtRewardSnapshot_Before = alice_rewardSnapshot_Before[1]
 
       const bob_rewardSnapshot_Before = await troveManager.rewardSnapshots(bob)
       const bob_SOVrewardSnapshot_Before = bob_rewardSnapshot_Before[0]
-      const bob_ZUSDDebtRewardSnapshot_Before = bob_rewardSnapshot_Before[1]
+      const bob_ZSUSDDebtRewardSnapshot_Before = bob_rewardSnapshot_Before[1]
 
       assert.equal(alice_SOVrewardSnapshot_Before, 0)
-      assert.equal(alice_ZUSDDebtRewardSnapshot_Before, 0)
+      assert.equal(alice_ZSUSDDebtRewardSnapshot_Before, 0)
       assert.equal(bob_SOVrewardSnapshot_Before, 0)
-      assert.equal(bob_ZUSDDebtRewardSnapshot_Before, 0)
+      assert.equal(bob_ZSUSDDebtRewardSnapshot_Before, 0)
 
       const alicePendingSOVReward = await troveManager.getPendingSOVReward(alice)
       const bobPendingSOVReward = await troveManager.getPendingSOVReward(bob)
-      const alicePendingZUSDDebtReward = await troveManager.getPendingZUSDDebtReward(alice)
-      const bobPendingZUSDDebtReward = await troveManager.getPendingZUSDDebtReward(bob)
-      for (reward of [alicePendingSOVReward, bobPendingSOVReward, alicePendingZUSDDebtReward, bobPendingZUSDDebtReward]) {
+      const alicePendingZSUSDDebtReward = await troveManager.getPendingZSUSDDebtReward(alice)
+      const bobPendingZSUSDDebtReward = await troveManager.getPendingZSUSDDebtReward(bob)
+      for (reward of [alicePendingSOVReward, bobPendingSOVReward, alicePendingZSUSDDebtReward, bobPendingZSUSDDebtReward]) {
         assert.isTrue(reward.gt(toBN('0')))
       }
 
@@ -319,31 +319,31 @@ contract('BorrowerOperations', async accounts => {
       const bobNewDebt = await getTroveEntireDebt(bob)
 
       assert.isTrue(aliceNewColl.eq(aliceCollBefore.add(alicePendingSOVReward).add(aliceTopUp)))
-      assert.isTrue(aliceNewDebt.eq(aliceDebtBefore.add(alicePendingZUSDDebtReward)))
+      assert.isTrue(aliceNewDebt.eq(aliceDebtBefore.add(alicePendingZSUSDDebtReward)))
       assert.isTrue(bobNewColl.eq(bobCollBefore.add(bobPendingSOVReward).add(bobTopUp)))
-      assert.isTrue(bobNewDebt.eq(bobDebtBefore.add(bobPendingZUSDDebtReward)))
+      assert.isTrue(bobNewDebt.eq(bobDebtBefore.add(bobPendingZSUSDDebtReward)))
 
       /* Check that both Alice and Bob's snapshots of the rewards-per-unit-staked metrics should be updated
-       to the latest values of L_SOV and L_ZUSDDebt */
+       to the latest values of L_SOV and L_ZSUSDDebt */
       const alice_rewardSnapshot_After = await troveManager.rewardSnapshots(alice)
       const alice_SOVrewardSnapshot_After = alice_rewardSnapshot_After[0]
-      const alice_ZUSDDebtRewardSnapshot_After = alice_rewardSnapshot_After[1]
+      const alice_ZSUSDDebtRewardSnapshot_After = alice_rewardSnapshot_After[1]
 
       const bob_rewardSnapshot_After = await troveManager.rewardSnapshots(bob)
       const bob_SOVrewardSnapshot_After = bob_rewardSnapshot_After[0]
-      const bob_ZUSDDebtRewardSnapshot_After = bob_rewardSnapshot_After[1]
+      const bob_ZSUSDDebtRewardSnapshot_After = bob_rewardSnapshot_After[1]
 
       assert.isAtMost(th.getDifference(alice_SOVrewardSnapshot_After, L_SOV), 100)
-      assert.isAtMost(th.getDifference(alice_ZUSDDebtRewardSnapshot_After, L_ZUSDDebt), 100)
+      assert.isAtMost(th.getDifference(alice_ZSUSDDebtRewardSnapshot_After, L_ZSUSDDebt), 100)
       assert.isAtMost(th.getDifference(bob_SOVrewardSnapshot_After, L_SOV), 100)
-      assert.isAtMost(th.getDifference(bob_ZUSDDebtRewardSnapshot_After, L_ZUSDDebt), 100)
+      assert.isAtMost(th.getDifference(bob_ZSUSDDebtRewardSnapshot_After, L_ZSUSDDebt), 100)
     })
 
     // it("addColl(), active Trove: adds the right corrected stake after liquidations have occured", async () => {
     //  // TODO - check stake updates for addColl/withdrawColl/adustTrove ---
 
     //   // --- SETUP ---
-    //   // A,B,C add 15/5/5 ETH, withdraw 100/100/900 ZUSD
+    //   // A,B,C add 15/5/5 ETH, withdraw 100/100/900 ZSUSD
     //   await borrowerOperations.openTrove(th._100pct, dec(100, 16), alice, alice, { from: alice, value: dec(15, 'ether') })
     //   await borrowerOperations.openTrove(th._100pct, dec(100, 16), bob, bob, { from: bob, value: dec(4, 'ether') })
     //   await borrowerOperations.openTrove(th._100pct, dec(900, 18), carol, carol, { from: carol, value: dec(5, 'ether') })
@@ -351,10 +351,10 @@ contract('BorrowerOperations', async accounts => {
     //   await borrowerOperations.openTrove(th._100pct, 0, dennis, dennis, { from: dennis, value: dec(1, 16) })
     //   // --- TEST ---
 
-    //   // price drops to 1ETH:100ZUSD, reducing Carol's ICR below MCR
+    //   // price drops to 1ETH:100ZSUSD, reducing Carol's ICR below MCR
     //   await priceFeed.setPrice('1000000000000000000');
 
-    //   // close Carol's Trove, liquidating her 5 ether and 900ZUSD.
+    //   // close Carol's Trove, liquidating her 5 ether and 900ZSUSD.
     //   await troveManager.liquidate(carol, { from: owner });
 
     //   // dennis tops up his trove by 1 ETH
@@ -453,8 +453,8 @@ contract('BorrowerOperations', async accounts => {
 
     // reverts when calling address does not have active trove  
     it("withdrawColl(): reverts when calling address does not have active trove", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
 
       // Bob successfully withdraws some coll
       const txBob = await borrowerOperations.withdrawColl(dec(100, 'finney'), bob, bob, { from: bob })
@@ -541,7 +541,7 @@ contract('BorrowerOperations', async accounts => {
 
       // --- TEST ---
 
-      // price drops to 1ETH:150ZUSD, reducing TCR below 150%
+      // price drops to 1ETH:150ZSUSD, reducing TCR below 150%
       await priceFeed.setPrice('150000000000000000000');
 
       //Alice tries to withdraw collateral during Recovery Mode
@@ -660,7 +660,7 @@ contract('BorrowerOperations', async accounts => {
       assert.isTrue(balanceDiff.eq(toBN(dec(1, 16))))
     })
 
-    it("withdrawColl(): applies pending rewards and updates user's L_SOV, L_ZUSDDebt snapshots", async () => {
+    it("withdrawColl(): applies pending rewards and updates user's L_SOV, L_ZSUSDDebt snapshots", async () => {
       // --- SETUP ---
       // Alice adds 15 ether, Bob adds 5 ether, Carol adds 1 ether
       await openTrove({ ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
@@ -675,34 +675,34 @@ contract('BorrowerOperations', async accounts => {
 
       // --- TEST ---
 
-      // price drops to 1ETH:100ZUSD, reducing Carol's ICR below MCR
+      // price drops to 1ETH:100ZSUSD, reducing Carol's ICR below MCR
       await priceFeed.setPrice('100000000000000000000');
 
-      // close Carol's Trove, liquidating her 1 ether and 180ZUSD.
+      // close Carol's Trove, liquidating her 1 ether and 180ZSUSD.
       await troveManager.liquidate(carol, { from: owner });
 
       const L_SOV = await troveManager.L_SOV()
-      const L_ZUSDDebt = await troveManager.L_ZUSDDebt()
+      const L_ZSUSDDebt = await troveManager.L_ZSUSDDebt()
 
       // check Alice and Bob's reward snapshots are zero before they alter their Troves
       const alice_rewardSnapshot_Before = await troveManager.rewardSnapshots(alice)
       const alice_SOVrewardSnapshot_Before = alice_rewardSnapshot_Before[0]
-      const alice_ZUSDDebtRewardSnapshot_Before = alice_rewardSnapshot_Before[1]
+      const alice_ZSUSDDebtRewardSnapshot_Before = alice_rewardSnapshot_Before[1]
 
       const bob_rewardSnapshot_Before = await troveManager.rewardSnapshots(bob)
       const bob_SOVrewardSnapshot_Before = bob_rewardSnapshot_Before[0]
-      const bob_ZUSDDebtRewardSnapshot_Before = bob_rewardSnapshot_Before[1]
+      const bob_ZSUSDDebtRewardSnapshot_Before = bob_rewardSnapshot_Before[1]
 
       assert.equal(alice_SOVrewardSnapshot_Before, 0)
-      assert.equal(alice_ZUSDDebtRewardSnapshot_Before, 0)
+      assert.equal(alice_ZSUSDDebtRewardSnapshot_Before, 0)
       assert.equal(bob_SOVrewardSnapshot_Before, 0)
-      assert.equal(bob_ZUSDDebtRewardSnapshot_Before, 0)
+      assert.equal(bob_ZSUSDDebtRewardSnapshot_Before, 0)
 
       // Check A and B have pending rewards
       const pendingCollReward_A = await troveManager.getPendingSOVReward(alice)
-      const pendingDebtReward_A = await troveManager.getPendingZUSDDebtReward(alice)
+      const pendingDebtReward_A = await troveManager.getPendingZSUSDDebtReward(alice)
       const pendingCollReward_B = await troveManager.getPendingSOVReward(bob)
-      const pendingDebtReward_B = await troveManager.getPendingZUSDDebtReward(bob)
+      const pendingDebtReward_B = await troveManager.getPendingZSUSDDebtReward(bob)
       for (reward of [pendingCollReward_A, pendingDebtReward_A, pendingCollReward_B, pendingDebtReward_B]) {
         assert.isTrue(reward.gt(toBN('0')))
       }
@@ -727,24 +727,24 @@ contract('BorrowerOperations', async accounts => {
       th.assertIsApproximatelyEqual(bobDebtAfter, bobDebtBefore.add(pendingDebtReward_B), 10000)
 
       /* After top up, both Alice and Bob's snapshots of the rewards-per-unit-staked metrics should be updated
-       to the latest values of L_SOV and L_ZUSDDebt */
+       to the latest values of L_SOV and L_ZSUSDDebt */
       const alice_rewardSnapshot_After = await troveManager.rewardSnapshots(alice)
       const alice_SOVrewardSnapshot_After = alice_rewardSnapshot_After[0]
-      const alice_ZUSDDebtRewardSnapshot_After = alice_rewardSnapshot_After[1]
+      const alice_ZSUSDDebtRewardSnapshot_After = alice_rewardSnapshot_After[1]
 
       const bob_rewardSnapshot_After = await troveManager.rewardSnapshots(bob)
       const bob_SOVrewardSnapshot_After = bob_rewardSnapshot_After[0]
-      const bob_ZUSDDebtRewardSnapshot_After = bob_rewardSnapshot_After[1]
+      const bob_ZSUSDDebtRewardSnapshot_After = bob_rewardSnapshot_After[1]
 
       assert.isAtMost(th.getDifference(alice_SOVrewardSnapshot_After, L_SOV), 100)
-      assert.isAtMost(th.getDifference(alice_ZUSDDebtRewardSnapshot_After, L_ZUSDDebt), 100)
+      assert.isAtMost(th.getDifference(alice_ZSUSDDebtRewardSnapshot_After, L_ZSUSDDebt), 100)
       assert.isAtMost(th.getDifference(bob_SOVrewardSnapshot_After, L_SOV), 100)
-      assert.isAtMost(th.getDifference(bob_ZUSDDebtRewardSnapshot_After, L_ZUSDDebt), 100)
+      assert.isAtMost(th.getDifference(bob_ZSUSDDebtRewardSnapshot_After, L_ZSUSDDebt), 100)
     })
 
-    // --- withdrawZUSD() ---
+    // --- withdrawZSUSD() ---
 
-    it("withdrawZUSD(): reverts when withdrawal would leave trove with ICR < MCR", async () => {
+    it("withdrawZSUSD(): reverts when withdrawal would leave trove with ICR < MCR", async () => {
       // alice creates a Trove and adds first collateral
       await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
       await openTrove({ ICR: toBN(dec(10, 18)), extraParams: { from: bob } })
@@ -756,21 +756,21 @@ contract('BorrowerOperations', async accounts => {
       assert.isFalse(await troveManager.checkRecoveryMode(price))
       assert.isTrue((await troveManager.getCurrentICR(alice, price)).lt(toBN(dec(110, 16))))
 
-      const ZUSDwithdrawal = 1  // withdraw 1 wei ZUSD
+      const ZSUSDwithdrawal = 1  // withdraw 1 wei ZSUSD
 
-      await assertRevert(borrowerOperations.withdrawZUSD(th._100pct, ZUSDwithdrawal, alice, alice, { from: alice }),
+      await assertRevert(borrowerOperations.withdrawZSUSD(th._100pct, ZSUSDwithdrawal, alice, alice, { from: alice }),
         "BorrowerOps: An operation that would result in ICR < MCR is not permitted")
     })
 
-    it("withdrawZUSD(): decays a non-zero base rate", async () => {
+    it("withdrawZSUSD(): decays a non-zero base rate", async () => {
       await openTrove({ ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-      await openTrove({ extraZUSDAmount: toBN(dec(20, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(20, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openTrove({ extraZUSDAmount: toBN(dec(20, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
-      await openTrove({ extraZUSDAmount: toBN(dec(20, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: E } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(20, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(20, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(20, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(20, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: E } })
 
-      const A_ZUSDBal = await zusdToken.balanceOf(A)
+      const A_ZSUSDBal = await zsusdToken.balanceOf(A)
 
       // Artificially set base rate to 5%
       await troveManager.setBaseRate(dec(5, 16))
@@ -782,8 +782,8 @@ contract('BorrowerOperations', async accounts => {
       // 2 hours pass
       th.fastForwardTime(7200, web3.currentProvider)
 
-      // D withdraws ZUSD
-      await borrowerOperations.withdrawZUSD(th._100pct, dec(1, 16), A, A, { from: D })
+      // D withdraws ZSUSD
+      await borrowerOperations.withdrawZSUSD(th._100pct, dec(1, 16), A, A, { from: D })
 
       // Check baseRate has decreased
       const baseRate_2 = await troveManager.baseRate()
@@ -792,42 +792,42 @@ contract('BorrowerOperations', async accounts => {
       // 1 hour passes
       th.fastForwardTime(3600, web3.currentProvider)
 
-      // E withdraws ZUSD
-      await borrowerOperations.withdrawZUSD(th._100pct, dec(1, 16), A, A, { from: E })
+      // E withdraws ZSUSD
+      await borrowerOperations.withdrawZSUSD(th._100pct, dec(1, 16), A, A, { from: E })
 
       const baseRate_3 = await troveManager.baseRate()
       assert.isTrue(baseRate_3.lt(baseRate_2))
     })
 
-    it("withdrawZUSD(): reverts if max fee > 100%", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(20, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
+    it("withdrawZSUSD(): reverts if max fee > 100%", async () => {
+      await openTrove({ extraZSUSDAmount: toBN(dec(10, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(20, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
 
-      await assertRevert(borrowerOperations.withdrawZUSD(dec(2, 18), dec(1, 16), A, A, { from: A }), "Max fee percentage must be between 0.5% and 100%")
-      await assertRevert(borrowerOperations.withdrawZUSD('1000000000000000001', dec(1, 16), A, A, { from: A }), "Max fee percentage must be between 0.5% and 100%")
+      await assertRevert(borrowerOperations.withdrawZSUSD(dec(2, 18), dec(1, 16), A, A, { from: A }), "Max fee percentage must be between 0.5% and 100%")
+      await assertRevert(borrowerOperations.withdrawZSUSD('1000000000000000001', dec(1, 16), A, A, { from: A }), "Max fee percentage must be between 0.5% and 100%")
     })
 
-    it("withdrawZUSD(): reverts if max fee < 0.5% in Normal mode", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(20, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
+    it("withdrawZSUSD(): reverts if max fee < 0.5% in Normal mode", async () => {
+      await openTrove({ extraZSUSDAmount: toBN(dec(10, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(20, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
 
-      await assertRevert(borrowerOperations.withdrawZUSD(0, dec(1, 16), A, A, { from: A }), "Max fee percentage must be between 0.5% and 100%")
-      await assertRevert(borrowerOperations.withdrawZUSD(1, dec(1, 16), A, A, { from: A }), "Max fee percentage must be between 0.5% and 100%")
-      await assertRevert(borrowerOperations.withdrawZUSD('4999999999999999', dec(1, 16), A, A, { from: A }), "Max fee percentage must be between 0.5% and 100%")
+      await assertRevert(borrowerOperations.withdrawZSUSD(0, dec(1, 16), A, A, { from: A }), "Max fee percentage must be between 0.5% and 100%")
+      await assertRevert(borrowerOperations.withdrawZSUSD(1, dec(1, 16), A, A, { from: A }), "Max fee percentage must be between 0.5% and 100%")
+      await assertRevert(borrowerOperations.withdrawZSUSD('4999999999999999', dec(1, 16), A, A, { from: A }), "Max fee percentage must be between 0.5% and 100%")
     })
 
-    it("withdrawZUSD(): reverts if fee exceeds max fee percentage", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(60, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(60, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openTrove({ extraZUSDAmount: toBN(dec(70, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
-      await openTrove({ extraZUSDAmount: toBN(dec(80, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
-      await openTrove({ extraZUSDAmount: toBN(dec(180, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: E } })
+    it("withdrawZSUSD(): reverts if fee exceeds max fee percentage", async () => {
+      await openTrove({ extraZSUSDAmount: toBN(dec(60, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(60, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(70, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(80, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(180, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: E } })
 
-      const totalSupply = await zusdToken.totalSupply()
+      const totalSupply = await zsusdToken.totalSupply()
 
       // Artificially make baseRate 5%
       await troveManager.setBaseRate(dec(5, 16))
@@ -842,38 +842,38 @@ contract('BorrowerOperations', async accounts => {
       // actual: 0.5%, 5e15
 
 
-      // ZUSDFee:                  15000000558793542
+      // ZSUSDFee:                  15000000558793542
       // absolute _fee:            15000000558793542
       // actual feePercentage:      5000000186264514
       // user's _maxFeePercentage: 49999999999999999
 
       const lessThan5pct = '49999999999999999'
-      await assertRevert(borrowerOperations.withdrawZUSD(lessThan5pct, dec(3, 16), A, A, { from: A }), "Fee exceeded provided maximum")
+      await assertRevert(borrowerOperations.withdrawZSUSD(lessThan5pct, dec(3, 16), A, A, { from: A }), "Fee exceeded provided maximum")
 
       baseRate = await troveManager.baseRate() // expect 5% base rate
       assert.equal(baseRate, dec(5, 16))
       // Attempt with maxFee 1%
-      await assertRevert(borrowerOperations.withdrawZUSD(dec(1, 16), dec(1, 16), A, A, { from: B }), "Fee exceeded provided maximum")
+      await assertRevert(borrowerOperations.withdrawZSUSD(dec(1, 16), dec(1, 16), A, A, { from: B }), "Fee exceeded provided maximum")
 
       baseRate = await troveManager.baseRate()  // expect 5% base rate
       assert.equal(baseRate, dec(5, 16))
       // Attempt with maxFee 3.754%
-      await assertRevert(borrowerOperations.withdrawZUSD(dec(3754, 13), dec(1, 16), A, A, { from: C }), "Fee exceeded provided maximum")
+      await assertRevert(borrowerOperations.withdrawZSUSD(dec(3754, 13), dec(1, 16), A, A, { from: C }), "Fee exceeded provided maximum")
 
       baseRate = await troveManager.baseRate()  // expect 5% base rate
       assert.equal(baseRate, dec(5, 16))
       // Attempt with maxFee 0.5%%
-      await assertRevert(borrowerOperations.withdrawZUSD(dec(5, 15), dec(1, 16), A, A, { from: D }), "Fee exceeded provided maximum")
+      await assertRevert(borrowerOperations.withdrawZSUSD(dec(5, 15), dec(1, 16), A, A, { from: D }), "Fee exceeded provided maximum")
     })
 
-    it("withdrawZUSD(): succeeds when fee is less than max fee percentage", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(60, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(60, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openTrove({ extraZUSDAmount: toBN(dec(70, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
-      await openTrove({ extraZUSDAmount: toBN(dec(80, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
-      await openTrove({ extraZUSDAmount: toBN(dec(180, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: E } })
+    it("withdrawZSUSD(): succeeds when fee is less than max fee percentage", async () => {
+      await openTrove({ extraZSUSDAmount: toBN(dec(60, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(60, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(70, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(80, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(180, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: E } })
 
-      const totalSupply = await zusdToken.totalSupply()
+      const totalSupply = await zsusdToken.totalSupply()
 
       // Artificially make baseRate 5%
       await troveManager.setBaseRate(dec(5, 16))
@@ -884,43 +884,43 @@ contract('BorrowerOperations', async accounts => {
 
       // Attempt with maxFee > 5%
       const moreThan5pct = '50000000000000001'
-      const tx1 = await borrowerOperations.withdrawZUSD(moreThan5pct, dec(1, 16), A, A, { from: A })
+      const tx1 = await borrowerOperations.withdrawZSUSD(moreThan5pct, dec(1, 16), A, A, { from: A })
       assert.isTrue(tx1.receipt.status)
 
       baseRate = await troveManager.baseRate() // expect 5% base rate
       assert.equal(baseRate, dec(5, 16))
 
       // Attempt with maxFee = 5%
-      const tx2 = await borrowerOperations.withdrawZUSD(dec(5, 16), dec(1, 16), A, A, { from: B })
+      const tx2 = await borrowerOperations.withdrawZSUSD(dec(5, 16), dec(1, 16), A, A, { from: B })
       assert.isTrue(tx2.receipt.status)
 
       baseRate = await troveManager.baseRate() // expect 5% base rate
       assert.equal(baseRate, dec(5, 16))
 
       // Attempt with maxFee 10%
-      const tx3 = await borrowerOperations.withdrawZUSD(dec(1, 17), dec(1, 16), A, A, { from: C })
+      const tx3 = await borrowerOperations.withdrawZSUSD(dec(1, 17), dec(1, 16), A, A, { from: C })
       assert.isTrue(tx3.receipt.status)
 
       baseRate = await troveManager.baseRate() // expect 5% base rate
       assert.equal(baseRate, dec(5, 16))
 
       // Attempt with maxFee 37.659%
-      const tx4 = await borrowerOperations.withdrawZUSD(dec(37659, 13), dec(1, 16), A, A, { from: D })
+      const tx4 = await borrowerOperations.withdrawZSUSD(dec(37659, 13), dec(1, 16), A, A, { from: D })
       assert.isTrue(tx4.receipt.status)
 
       // Attempt with maxFee 100%
-      const tx5 = await borrowerOperations.withdrawZUSD(dec(1, 18), dec(1, 16), A, A, { from: E })
+      const tx5 = await borrowerOperations.withdrawZSUSD(dec(1, 18), dec(1, 16), A, A, { from: E })
       assert.isTrue(tx5.receipt.status)
     })
 
-    it("withdrawZUSD(): doesn't change base rate if it is already zero", async () => {
+    it("withdrawZSUSD(): doesn't change base rate if it is already zero", async () => {
       await openTrove({ ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-      await openTrove({ extraZUSDAmount: toBN(dec(30, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openTrove({ extraZUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
-      await openTrove({ extraZUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
-      await openTrove({ extraZUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: E } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(30, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: E } })
 
       // Check baseRate is zero
       const baseRate_1 = await troveManager.baseRate()
@@ -929,8 +929,8 @@ contract('BorrowerOperations', async accounts => {
       // 2 hours pass
       th.fastForwardTime(7200, web3.currentProvider)
 
-      // D withdraws ZUSD
-      await borrowerOperations.withdrawZUSD(th._100pct, dec(37, 16), A, A, { from: D })
+      // D withdraws ZSUSD
+      await borrowerOperations.withdrawZSUSD(th._100pct, dec(37, 16), A, A, { from: D })
 
       // Check baseRate is still 0
       const baseRate_2 = await troveManager.baseRate()
@@ -940,18 +940,18 @@ contract('BorrowerOperations', async accounts => {
       th.fastForwardTime(3600, web3.currentProvider)
 
       // E opens trove 
-      await borrowerOperations.withdrawZUSD(th._100pct, dec(12, 16), A, A, { from: E })
+      await borrowerOperations.withdrawZSUSD(th._100pct, dec(12, 16), A, A, { from: E })
 
       const baseRate_3 = await troveManager.baseRate()
       assert.equal(baseRate_3, '0')
     })
 
-    it("withdrawZUSD(): lastFeeOpTime doesn't update if less time than decay interval has passed since the last fee operation", async () => {
+    it("withdrawZSUSD(): lastFeeOpTime doesn't update if less time than decay interval has passed since the last fee operation", async () => {
       await openTrove({ ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-      await openTrove({ extraZUSDAmount: toBN(dec(30, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openTrove({ extraZUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(30, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
 
       // Artificially make baseRate 5%
       await troveManager.setBaseRate(dec(5, 16))
@@ -967,7 +967,7 @@ contract('BorrowerOperations', async accounts => {
       th.fastForwardTime(10, web3.currentProvider)
 
       // Borrower C triggers a fee
-      await borrowerOperations.withdrawZUSD(th._100pct, dec(1, 16), C, C, { from: C })
+      await borrowerOperations.withdrawZSUSD(th._100pct, dec(1, 16), C, C, { from: C })
 
       const lastFeeOpTime_2 = await troveManager.lastFeeOperationTime()
 
@@ -983,7 +983,7 @@ contract('BorrowerOperations', async accounts => {
       assert.isTrue(toBN(timeNow).sub(lastFeeOpTime_1).gte(60))
 
       // Borrower C triggers a fee
-      await borrowerOperations.withdrawZUSD(th._100pct, dec(1, 16), C, C, { from: C })
+      await borrowerOperations.withdrawZSUSD(th._100pct, dec(1, 16), C, C, { from: C })
 
       const lastFeeOpTime_3 = await troveManager.lastFeeOperationTime()
 
@@ -993,11 +993,11 @@ contract('BorrowerOperations', async accounts => {
     })
 
 
-    it("withdrawZUSD(): borrower can't grief the baseRate and stop it decaying by issuing debt at higher frequency than the decay granularity", async () => {
+    it("withdrawZSUSD(): borrower can't grief the baseRate and stop it decaying by issuing debt at higher frequency than the decay granularity", async () => {
       await openTrove({ ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-      await openTrove({ extraZUSDAmount: toBN(dec(30, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openTrove({ extraZUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(30, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
 
       // Artificially make baseRate 5%
       await troveManager.setBaseRate(dec(5, 16))
@@ -1011,34 +1011,34 @@ contract('BorrowerOperations', async accounts => {
       th.fastForwardTime(30, web3.currentProvider)
 
       // Borrower C triggers a fee, before decay interval has passed
-      await borrowerOperations.withdrawZUSD(th._100pct, dec(1, 16), C, C, { from: C })
+      await borrowerOperations.withdrawZSUSD(th._100pct, dec(1, 16), C, C, { from: C })
 
       // 30 seconds pass
       th.fastForwardTime(30, web3.currentProvider)
 
       // Borrower C triggers another fee
-      await borrowerOperations.withdrawZUSD(th._100pct, dec(1, 16), C, C, { from: C })
+      await borrowerOperations.withdrawZSUSD(th._100pct, dec(1, 16), C, C, { from: C })
 
       // Check base rate has decreased even though Borrower tried to stop it decaying
       const baseRate_2 = await troveManager.baseRate()
       assert.isTrue(baseRate_2.lt(baseRate_1))
     })
 
-    it("withdrawZUSD(): borrowing at non-zero base rate sends ZUSD fee to ZERO staking contract", async () => {
+    it("withdrawZSUSD(): borrowing at non-zero base rate sends ZSUSD fee to ZERO staking contract", async () => {
       // time fast-forwards 1 year, and multisig stakes 1 ZERO
       await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
       await zeroToken.approve(zeroStaking.address, dec(1, 18), { from: multisig })
       await zeroStaking.stake(dec(1, 18), { from: multisig })
 
-      // Check ZERO ZUSD balance before == 0
-      const zeroStaking_ZUSDBalance_Before = await zusdToken.balanceOf(zeroStaking.address)
-      assert.equal(zeroStaking_ZUSDBalance_Before, '0')
+      // Check ZERO ZSUSD balance before == 0
+      const zeroStaking_ZSUSDBalance_Before = await zsusdToken.balanceOf(zeroStaking.address)
+      assert.equal(zeroStaking_ZSUSDBalance_Before, '0')
 
       await openTrove({ ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-      await openTrove({ extraZUSDAmount: toBN(dec(30, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openTrove({ extraZUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
-      await openTrove({ extraZUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(30, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
 
       // Artificially make baseRate 5%
       await troveManager.setBaseRate(dec(5, 16))
@@ -1051,26 +1051,26 @@ contract('BorrowerOperations', async accounts => {
       // 2 hours pass
       th.fastForwardTime(7200, web3.currentProvider)
 
-      // D withdraws ZUSD
-      await borrowerOperations.withdrawZUSD(th._100pct, dec(37, 16), C, C, { from: D })
+      // D withdraws ZSUSD
+      await borrowerOperations.withdrawZSUSD(th._100pct, dec(37, 16), C, C, { from: D })
 
-      // Check ZERO ZUSD balance after has increased
-      const zeroStaking_ZUSDBalance_After = await zusdToken.balanceOf(zeroStaking.address)
-      assert.isTrue(zeroStaking_ZUSDBalance_After.eq(zeroStaking_ZUSDBalance_Before))
+      // Check ZERO ZSUSD balance after has increased
+      const zeroStaking_ZSUSDBalance_After = await zsusdToken.balanceOf(zeroStaking.address)
+      assert.isTrue(zeroStaking_ZSUSDBalance_After.eq(zeroStaking_ZSUSDBalance_Before))
     })
 
     if (!withProxy) { // TODO: use rawLogs instead of logs
-      it("withdrawZUSD(): borrowing at non-zero base records the (drawn debt + fee) on the Trove struct", async () => {
+      it("withdrawZSUSD(): borrowing at non-zero base records the (drawn debt + fee) on the Trove struct", async () => {
         // time fast-forwards 1 year, and multisig stakes 1 ZERO
         await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
         await zeroToken.approve(zeroStaking.address, dec(1, 18), { from: multisig })
         await zeroStaking.stake(dec(1, 18), { from: multisig })
 
         await openTrove({ ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-        await openTrove({ extraZUSDAmount: toBN(dec(30, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-        await openTrove({ extraZUSDAmount: toBN(dec(40, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-        await openTrove({ extraZUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
-        await openTrove({ extraZUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
+        await openTrove({ extraZSUSDAmount: toBN(dec(30, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+        await openTrove({ extraZSUSDAmount: toBN(dec(40, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+        await openTrove({ extraZSUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+        await openTrove({ extraZSUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
         const D_debtBefore = await getTroveEntireDebt(D)
 
         // Artificially make baseRate 5%
@@ -1084,11 +1084,11 @@ contract('BorrowerOperations', async accounts => {
         // 2 hours pass
         th.fastForwardTime(7200, web3.currentProvider)
 
-        // D withdraws ZUSD
+        // D withdraws ZSUSD
         const withdrawal_D = toBN(dec(37, 16))
-        const withdrawalTx = await borrowerOperations.withdrawZUSD(th._100pct, toBN(dec(37, 16)), D, D, { from: D })
+        const withdrawalTx = await borrowerOperations.withdrawZSUSD(th._100pct, toBN(dec(37, 16)), D, D, { from: D })
 
-        const emittedFee = toBN(th.getZUSDFeeFromZUSDBorrowingEvent(withdrawalTx))
+        const emittedFee = toBN(th.getZSUSDFeeFromZSUSDBorrowingEvent(withdrawalTx))
         assert.isTrue(emittedFee.gt(toBN('0')))
 
         const newDebt = (await troveManager.Troves(D))[0]
@@ -1098,21 +1098,21 @@ contract('BorrowerOperations', async accounts => {
       })
     }
 
-    it("withdrawZUSD(): Borrowing at non-zero base rate increases the ZERO staking contract ZUSD fees-per-unit-staked", async () => {
+    it("withdrawZSUSD(): Borrowing at non-zero base rate increases the ZERO staking contract ZSUSD fees-per-unit-staked", async () => {
       // time fast-forwards 1 year, and multisig stakes 1 ZERO
       await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
       await zeroToken.approve(zeroStaking.address, dec(1, 18), { from: multisig })
       await zeroStaking.stake(dec(1, 18), { from: multisig })
 
-      // Check ZERO contract ZUSD fees-per-unit-staked is zero
-      const F_ZUSD_Before = await zeroStaking.F_ZUSD()
-      assert.equal(F_ZUSD_Before, '0')
+      // Check ZERO contract ZSUSD fees-per-unit-staked is zero
+      const F_ZSUSD_Before = await zeroStaking.F_ZSUSD()
+      assert.equal(F_ZSUSD_Before, '0')
 
       await openTrove({ ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-      await openTrove({ extraZUSDAmount: toBN(dec(30, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openTrove({ extraZUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
-      await openTrove({ extraZUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(30, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
 
       // Artificially make baseRate 5%
       await troveManager.setBaseRate(dec(5, 16))
@@ -1125,29 +1125,29 @@ contract('BorrowerOperations', async accounts => {
       // 2 hours pass
       th.fastForwardTime(7200, web3.currentProvider)
 
-      // D withdraws ZUSD
-      await borrowerOperations.withdrawZUSD(th._100pct, toBN(dec(37, 16)), D, D, { from: D })
+      // D withdraws ZSUSD
+      await borrowerOperations.withdrawZSUSD(th._100pct, toBN(dec(37, 16)), D, D, { from: D })
 
-      // Check ZERO contract ZUSD fees-per-unit-staked has increased
-      const F_ZUSD_After = await zeroStaking.F_ZUSD()
-      assert.isTrue(F_ZUSD_After.eq(F_ZUSD_Before))
+      // Check ZERO contract ZSUSD fees-per-unit-staked has increased
+      const F_ZSUSD_After = await zeroStaking.F_ZSUSD()
+      assert.isTrue(F_ZSUSD_After.eq(F_ZSUSD_Before))
     })
 
-    it("withdrawZUSD(): Borrowing at non-zero base rate sends requested amount to the user", async () => {
+    it("withdrawZSUSD(): Borrowing at non-zero base rate sends requested amount to the user", async () => {
       // time fast-forwards 1 year, and multisig stakes 1 ZERO
       await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
       await zeroToken.approve(zeroStaking.address, dec(1, 18), { from: multisig })
       await zeroStaking.stake(dec(1, 18), { from: multisig })
 
       // Check ZERO Staking contract balance before == 0
-      const zeroStaking_ZUSDBalance_Before = await zusdToken.balanceOf(zeroStaking.address)
-      assert.equal(zeroStaking_ZUSDBalance_Before, '0')
+      const zeroStaking_ZSUSDBalance_Before = await zsusdToken.balanceOf(zeroStaking.address)
+      assert.equal(zeroStaking_ZSUSDBalance_Before, '0')
 
       await openTrove({ ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-      await openTrove({ extraZUSDAmount: toBN(dec(30, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openTrove({ extraZUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
-      await openTrove({ extraZUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(30, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
 
       // Artificially make baseRate 5%
       await troveManager.setBaseRate(dec(5, 16))
@@ -1160,27 +1160,27 @@ contract('BorrowerOperations', async accounts => {
       // 2 hours pass
       th.fastForwardTime(7200, web3.currentProvider)
 
-      const D_ZUSDBalanceBefore = await zusdToken.balanceOf(D)
+      const D_ZSUSDBalanceBefore = await zsusdToken.balanceOf(D)
 
-      // D withdraws ZUSD
-      const D_ZUSDRequest = toBN(dec(37, 18))
-      await borrowerOperations.withdrawZUSD(th._100pct, D_ZUSDRequest, D, D, { from: D })
+      // D withdraws ZSUSD
+      const D_ZSUSDRequest = toBN(dec(37, 18))
+      await borrowerOperations.withdrawZSUSD(th._100pct, D_ZSUSDRequest, D, D, { from: D })
 
-      // Check ZERO staking ZUSD balance has increased
-      const zeroStaking_ZUSDBalance_After = await zusdToken.balanceOf(zeroStaking.address)
-      assert.isTrue(zeroStaking_ZUSDBalance_After.eq(zeroStaking_ZUSDBalance_Before))
+      // Check ZERO staking ZSUSD balance has increased
+      const zeroStaking_ZSUSDBalance_After = await zsusdToken.balanceOf(zeroStaking.address)
+      assert.isTrue(zeroStaking_ZSUSDBalance_After.eq(zeroStaking_ZSUSDBalance_Before))
 
-      // Check D's ZUSD balance now equals their initial balance plus request ZUSD
-      const D_ZUSDBalanceAfter = await zusdToken.balanceOf(D)
-      assert.isTrue(D_ZUSDBalanceAfter.eq(D_ZUSDBalanceBefore.add(D_ZUSDRequest)))
+      // Check D's ZSUSD balance now equals their initial balance plus request ZSUSD
+      const D_ZSUSDBalanceAfter = await zsusdToken.balanceOf(D)
+      assert.isTrue(D_ZSUSDBalanceAfter.eq(D_ZSUSDBalanceBefore.add(D_ZSUSDRequest)))
     })
 
-    it("withdrawZUSD(): Borrowing at zero base rate changes ZUSD fees-per-unit-staked", async () => {
+    it("withdrawZSUSD(): Borrowing at zero base rate changes ZSUSD fees-per-unit-staked", async () => {
       await openTrove({ ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-      await openTrove({ extraZUSDAmount: toBN(dec(30, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openTrove({ extraZUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
-      await openTrove({ extraZUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(30, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
 
       // Check baseRate is zero
       const baseRate_1 = await troveManager.baseRate()
@@ -1193,24 +1193,24 @@ contract('BorrowerOperations', async accounts => {
       // 2 hours pass
       th.fastForwardTime(7200, web3.currentProvider)
 
-      // Check ZERO ZUSD balance before == 0
-      const F_ZUSD_Before = await zeroStaking.F_ZUSD()
-      assert.equal(F_ZUSD_Before, '0')
+      // Check ZERO ZSUSD balance before == 0
+      const F_ZSUSD_Before = await zeroStaking.F_ZSUSD()
+      assert.equal(F_ZSUSD_Before, '0')
 
-      // D withdraws ZUSD
-      await borrowerOperations.withdrawZUSD(th._100pct, dec(37, 16), D, D, { from: D })
+      // D withdraws ZSUSD
+      await borrowerOperations.withdrawZSUSD(th._100pct, dec(37, 16), D, D, { from: D })
 
-      // Check ZERO ZUSD balance after > 0
-      const F_ZUSD_After = await zeroStaking.F_ZUSD()
-      assert.isTrue(F_ZUSD_After.gt('0'))
+      // Check ZERO ZSUSD balance after > 0
+      const F_ZSUSD_After = await zeroStaking.F_ZSUSD()
+      assert.isTrue(F_ZSUSD_After.gt('0'))
     })
 
-    it("withdrawZUSD(): Borrowing at zero base rate sends debt request to user", async () => {
+    it("withdrawZSUSD(): Borrowing at zero base rate sends debt request to user", async () => {
       await openTrove({ ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-      await openTrove({ extraZUSDAmount: toBN(dec(30, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openTrove({ extraZUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
-      await openTrove({ extraZUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(30, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
 
       // Check baseRate is zero
       const baseRate_1 = await troveManager.baseRate()
@@ -1219,54 +1219,54 @@ contract('BorrowerOperations', async accounts => {
       // 2 hours pass
       th.fastForwardTime(7200, web3.currentProvider)
 
-      const D_ZUSDBalanceBefore = await zusdToken.balanceOf(D)
+      const D_ZSUSDBalanceBefore = await zsusdToken.balanceOf(D)
 
-      // D withdraws ZUSD
-      const D_ZUSDRequest = toBN(dec(37, 16))
-      await borrowerOperations.withdrawZUSD(th._100pct, dec(37, 16), D, D, { from: D })
+      // D withdraws ZSUSD
+      const D_ZSUSDRequest = toBN(dec(37, 16))
+      await borrowerOperations.withdrawZSUSD(th._100pct, dec(37, 16), D, D, { from: D })
 
-      // Check D's ZUSD balance now equals their requested ZUSD
-      const D_ZUSDBalanceAfter = await zusdToken.balanceOf(D)
+      // Check D's ZSUSD balance now equals their requested ZSUSD
+      const D_ZSUSDBalanceAfter = await zsusdToken.balanceOf(D)
 
-      // Check D's trove debt == D's ZUSD balance + liquidation reserve
-      assert.isTrue(D_ZUSDBalanceAfter.eq(D_ZUSDBalanceBefore.add(D_ZUSDRequest)))
+      // Check D's trove debt == D's ZSUSD balance + liquidation reserve
+      assert.isTrue(D_ZSUSDBalanceAfter.eq(D_ZSUSDBalanceBefore.add(D_ZSUSDRequest)))
     })
 
-    it("withdrawZUSD(): reverts when calling address does not have active trove", async () => {
+    it("withdrawZSUSD(): reverts when calling address does not have active trove", async () => {
       await openTrove({ ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
       await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
 
-      // Bob successfully withdraws ZUSD
-      const txBob = await borrowerOperations.withdrawZUSD(th._100pct, dec(100, 16), bob, bob, { from: bob })
+      // Bob successfully withdraws ZSUSD
+      const txBob = await borrowerOperations.withdrawZSUSD(th._100pct, dec(100, 16), bob, bob, { from: bob })
       assert.isTrue(txBob.receipt.status)
 
-      // Carol with no active trove attempts to withdraw ZUSD
+      // Carol with no active trove attempts to withdraw ZSUSD
       try {
-        const txCarol = await borrowerOperations.withdrawZUSD(th._100pct, dec(100, 16), carol, carol, { from: carol })
+        const txCarol = await borrowerOperations.withdrawZSUSD(th._100pct, dec(100, 16), carol, carol, { from: carol })
         assert.isFalse(txCarol.receipt.status)
       } catch (err) {
         assert.include(err.message, "revert")
       }
     })
 
-    it("withdrawZUSD(): reverts when requested withdrawal amount is zero ZUSD", async () => {
+    it("withdrawZSUSD(): reverts when requested withdrawal amount is zero ZSUSD", async () => {
       await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
       await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
 
-      // Bob successfully withdraws 1e-18 ZUSD
-      const txBob = await borrowerOperations.withdrawZUSD(th._100pct, 1, bob, bob, { from: bob })
+      // Bob successfully withdraws 1e-18 ZSUSD
+      const txBob = await borrowerOperations.withdrawZSUSD(th._100pct, 1, bob, bob, { from: bob })
       assert.isTrue(txBob.receipt.status)
 
-      // Alice attempts to withdraw 0 ZUSD
+      // Alice attempts to withdraw 0 ZSUSD
       try {
-        const txAlice = await borrowerOperations.withdrawZUSD(th._100pct, 0, alice, alice, { from: alice })
+        const txAlice = await borrowerOperations.withdrawZSUSD(th._100pct, 0, alice, alice, { from: alice })
         assert.isFalse(txAlice.receipt.status)
       } catch (err) {
         assert.include(err.message, "revert")
       }
     })
 
-    it("withdrawZUSD(): reverts when system is in Recovery Mode", async () => {
+    it("withdrawZSUSD(): reverts when system is in Recovery Mode", async () => {
       await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
       await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
       await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: carol } })
@@ -1274,36 +1274,36 @@ contract('BorrowerOperations', async accounts => {
       assert.isFalse(await th.checkRecoveryMode(contracts))
 
       // Withdrawal possible when recoveryMode == false
-      const txAlice = await borrowerOperations.withdrawZUSD(th._100pct, dec(100, 16), alice, alice, { from: alice })
+      const txAlice = await borrowerOperations.withdrawZSUSD(th._100pct, dec(100, 16), alice, alice, { from: alice })
       assert.isTrue(txAlice.receipt.status)
 
       await priceFeed.setPrice('50000000000000000000')
 
       assert.isTrue(await th.checkRecoveryMode(contracts))
 
-      //Check ZUSD withdrawal impossible when recoveryMode == true
+      //Check ZSUSD withdrawal impossible when recoveryMode == true
       try {
-        const txBob = await borrowerOperations.withdrawZUSD(th._100pct, 1, bob, bob, { from: bob })
+        const txBob = await borrowerOperations.withdrawZSUSD(th._100pct, 1, bob, bob, { from: bob })
         assert.isFalse(txBob.receipt.status)
       } catch (err) {
         assert.include(err.message, "revert")
       }
     })
 
-    it("withdrawZUSD(): reverts when withdrawal would bring the trove's ICR < MCR", async () => {
+    it("withdrawZSUSD(): reverts when withdrawal would bring the trove's ICR < MCR", async () => {
       await openTrove({ ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
       await openTrove({ ICR: toBN(dec(11, 17)), extraParams: { from: bob } })
 
-      // Bob tries to withdraw ZUSD that would bring his ICR < MCR
+      // Bob tries to withdraw ZSUSD that would bring his ICR < MCR
       try {
-        const txBob = await borrowerOperations.withdrawZUSD(th._100pct, 1, bob, bob, { from: bob })
+        const txBob = await borrowerOperations.withdrawZSUSD(th._100pct, 1, bob, bob, { from: bob })
         assert.isFalse(txBob.receipt.status)
       } catch (err) {
         assert.include(err.message, "revert")
       }
     })
 
-    it("withdrawZUSD(): reverts when a withdrawal would cause the TCR of the system to fall below the CCR", async () => {
+    it("withdrawZSUSD(): reverts when a withdrawal would cause the TCR of the system to fall below the CCR", async () => {
       await priceFeed.setPrice(dec(100, 18))
       const price = await priceFeed.getPrice()
 
@@ -1314,82 +1314,82 @@ contract('BorrowerOperations', async accounts => {
       var TCR = (await th.getTCR(contracts)).toString()
       assert.equal(TCR, '1500000000000000000')
 
-      // Bob attempts to withdraw 1 ZUSD.
+      // Bob attempts to withdraw 1 ZSUSD.
       // System TCR would be: ((3+3) * 100 ) / (200+201) = 600/401 = 149.62%, i.e. below CCR of 150%.
       try {
-        const txBob = await borrowerOperations.withdrawZUSD(th._100pct, dec(1, 16), bob, bob, { from: bob })
+        const txBob = await borrowerOperations.withdrawZSUSD(th._100pct, dec(1, 16), bob, bob, { from: bob })
         assert.isFalse(txBob.receipt.status)
       } catch (err) {
         assert.include(err.message, "revert")
       }
     })
 
-    it("withdrawZUSD(): reverts if system is in Recovery Mode", async () => {
+    it("withdrawZSUSD(): reverts if system is in Recovery Mode", async () => {
       // --- SETUP ---
       await openTrove({ ICR: toBN(dec(15, 17)), extraParams: { from: alice } })
       await openTrove({ ICR: toBN(dec(15, 17)), extraParams: { from: bob } })
 
       // --- TEST ---
 
-      // price drops to 1ETH:150ZUSD, reducing TCR below 150%
+      // price drops to 1ETH:150ZSUSD, reducing TCR below 150%
       await priceFeed.setPrice('150000000000000000000');
       assert.isTrue((await th.getTCR(contracts)).lt(toBN(dec(15, 17))))
 
       try {
-        const txData = await borrowerOperations.withdrawZUSD(th._100pct, '200', alice, alice, { from: alice })
+        const txData = await borrowerOperations.withdrawZSUSD(th._100pct, '200', alice, alice, { from: alice })
         assert.isFalse(txData.receipt.status)
       } catch (err) {
         assert.include(err.message, 'revert')
       }
     })
 
-    it("withdrawZUSD(): increases the Trove's ZUSD debt by the correct amount", async () => {
+    it("withdrawZSUSD(): increases the Trove's ZSUSD debt by the correct amount", async () => {
       await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
 
       // check before
       const aliceDebtBefore = await getTroveEntireDebt(alice)
       assert.isTrue(aliceDebtBefore.gt(toBN(0)))
 
-      await borrowerOperations.withdrawZUSD(th._100pct, await getNetBorrowingAmount(100), alice, alice, { from: alice })
+      await borrowerOperations.withdrawZSUSD(th._100pct, await getNetBorrowingAmount(100), alice, alice, { from: alice })
 
       // check after
       const aliceDebtAfter = await getTroveEntireDebt(alice)
       th.assertIsApproximatelyEqual(aliceDebtAfter, aliceDebtBefore.add(toBN(100)))
     })
 
-    it("withdrawZUSD(): increases ZUSD debt in ActivePool by correct amount", async () => {
+    it("withdrawZSUSD(): increases ZSUSD debt in ActivePool by correct amount", async () => {
       await openTrove({ ICR: toBN(dec(10, 18)), extraParams: { from: alice, value: toBN(dec(100, 16)) } })
 
       const aliceDebtBefore = await getTroveEntireDebt(alice)
       assert.isTrue(aliceDebtBefore.gt(toBN(0)))
 
       // check before
-      const activePool_ZUSD_Before = await activePool.getZUSDDebt()
-      assert.isTrue(activePool_ZUSD_Before.eq(aliceDebtBefore))
+      const activePool_ZSUSD_Before = await activePool.getZSUSDDebt()
+      assert.isTrue(activePool_ZSUSD_Before.eq(aliceDebtBefore))
 
-      await borrowerOperations.withdrawZUSD(th._100pct, await getNetBorrowingAmount(dec(10000, 16)), alice, alice, { from: alice })
+      await borrowerOperations.withdrawZSUSD(th._100pct, await getNetBorrowingAmount(dec(10000, 16)), alice, alice, { from: alice })
 
       // check after
-      const activePool_ZUSD_After = await activePool.getZUSDDebt()
-      th.assertIsApproximatelyEqual(activePool_ZUSD_After, activePool_ZUSD_Before.add(toBN(dec(10000, 16))))
+      const activePool_ZSUSD_After = await activePool.getZSUSDDebt()
+      th.assertIsApproximatelyEqual(activePool_ZSUSD_After, activePool_ZSUSD_Before.add(toBN(dec(10000, 16))))
     })
 
-    it("withdrawZUSD(): increases user ZUSDToken balance by correct amount", async () => {
+    it("withdrawZSUSD(): increases user ZSUSDToken balance by correct amount", async () => {
       await openTrove({ ICR: toBN(dec(10, 18)), extraParams: { value: toBN(dec(100, 16)), from: alice } })
 
       // check before
-      const alice_ZUSDTokenBalance_Before = await zusdToken.balanceOf(alice)
-      assert.isTrue(alice_ZUSDTokenBalance_Before.gt(toBN('0')))
+      const alice_ZSUSDTokenBalance_Before = await zsusdToken.balanceOf(alice)
+      assert.isTrue(alice_ZSUSDTokenBalance_Before.gt(toBN('0')))
 
-      await borrowerOperations.withdrawZUSD(th._100pct, dec(10000, 16), alice, alice, { from: alice })
+      await borrowerOperations.withdrawZSUSD(th._100pct, dec(10000, 16), alice, alice, { from: alice })
 
       // check after
-      const alice_ZUSDTokenBalance_After = await zusdToken.balanceOf(alice)
-      assert.isTrue(alice_ZUSDTokenBalance_After.eq(alice_ZUSDTokenBalance_Before.add(toBN(dec(10000, 16)))))
+      const alice_ZSUSDTokenBalance_After = await zsusdToken.balanceOf(alice)
+      assert.isTrue(alice_ZSUSDTokenBalance_After.eq(alice_ZSUSDTokenBalance_Before.add(toBN(dec(10000, 16)))))
     })
 
-    // --- repayZUSD() ---
-    it("repayZUSD(): reverts when repayment would leave trove with ICR < MCR", async () => {
+    // --- repayZSUSD() ---
+    it("repayZSUSD(): reverts when repayment would leave trove with ICR < MCR", async () => {
       // alice creates a Trove and adds first collateral
       await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
       await openTrove({ ICR: toBN(dec(10, 18)), extraParams: { from: bob } })
@@ -1401,78 +1401,78 @@ contract('BorrowerOperations', async accounts => {
       assert.isFalse(await troveManager.checkRecoveryMode(price))
       assert.isTrue((await troveManager.getCurrentICR(alice, price)).lt(toBN(dec(110, 16))))
 
-      const ZUSDRepayment = 1  // 1 wei repayment
+      const ZSUSDRepayment = 1  // 1 wei repayment
 
-      await assertRevert(borrowerOperations.repayZUSD(ZUSDRepayment, alice, alice, { from: alice }),
+      await assertRevert(borrowerOperations.repayZSUSD(ZSUSDRepayment, alice, alice, { from: alice }),
         "BorrowerOps: An operation that would result in ICR < MCR is not permitted")
     })
 
-    it("repayZUSD(): Succeeds when it would leave trove with net debt >= minimum net debt", async () => {
-      // Make the ZUSD request 2 wei above min net debt to correct for floor division, and make net debt = min net debt + 1 wei
+    it("repayZSUSD(): Succeeds when it would leave trove with net debt >= minimum net debt", async () => {
+      // Make the ZSUSD request 2 wei above min net debt to correct for floor division, and make net debt = min net debt + 1 wei
       await sovToken.approve(borrowerOperations.address, toBN(dec(100, 30)), {from: A})
       await borrowerOperations.openTrove(th._100pct, await getNetBorrowingAmount(MIN_NET_DEBT.add(toBN('2'))), A, A, toBN(dec(100, 30)), { from: A })
 
-      const repayTxA = await borrowerOperations.repayZUSD(1, A, A, { from: A })
+      const repayTxA = await borrowerOperations.repayZSUSD(1, A, A, { from: A })
       assert.isTrue(repayTxA.receipt.status)
 
       await sovToken.approve(borrowerOperations.address, toBN(dec(100, 30)), {from: B})
       await borrowerOperations.openTrove(th._100pct, dec(20, 25), B, B, toBN(dec(100, 30)), { from: B })
 
-      const repayTxB = await borrowerOperations.repayZUSD(dec(19, 25), B, B, { from: B })
+      const repayTxB = await borrowerOperations.repayZSUSD(dec(19, 25), B, B, { from: B })
       assert.isTrue(repayTxB.receipt.status)
     })
 
-    it("repayZUSD(): reverts when it would leave trove with net debt < minimum net debt", async () => {
-      // Make the ZUSD request 2 wei above min net debt to correct for floor division, and make net debt = min net debt + 1 wei
+    it("repayZSUSD(): reverts when it would leave trove with net debt < minimum net debt", async () => {
+      // Make the ZSUSD request 2 wei above min net debt to correct for floor division, and make net debt = min net debt + 1 wei
       await sovToken.approve(borrowerOperations.address, toBN(dec(100, 30)), {from: A})
       await borrowerOperations.openTrove(th._100pct, await getNetBorrowingAmount(MIN_NET_DEBT.add(toBN('2'))), A, A, toBN(dec(100, 30)), { from: A })
 
-      const repayTxAPromise = borrowerOperations.repayZUSD(2, A, A, { from: A })
+      const repayTxAPromise = borrowerOperations.repayZSUSD(2, A, A, { from: A })
       await assertRevert(repayTxAPromise, "BorrowerOps: Trove's net debt must be greater than minimum")
     })
 
-    it("repayZUSD(): reverts when calling address does not have active trove", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
-      // Bob successfully repays some ZUSD
-      const txBob = await borrowerOperations.repayZUSD(dec(10, 18), bob, bob, { from: bob })
+    it("repayZSUSD(): reverts when calling address does not have active trove", async () => {
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
+      // Bob successfully repays some ZSUSD
+      const txBob = await borrowerOperations.repayZSUSD(dec(10, 18), bob, bob, { from: bob })
       assert.isTrue(txBob.receipt.status)
 
-      // Carol with no active trove attempts to repayZUSD
+      // Carol with no active trove attempts to repayZSUSD
       try {
-        const txCarol = await borrowerOperations.repayZUSD(dec(10, 18), carol, carol, { from: carol })
+        const txCarol = await borrowerOperations.repayZSUSD(dec(10, 18), carol, carol, { from: carol })
         assert.isFalse(txCarol.receipt.status)
       } catch (err) {
         assert.include(err.message, "revert")
       }
     })
 
-    it("repayZUSD(): reverts when attempted repayment is > the debt of the trove", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
+    it("repayZSUSD(): reverts when attempted repayment is > the debt of the trove", async () => {
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
       const aliceDebt = await getTroveEntireDebt(alice)
 
-      // Bob successfully repays some ZUSD
-      const txBob = await borrowerOperations.repayZUSD(dec(10, 18), bob, bob, { from: bob })
+      // Bob successfully repays some ZSUSD
+      const txBob = await borrowerOperations.repayZSUSD(dec(10, 18), bob, bob, { from: bob })
       assert.isTrue(txBob.receipt.status)
 
       // Alice attempts to repay more than her debt
       try {
-        const txAlice = await borrowerOperations.repayZUSD(aliceDebt.add(toBN(dec(1, 18))), alice, alice, { from: alice })
+        const txAlice = await borrowerOperations.repayZSUSD(aliceDebt.add(toBN(dec(1, 18))), alice, alice, { from: alice })
         assert.isFalse(txAlice.receipt.status)
       } catch (err) {
         assert.include(err.message, "revert")
       }
     })
 
-    //repayZUSD: reduces ZUSD debt in Trove
-    it("repayZUSD(): reduces the Trove's ZUSD debt by the correct amount", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
+    //repayZSUSD: reduces ZSUSD debt in Trove
+    it("repayZSUSD(): reduces the Trove's ZSUSD debt by the correct amount", async () => {
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
       const aliceDebtBefore = await getTroveEntireDebt(alice)
       assert.isTrue(aliceDebtBefore.gt(toBN('0')))
 
-      await borrowerOperations.repayZUSD(aliceDebtBefore.div(toBN(10)), alice, alice, { from: alice })  // Repays 1/10 her debt
+      await borrowerOperations.repayZSUSD(aliceDebtBefore.div(toBN(10)), alice, alice, { from: alice })  // Repays 1/10 her debt
 
       const aliceDebtAfter = await getTroveEntireDebt(alice)
       assert.isTrue(aliceDebtAfter.gt(toBN('0')))
@@ -1480,43 +1480,43 @@ contract('BorrowerOperations', async accounts => {
       th.assertIsApproximatelyEqual(aliceDebtAfter, aliceDebtBefore.mul(toBN(9)).div(toBN(10)))  // check 9/10 debt remaining
     })
 
-    it("repayZUSD(): decreases ZUSD debt in ActivePool by correct amount", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
+    it("repayZSUSD(): decreases ZSUSD debt in ActivePool by correct amount", async () => {
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
       const aliceDebtBefore = await getTroveEntireDebt(alice)
       assert.isTrue(aliceDebtBefore.gt(toBN('0')))
 
       // Check before
-      const activePool_ZUSD_Before = await activePool.getZUSDDebt()
-      assert.isTrue(activePool_ZUSD_Before.gt(toBN('0')))
+      const activePool_ZSUSD_Before = await activePool.getZSUSDDebt()
+      assert.isTrue(activePool_ZSUSD_Before.gt(toBN('0')))
 
-      await borrowerOperations.repayZUSD(aliceDebtBefore.div(toBN(10)), alice, alice, { from: alice })  // Repays 1/10 her debt
+      await borrowerOperations.repayZSUSD(aliceDebtBefore.div(toBN(10)), alice, alice, { from: alice })  // Repays 1/10 her debt
 
       // check after
-      const activePool_ZUSD_After = await activePool.getZUSDDebt()
-      th.assertIsApproximatelyEqual(activePool_ZUSD_After, activePool_ZUSD_Before.sub(aliceDebtBefore.div(toBN(10))))
+      const activePool_ZSUSD_After = await activePool.getZSUSDDebt()
+      th.assertIsApproximatelyEqual(activePool_ZSUSD_After, activePool_ZSUSD_Before.sub(aliceDebtBefore.div(toBN(10))))
     })
 
-    it("repayZUSD(): decreases user ZUSDToken balance by correct amount", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
+    it("repayZSUSD(): decreases user ZSUSDToken balance by correct amount", async () => {
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
       const aliceDebtBefore = await getTroveEntireDebt(alice)
       assert.isTrue(aliceDebtBefore.gt(toBN('0')))
 
       // check before
-      const alice_ZUSDTokenBalance_Before = await zusdToken.balanceOf(alice)
-      assert.isTrue(alice_ZUSDTokenBalance_Before.gt(toBN('0')))
+      const alice_ZSUSDTokenBalance_Before = await zsusdToken.balanceOf(alice)
+      assert.isTrue(alice_ZSUSDTokenBalance_Before.gt(toBN('0')))
 
-      await borrowerOperations.repayZUSD(aliceDebtBefore.div(toBN(10)), alice, alice, { from: alice })  // Repays 1/10 her debt
+      await borrowerOperations.repayZSUSD(aliceDebtBefore.div(toBN(10)), alice, alice, { from: alice })  // Repays 1/10 her debt
 
       // check after
-      const alice_ZUSDTokenBalance_After = await zusdToken.balanceOf(alice)
-      th.assertIsApproximatelyEqual(alice_ZUSDTokenBalance_After, alice_ZUSDTokenBalance_Before.sub(aliceDebtBefore.div(toBN(10))))
+      const alice_ZSUSDTokenBalance_After = await zsusdToken.balanceOf(alice)
+      th.assertIsApproximatelyEqual(alice_ZSUSDTokenBalance_After, alice_ZSUSDTokenBalance_Before.sub(aliceDebtBefore.div(toBN(10))))
     })
 
-    it('repayZUSD(): can repay debt in Recovery Mode', async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
+    it('repayZSUSD(): can repay debt in Recovery Mode', async () => {
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
       const aliceDebtBefore = await getTroveEntireDebt(alice)
       assert.isTrue(aliceDebtBefore.gt(toBN('0')))
 
@@ -1526,7 +1526,7 @@ contract('BorrowerOperations', async accounts => {
 
       assert.isTrue(await th.checkRecoveryMode(contracts))
 
-      const tx = await borrowerOperations.repayZUSD(aliceDebtBefore.div(toBN(10)), alice, alice, { from: alice })
+      const tx = await borrowerOperations.repayZSUSD(aliceDebtBefore.div(toBN(10)), alice, alice, { from: alice })
       assert.isTrue(tx.receipt.status)
 
       // Check Alice's debt: 110 (initial) - 50 (repaid)
@@ -1534,24 +1534,24 @@ contract('BorrowerOperations', async accounts => {
       th.assertIsApproximatelyEqual(aliceDebtAfter, aliceDebtBefore.mul(toBN(9)).div(toBN(10)))
     })
 
-    it("repayZUSD(): Reverts if borrower has insufficient ZUSD balance to cover his debt repayment", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      const bobBalBefore = await zusdToken.balanceOf(B)
+    it("repayZSUSD(): Reverts if borrower has insufficient ZSUSD balance to cover his debt repayment", async () => {
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      const bobBalBefore = await zsusdToken.balanceOf(B)
       assert.isTrue(bobBalBefore.gt(toBN('0')))
 
-      // Bob transfers all but 5 of his ZUSD to Carol
-      await zusdToken.transfer(C, bobBalBefore.sub((toBN(dec(5, 18)))), { from: B })
+      // Bob transfers all but 5 of his ZSUSD to Carol
+      await zsusdToken.transfer(C, bobBalBefore.sub((toBN(dec(5, 18)))), { from: B })
 
-      //Confirm B's ZUSD balance has decreased to 5 ZUSD
-      const bobBalAfter = await zusdToken.balanceOf(B)
+      //Confirm B's ZSUSD balance has decreased to 5 ZSUSD
+      const bobBalAfter = await zsusdToken.balanceOf(B)
 
       assert.isTrue(bobBalAfter.eq(toBN(dec(5, 18))))
 
-      // Bob tries to repay 6 ZUSD
-      const repayZUSDPromise_B = borrowerOperations.repayZUSD(toBN(dec(6, 18)), B, B, { from: B })
+      // Bob tries to repay 6 ZSUSD
+      const repayZSUSDPromise_B = borrowerOperations.repayZSUSD(toBN(dec(6, 18)), B, B, { from: B })
 
-      await assertRevert(repayZUSDPromise_B, "Caller doesnt have enough ZUSD to make repayment")
+      await assertRevert(repayZSUSDPromise_B, "Caller doesnt have enough ZSUSD to make repayment")
     })
 
     // --- adjustTrove() ---
@@ -1568,16 +1568,16 @@ contract('BorrowerOperations', async accounts => {
       assert.isFalse(await troveManager.checkRecoveryMode(price))
       assert.isTrue((await troveManager.getCurrentICR(alice, price)).lt(toBN(dec(110, 16))))
 
-      const ZUSDRepayment = 1  // 1 wei repayment
+      const ZSUSDRepayment = 1  // 1 wei repayment
       const collTopUp = 1
 
       await sovToken.approve(borrowerOperations.address, collTopUp, { from: alice })
-      await assertRevert(borrowerOperations.adjustTrove(th._100pct, 0, ZUSDRepayment, false, alice, alice, collTopUp, { from: alice }),
+      await assertRevert(borrowerOperations.adjustTrove(th._100pct, 0, ZSUSDRepayment, false, alice, alice, collTopUp, { from: alice }),
         "BorrowerOps: An operation that would result in ICR < MCR is not permitted")
     })
 
     it("adjustTrove(): reverts if max fee < 0.5% in Normal mode", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
 
       await sovToken.approve(borrowerOperations.address, toBN(dec(2, 16)), { from: A })
       await assertRevert(borrowerOperations.adjustTrove(0, 0, dec(1, 16), true, A, A, toBN(dec(2, 16)), { from: A }), "Max fee percentage must be between 0.5% and 100%")
@@ -1588,7 +1588,7 @@ contract('BorrowerOperations', async accounts => {
     it("adjustTrove(): allows max fee < 0.5% in Recovery mode", async () => {
       await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: whale, value: toBN(dec(100, 16)) } })
 
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
 
       await priceFeed.setPrice(dec(120, 18))
       assert.isTrue(await th.checkRecoveryMode(contracts))
@@ -1607,11 +1607,11 @@ contract('BorrowerOperations', async accounts => {
 
     it("adjustTrove(): decays a non-zero base rate", async () => {
       await openTrove({ ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-      await openTrove({ extraZUSDAmount: toBN(dec(30, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openTrove({ extraZUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
-      await openTrove({ extraZUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: E } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(30, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: E } })
 
       // Artificially make baseRate 5%
       await troveManager.setBaseRate(dec(5, 16))
@@ -1643,16 +1643,16 @@ contract('BorrowerOperations', async accounts => {
 
     it("adjustTrove(): doesn't decay a non-zero base rate when user issues 0 debt", async () => {
       await openTrove({ ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-      await openTrove({ extraZUSDAmount: toBN(dec(30, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openTrove({ extraZUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(30, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
 
       // Artificially make baseRate 5%
       await troveManager.setBaseRate(dec(5, 16))
       await troveManager.setLastFeeOpTimeToNow()
 
       // D opens trove 
-      await openTrove({ extraZUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
 
       // Check baseRate is now non-zero
       const baseRate_1 = await troveManager.baseRate()
@@ -1671,8 +1671,8 @@ contract('BorrowerOperations', async accounts => {
     })
 
     it("adjustTrove(): doesn't change base rate if it is already zero", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(40, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: E } })
-      await openTrove({ extraZUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: E } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
 
       // Check baseRate is zero
       const baseRate_1 = await troveManager.baseRate()
@@ -1700,9 +1700,9 @@ contract('BorrowerOperations', async accounts => {
 
     it("adjustTrove(): lastFeeOpTime doesn't update if less time than decay interval has passed since the last fee operation", async () => {
       await openTrove({ ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-      await openTrove({ extraZUSDAmount: toBN(dec(30, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openTrove({ extraZUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(30, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
 
       // Artificially make baseRate 5%
       await troveManager.setBaseRate(dec(5, 16))
@@ -1745,9 +1745,9 @@ contract('BorrowerOperations', async accounts => {
 
     it("adjustTrove(): borrower can't grief the baseRate and stop it decaying by issuing debt at higher frequency than the decay granularity", async () => {
       await openTrove({ ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-      await openTrove({ extraZUSDAmount: toBN(dec(30, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openTrove({ extraZUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(30, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
 
       // Artificially make baseRate 5%
       await troveManager.setBaseRate(dec(5, 16))
@@ -1771,20 +1771,20 @@ contract('BorrowerOperations', async accounts => {
       assert.isTrue(baseRate_2.lt(baseRate_1))
     })
 
-    it("adjustTrove(): borrowing at non-zero base rate sends ZUSD fee to ZERO staking contract", async () => {
+    it("adjustTrove(): borrowing at non-zero base rate sends ZSUSD fee to ZERO staking contract", async () => {
       // time fast-forwards 1 year, and multisig stakes 1 ZERO
       await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
       await zeroToken.approve(zeroStaking.address, dec(1, 18), { from: multisig })
       await zeroStaking.stake(dec(1, 18), { from: multisig })
 
-      // Check ZERO ZUSD balance before == 0
-      const zeroStaking_ZUSDBalance_Before = await zusdToken.balanceOf(zeroStaking.address)
-      assert.equal(zeroStaking_ZUSDBalance_Before, '0')
+      // Check ZERO ZSUSD balance before == 0
+      const zeroStaking_ZSUSDBalance_Before = await zsusdToken.balanceOf(zeroStaking.address)
+      assert.equal(zeroStaking_ZSUSDBalance_Before, '0')
 
       await openTrove({ ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-      await openTrove({ extraZUSDAmount: toBN(dec(30, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openTrove({ extraZUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(30, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
 
       // Artificially make baseRate 5%
       await troveManager.setBaseRate(dec(5, 16))
@@ -1798,11 +1798,11 @@ contract('BorrowerOperations', async accounts => {
       th.fastForwardTime(7200, web3.currentProvider)
 
       // D adjusts trove
-      await openTrove({ extraZUSDAmount: toBN(dec(37, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(37, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
 
-      // Check ZERO ZUSD balance after has increased
-      const zeroStaking_ZUSDBalance_After = await zusdToken.balanceOf(zeroStaking.address)
-      assert.isTrue(zeroStaking_ZUSDBalance_After.eq(zeroStaking_ZUSDBalance_Before))
+      // Check ZERO ZSUSD balance after has increased
+      const zeroStaking_ZSUSDBalance_After = await zsusdToken.balanceOf(zeroStaking.address)
+      assert.isTrue(zeroStaking_ZSUSDBalance_After.eq(zeroStaking_ZSUSDBalance_Before))
     })
 
     if (!withProxy) { // TODO: use rawLogs instead of logs
@@ -1813,10 +1813,10 @@ contract('BorrowerOperations', async accounts => {
         await zeroStaking.stake(dec(1, 18), { from: multisig })
 
         await openTrove({ ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-        await openTrove({ extraZUSDAmount: toBN(dec(30, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-        await openTrove({ extraZUSDAmount: toBN(dec(40, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-        await openTrove({ extraZUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
-        await openTrove({ extraZUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
+        await openTrove({ extraZSUSDAmount: toBN(dec(30, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+        await openTrove({ extraZSUSDAmount: toBN(dec(40, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+        await openTrove({ extraZSUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+        await openTrove({ extraZSUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
         const D_debtBefore = await getTroveEntireDebt(D)
 
         // Artificially make baseRate 5%
@@ -1832,10 +1832,10 @@ contract('BorrowerOperations', async accounts => {
 
         const withdrawal_D = toBN(dec(37, 18))
 
-        // D withdraws ZUSD
+        // D withdraws ZSUSD
         const adjustmentTx = await borrowerOperations.adjustTrove(th._100pct, 0, withdrawal_D, true, D, D, 0, { from: D })
 
-        const emittedFee = toBN(th.getZUSDFeeFromZUSDBorrowingEvent(adjustmentTx))
+        const emittedFee = toBN(th.getZSUSDFeeFromZSUSDBorrowingEvent(adjustmentTx))
         assert.isTrue(emittedFee.gt(toBN('0')))
 
         const D_newDebt = (await troveManager.Troves(D))[0]
@@ -1845,21 +1845,21 @@ contract('BorrowerOperations', async accounts => {
       })
     }
 
-    it("adjustTrove(): Borrowing at non-zero base rate increases the ZERO staking contract ZUSD fees-per-unit-staked", async () => {
+    it("adjustTrove(): Borrowing at non-zero base rate increases the ZERO staking contract ZSUSD fees-per-unit-staked", async () => {
       // time fast-forwards 1 year, and multisig stakes 1 ZERO
       await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
       await zeroToken.approve(zeroStaking.address, dec(1, 18), { from: multisig })
       await zeroStaking.stake(dec(1, 18), { from: multisig })
 
-      // Check ZERO contract ZUSD fees-per-unit-staked is zero
-      const F_ZUSD_Before = await zeroStaking.F_ZUSD()
-      assert.equal(F_ZUSD_Before, '0')
+      // Check ZERO contract ZSUSD fees-per-unit-staked is zero
+      const F_ZSUSD_Before = await zeroStaking.F_ZSUSD()
+      assert.equal(F_ZSUSD_Before, '0')
 
       await openTrove({ ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-      await openTrove({ extraZUSDAmount: toBN(dec(30, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openTrove({ extraZUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
-      await openTrove({ extraZUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(30, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
 
       // Artificially make baseRate 5%
       await troveManager.setBaseRate(dec(5, 16))
@@ -1875,9 +1875,9 @@ contract('BorrowerOperations', async accounts => {
       // D adjusts trove
       await borrowerOperations.adjustTrove(th._100pct, 0, dec(37, 18), true, D, D, 0, { from: D })
 
-      // Check ZERO contract ZUSD fees-per-unit-staked has increased
-      const F_ZUSD_After = await zeroStaking.F_ZUSD()
-      assert.isTrue(F_ZUSD_After.eq(F_ZUSD_Before))
+      // Check ZERO contract ZSUSD fees-per-unit-staked has increased
+      const F_ZSUSD_After = await zeroStaking.F_ZSUSD()
+      assert.isTrue(F_ZSUSD_After.eq(F_ZSUSD_Before))
     })
 
     it("adjustTrove(): Borrowing at non-zero base rate sends requested amount to the user", async () => {
@@ -1887,16 +1887,16 @@ contract('BorrowerOperations', async accounts => {
       await zeroStaking.stake(dec(1, 18), { from: multisig })
 
       // Check ZERO Staking contract balance before == 0
-      const zeroStaking_ZUSDBalance_Before = await zusdToken.balanceOf(zeroStaking.address)
-      assert.equal(zeroStaking_ZUSDBalance_Before, '0')
+      const zeroStaking_ZSUSDBalance_Before = await zsusdToken.balanceOf(zeroStaking.address)
+      assert.equal(zeroStaking_ZSUSDBalance_Before, '0')
 
       await openTrove({ ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-      await openTrove({ extraZUSDAmount: toBN(dec(30, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openTrove({ extraZUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
-      await openTrove({ extraZUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(30, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
 
-      const D_ZUSDBalanceBefore = await zusdToken.balanceOf(D)
+      const D_ZSUSDBalanceBefore = await zsusdToken.balanceOf(D)
 
       // Artificially make baseRate 5%
       await troveManager.setBaseRate(dec(5, 16))
@@ -1910,24 +1910,24 @@ contract('BorrowerOperations', async accounts => {
       th.fastForwardTime(7200, web3.currentProvider)
 
       // D adjusts trove
-      const ZUSDRequest_D = toBN(dec(40, 18))
-      await borrowerOperations.adjustTrove(th._100pct, 0, ZUSDRequest_D, true, D, D, 0, { from: D })
+      const ZSUSDRequest_D = toBN(dec(40, 18))
+      await borrowerOperations.adjustTrove(th._100pct, 0, ZSUSDRequest_D, true, D, D, 0, { from: D })
 
-      // Check ZERO staking ZUSD balance has increased
-      const zeroStaking_ZUSDBalance_After = await zusdToken.balanceOf(zeroStaking.address)
-      assert.isTrue(zeroStaking_ZUSDBalance_After.eq(zeroStaking_ZUSDBalance_Before))
+      // Check ZERO staking ZSUSD balance has increased
+      const zeroStaking_ZSUSDBalance_After = await zsusdToken.balanceOf(zeroStaking.address)
+      assert.isTrue(zeroStaking_ZSUSDBalance_After.eq(zeroStaking_ZSUSDBalance_Before))
 
-      // Check D's ZUSD balance has increased by their requested ZUSD
-      const D_ZUSDBalanceAfter = await zusdToken.balanceOf(D)
-      assert.isTrue(D_ZUSDBalanceAfter.eq(D_ZUSDBalanceBefore.add(ZUSDRequest_D)))
+      // Check D's ZSUSD balance has increased by their requested ZSUSD
+      const D_ZSUSDBalanceAfter = await zsusdToken.balanceOf(D)
+      assert.isTrue(D_ZSUSDBalanceAfter.eq(D_ZSUSDBalanceBefore.add(ZSUSDRequest_D)))
     })
 
-    it("adjustTrove(): Borrowing at zero base rate changes ZUSD balance of ZERO staking contract", async () => {
+    it("adjustTrove(): Borrowing at zero base rate changes ZSUSD balance of ZERO staking contract", async () => {
       await openTrove({ ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-      await openTrove({ extraZUSDAmount: toBN(dec(30, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openTrove({ extraZUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
-      await openTrove({ extraZUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(30, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(50, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
 
       // Check baseRate is zero
       const baseRate_1 = await troveManager.baseRate()
@@ -1936,24 +1936,24 @@ contract('BorrowerOperations', async accounts => {
       // 2 hours pass
       th.fastForwardTime(7200, web3.currentProvider)
 
-      // Check staking ZUSD balance before > 0
-      const zeroStaking_ZUSDBalance_Before = await zusdToken.balanceOf(zeroStaking.address)
-      assert.isTrue(zeroStaking_ZUSDBalance_Before.eq(toBN('0')))
+      // Check staking ZSUSD balance before > 0
+      const zeroStaking_ZSUSDBalance_Before = await zsusdToken.balanceOf(zeroStaking.address)
+      assert.isTrue(zeroStaking_ZSUSDBalance_Before.eq(toBN('0')))
 
       // D adjusts trove
       await borrowerOperations.adjustTrove(th._100pct, 0, dec(37, 18), true, D, D, 0, { from: D })
 
-      // Check staking ZUSD balance after > staking balance before
-      const zeroStaking_ZUSDBalance_After = await zusdToken.balanceOf(zeroStaking.address)
-      assert.isTrue(zeroStaking_ZUSDBalance_After.eq(zeroStaking_ZUSDBalance_Before))
+      // Check staking ZSUSD balance after > staking balance before
+      const zeroStaking_ZSUSDBalance_After = await zsusdToken.balanceOf(zeroStaking.address)
+      assert.isTrue(zeroStaking_ZSUSDBalance_After.eq(zeroStaking_ZSUSDBalance_Before))
     })
 
-    it("adjustTrove(): Borrowing at zero base rate changes ZERO staking contract ZUSD fees-per-unit-staked", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: whale, value: toBN(dec(100, 'ether')) } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
+    it("adjustTrove(): Borrowing at zero base rate changes ZERO staking contract ZSUSD fees-per-unit-staked", async () => {
+      await openTrove({ extraZSUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: whale, value: toBN(dec(100, 'ether')) } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
 
       // Check baseRate is zero
       const baseRate_1 = await troveManager.baseRate()
@@ -1966,26 +1966,26 @@ contract('BorrowerOperations', async accounts => {
       await zeroToken.unprotectedMint(A, dec(100, 16))
       await zeroStaking.stake(dec(100, 16), { from: A })
 
-      // Check staking ZUSD balance before == 0
-      const F_ZUSD_Before = await zeroStaking.F_ZUSD()
-      assert.isTrue(F_ZUSD_Before.eq(toBN('0')))
+      // Check staking ZSUSD balance before == 0
+      const F_ZSUSD_Before = await zeroStaking.F_ZSUSD()
+      assert.isTrue(F_ZSUSD_Before.eq(toBN('0')))
 
       // D adjusts trove
       await borrowerOperations.adjustTrove(th._100pct, 0, dec(37, 18), true, D, D, 0, { from: D })
 
-      // Check staking ZUSD balance increases
-      const F_ZUSD_After = await zeroStaking.F_ZUSD()
-      assert.isTrue(F_ZUSD_After.eq(F_ZUSD_Before))
+      // Check staking ZSUSD balance increases
+      const F_ZSUSD_After = await zeroStaking.F_ZSUSD()
+      assert.isTrue(F_ZSUSD_After.eq(F_ZSUSD_Before))
     })
 
-    it("adjustTrove(): Borrowing at zero base rate sends total requested ZUSD to the user", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: whale, value: toBN(dec(100, 'ether')) } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
+    it("adjustTrove(): Borrowing at zero base rate sends total requested ZSUSD to the user", async () => {
+      await openTrove({ extraZSUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: whale, value: toBN(dec(100, 'ether')) } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
 
-      const D_ZUSDBalBefore = await zusdToken.balanceOf(D)
+      const D_ZSUSDBalBefore = await zsusdToken.balanceOf(D)
       // Check baseRate is zero
       const baseRate_1 = await troveManager.baseRate()
       assert.equal(baseRate_1, '0')
@@ -1993,22 +1993,22 @@ contract('BorrowerOperations', async accounts => {
       // 2 hours pass
       th.fastForwardTime(7200, web3.currentProvider)
 
-      const DUSDBalanceBefore = await zusdToken.balanceOf(D)
+      const DUSDBalanceBefore = await zsusdToken.balanceOf(D)
 
       // D adjusts trove
-      const ZUSDRequest_D = toBN(dec(40, 18))
-      await borrowerOperations.adjustTrove(th._100pct, 0, ZUSDRequest_D, true, D, D, 0, { from: D })
+      const ZSUSDRequest_D = toBN(dec(40, 18))
+      await borrowerOperations.adjustTrove(th._100pct, 0, ZSUSDRequest_D, true, D, D, 0, { from: D })
 
-      // Check D's ZUSD balance increased by their requested ZUSD
-      const ZUSDBalanceAfter = await zusdToken.balanceOf(D)
-      assert.isTrue(ZUSDBalanceAfter.eq(D_ZUSDBalBefore.add(ZUSDRequest_D)))
+      // Check D's ZSUSD balance increased by their requested ZSUSD
+      const ZSUSDBalanceAfter = await zsusdToken.balanceOf(D)
+      assert.isTrue(ZSUSDBalanceAfter.eq(D_ZSUSDBalBefore.add(ZSUSDRequest_D)))
     })
 
     it("adjustTrove(): reverts when calling address has no active trove", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      await openTrove({ extraZUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
 
-      // Alice coll and debt increase(+1 SOV, +50ZUSD)
+      // Alice coll and debt increase(+1 SOV, +50ZSUSD)
       await sovToken.approve(borrowerOperations.address, toBN(dec(1, 16)), { from: alice})
       await borrowerOperations.adjustTrove(th._100pct, 0, dec(50, 16), true, alice, alice, toBN(dec(1, 16)), { from: alice })
 
@@ -2022,8 +2022,8 @@ contract('BorrowerOperations', async accounts => {
     })
 
     it("adjustTrove(): reverts in Recovery Mode when the adjustment would reduce the TCR", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      await openTrove({ extraZUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
 
       assert.isFalse(await th.checkRecoveryMode(contracts))
 
@@ -2059,8 +2059,8 @@ contract('BorrowerOperations', async accounts => {
     })
 
     it("adjustTrove(): collateral withdrawal reverts in Recovery Mode", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      await openTrove({ extraZUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
 
       assert.isFalse(await th.checkRecoveryMode(contracts))
 
@@ -2074,8 +2074,8 @@ contract('BorrowerOperations', async accounts => {
     })
 
     it("adjustTrove(): debt increase that would leave ICR < 150% reverts in Recovery Mode", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      await openTrove({ extraZUSDAmount: toBN(dec(20000, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(20000, 16)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
       const CCR = await troveManager.CCR()
 
       assert.isFalse(await th.checkRecoveryMode(contracts))
@@ -2103,8 +2103,8 @@ contract('BorrowerOperations', async accounts => {
     })
 
     it("adjustTrove(): debt increase that would reduce the ICR reverts in Recovery Mode", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(3, 18)), extraParams: { from: alice } })
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(3, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
       const CCR = await troveManager.CCR()
 
       assert.isFalse(await th.checkRecoveryMode(contracts))
@@ -2158,8 +2158,8 @@ contract('BorrowerOperations', async accounts => {
     })
 
     it("adjustTrove(): A trove with ICR < CCR in Recovery Mode can adjust their trove to ICR > CCR", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
       const CCR = await troveManager.CCR()
 
       assert.isFalse(await th.checkRecoveryMode(contracts))
@@ -2192,8 +2192,8 @@ contract('BorrowerOperations', async accounts => {
     })
 
     it("adjustTrove(): A trove with ICR > CCR in Recovery Mode can improve their ICR", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(3, 18)), extraParams: { from: alice } })
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(3, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
       const CCR = await troveManager.CCR()
 
       assert.isFalse(await th.checkRecoveryMode(contracts))
@@ -2226,8 +2226,8 @@ contract('BorrowerOperations', async accounts => {
     })
 
     it("adjustTrove(): debt increase in Recovery Mode charges no fee", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      await openTrove({ extraZUSDAmount: toBN(dec(200000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(200000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
 
       assert.isFalse(await th.checkRecoveryMode(contracts))
 
@@ -2239,22 +2239,22 @@ contract('BorrowerOperations', async accounts => {
       await zeroToken.unprotectedMint(bob, dec(100, 16))
       await zeroStaking.stake(dec(100, 16), { from: bob })
 
-      const zeroStakingZUSDBalanceBefore = await zusdToken.balanceOf(zeroStaking.address)
-      assert.isTrue(zeroStakingZUSDBalanceBefore.eq(toBN('0')))
+      const zeroStakingZSUSDBalanceBefore = await zsusdToken.balanceOf(zeroStaking.address)
+      assert.isTrue(zeroStakingZSUSDBalanceBefore.eq(toBN('0')))
 
       await sovToken.approve(borrowerOperations.address, toBN(dec(100, 'ether')), { from: alice})
       const txAlice = await borrowerOperations.adjustTrove(th._100pct, 0, dec(50, 16), true, alice, alice, toBN(dec(100, 'ether')), { from: alice })
       assert.isTrue(txAlice.receipt.status)
 
       // Check emitted fee = 0
-      const emittedFee = toBN(await th.getEventArgByName(txAlice, 'ZUSDBorrowingFeePaid', '_ZUSDFee'))
+      const emittedFee = toBN(await th.getEventArgByName(txAlice, 'ZSUSDBorrowingFeePaid', '_ZSUSDFee'))
       assert.isTrue(emittedFee.eq(toBN('0')))
 
       assert.isTrue(await th.checkRecoveryMode(contracts))
 
       // Check no fee was sent to staking contract
-      const zeroStakingZUSDBalanceAfter = await zusdToken.balanceOf(zeroStaking.address)
-      assert.equal(zeroStakingZUSDBalanceAfter.toString(), zeroStakingZUSDBalanceBefore.toString())
+      const zeroStakingZSUSDBalanceAfter = await zsusdToken.balanceOf(zeroStaking.address)
+      assert.equal(zeroStakingZSUSDBalanceAfter.toString(), zeroStakingZSUSDBalanceBefore.toString())
     })
 
     it("adjustTrove(): reverts when change would cause the TCR of the system to fall below the CCR", async () => {
@@ -2277,20 +2277,20 @@ contract('BorrowerOperations', async accounts => {
       }
     })
 
-    it("adjustTrove(): reverts when ZUSD repaid is > debt of the trove", async () => {
+    it("adjustTrove(): reverts when ZSUSD repaid is > debt of the trove", async () => {
       await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
       const bobOpenTx = (await openTrove({ ICR: toBN(dec(2, 18)), extraParams: { from: bob } })).tx
 
       const bobDebt = await getTroveEntireDebt(bob)
       assert.isTrue(bobDebt.gt(toBN('0')))
 
-      const bobFee = toBN(await th.getEventArgByIndex(bobOpenTx, 'ZUSDBorrowingFeePaid', 1))
+      const bobFee = toBN(await th.getEventArgByIndex(bobOpenTx, 'ZSUSDBorrowingFeePaid', 1))
       assert.isTrue(bobFee.gt(toBN('0')))
 
-      // Alice transfers ZUSD to bob to compensate borrowing fees
-      await zusdToken.transfer(bob, bobFee, { from: alice })
+      // Alice transfers ZSUSD to bob to compensate borrowing fees
+      await zsusdToken.transfer(bob, bobFee, { from: alice })
 
-      const remainingDebt = (await troveManager.getTroveDebt(bob)).sub(ZUSD_GAS_COMPENSATION)
+      const remainingDebt = (await troveManager.getTroveDebt(bob)).sub(ZSUSD_GAS_COMPENSATION)
 
       // Bob attempts an adjustment that would repay 1 wei more than his debt
       await sovToken.approve(borrowerOperations.address, toBN(dec(1, 16)), { from: bob})
@@ -2317,14 +2317,14 @@ contract('BorrowerOperations', async accounts => {
     })
 
     it("adjustTrove(): reverts when change would cause the ICR of the trove to fall below the MCR", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 16)), ICR: toBN(dec(100, 18)), extraParams: { from: whale } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 16)), ICR: toBN(dec(100, 18)), extraParams: { from: whale } })
 
       await priceFeed.setPrice(dec(100, 18))
 
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 16)), ICR: toBN(dec(11, 17)), extraParams: { from: alice } })
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 16)), ICR: toBN(dec(11, 17)), extraParams: { from: bob } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 16)), ICR: toBN(dec(11, 17)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 16)), ICR: toBN(dec(11, 17)), extraParams: { from: bob } })
 
-      // Bob attempts to increase debt by 100 ZUSD and 1 ether, i.e. a change that constitutes a 100% ratio of coll:debt.
+      // Bob attempts to increase debt by 100 ZSUSD and 1 ether, i.e. a change that constitutes a 100% ratio of coll:debt.
       // Since his ICR prior is 110%, this change would reduce his ICR below MCR.
       try {
         await sovToken.approve(borrowerOperations.address, toBN(dec(1, 16)), { from: bob})
@@ -2336,7 +2336,7 @@ contract('BorrowerOperations', async accounts => {
     })
 
     it("adjustTrove(): With 0 coll change, doesnt change borrower's coll or ActivePool coll", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
 
       const aliceCollBefore = await getTroveEntireColl(alice)
       const activePoolCollBefore = await activePool.getSOV()
@@ -2344,7 +2344,7 @@ contract('BorrowerOperations', async accounts => {
       assert.isTrue(aliceCollBefore.gt(toBN('0')))
       assert.isTrue(aliceCollBefore.eq(activePoolCollBefore))
 
-      // Alice adjusts trove. No coll change, and a debt increase (+50ZUSD)
+      // Alice adjusts trove. No coll change, and a debt increase (+50ZSUSD)
       await borrowerOperations.adjustTrove(th._100pct, 0, dec(50, 16), true, alice, alice, 0, { from: alice })
 
       const aliceCollAfter = await getTroveEntireColl(alice)
@@ -2356,16 +2356,16 @@ contract('BorrowerOperations', async accounts => {
 
 
     it("adjustTrove(): updates borrower's debt and coll with an increase in both", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 16)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 16)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 16)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 16)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
 
       const debtBefore = await getTroveEntireDebt(alice)
       const collBefore = await getTroveEntireColl(alice)
       assert.isTrue(debtBefore.gt(toBN('0')))
       assert.isTrue(collBefore.gt(toBN('0')))
 
-      // Alice adjusts trove. Coll and debt increase(+1 SOV, +50ZUSD)
+      // Alice adjusts trove. Coll and debt increase(+1 SOV, +50ZSUSD)
       await sovToken.approve(borrowerOperations.address, toBN(dec(1, 16)), { from: alice})
       await borrowerOperations.adjustTrove(th._100pct, 0, await getNetBorrowingAmount(dec(50, 16)), true, alice, alice, toBN(dec(1, 16)), { from: alice })
 
@@ -2377,16 +2377,16 @@ contract('BorrowerOperations', async accounts => {
     })
 
     it("adjustTrove(): updates borrower's debt and coll with a decrease in both", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
 
       const debtBefore = await getTroveEntireDebt(alice)
       const collBefore = await getTroveEntireColl(alice)
       assert.isTrue(debtBefore.gt(toBN('0')))
       assert.isTrue(collBefore.gt(toBN('0')))
 
-      // Alice adjusts trove coll and debt decrease (-0.5 ETH, -50ZUSD)
+      // Alice adjusts trove coll and debt decrease (-0.5 ETH, -50ZSUSD)
       await borrowerOperations.adjustTrove(th._100pct, dec(500, 'finney'), dec(50, 16), false, alice, alice, 0, { from: alice })
 
       const debtAfter = await getTroveEntireDebt(alice)
@@ -2397,16 +2397,16 @@ contract('BorrowerOperations', async accounts => {
     })
 
     it("adjustTrove(): updates borrower's  debt and coll with coll increase, debt decrease", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
 
       const debtBefore = await getTroveEntireDebt(alice)
       const collBefore = await getTroveEntireColl(alice)
       assert.isTrue(debtBefore.gt(toBN('0')))
       assert.isTrue(collBefore.gt(toBN('0')))
 
-      // Alice adjusts trove - coll increase and debt decrease (+0.5 ETH, -50ZUSD)
+      // Alice adjusts trove - coll increase and debt decrease (+0.5 ETH, -50ZSUSD)
       await sovToken.approve(borrowerOperations.address, toBN(dec(500, 'finney')), { from: alice})
       await borrowerOperations.adjustTrove(th._100pct, 0, dec(50, 16), false, alice, alice, toBN(dec(500, 'finney')), { from: alice })
 
@@ -2418,16 +2418,16 @@ contract('BorrowerOperations', async accounts => {
     })
 
     it("adjustTrove(): updates borrower's debt and coll with coll decrease, debt increase", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
 
       const debtBefore = await getTroveEntireDebt(alice)
       const collBefore = await getTroveEntireColl(alice)
       assert.isTrue(debtBefore.gt(toBN('0')))
       assert.isTrue(collBefore.gt(toBN('0')))
 
-      // Alice adjusts trove - coll decrease and debt increase (0.1 ETH, 10ZUSD)
+      // Alice adjusts trove - coll decrease and debt increase (0.1 ETH, 10ZSUSD)
       await borrowerOperations.adjustTrove(th._100pct, dec(1, 17), await getNetBorrowingAmount(dec(1, 18)), true, alice, alice, 0, { from: alice })
 
       const debtAfter = await getTroveEntireDebt(alice)
@@ -2438,16 +2438,16 @@ contract('BorrowerOperations', async accounts => {
     })
 
     it("adjustTrove(): updates borrower's stake and totalStakes with a coll increase", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
 
       const stakeBefore = await troveManager.getTroveStake(alice)
       const totalStakesBefore = await troveManager.totalStakes();
       assert.isTrue(stakeBefore.gt(toBN('0')))
       assert.isTrue(totalStakesBefore.gt(toBN('0')))
 
-      // Alice adjusts trove - coll and debt increase (+1 ETH, +50 ZUSD)
+      // Alice adjusts trove - coll and debt increase (+1 ETH, +50 ZSUSD)
       await sovToken.approve(borrowerOperations.address, toBN(dec(1, 16)), { from: alice})
       await borrowerOperations.adjustTrove(th._100pct, 0, dec(50, 16), true, alice, alice, toBN(dec(1, 16)), { from: alice })
 
@@ -2459,9 +2459,9 @@ contract('BorrowerOperations', async accounts => {
     })
 
     it("adjustTrove():  updates borrower's stake and totalStakes with a coll decrease", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
 
       const stakeBefore = await troveManager.getTroveStake(alice)
       const totalStakesBefore = await troveManager.totalStakes();
@@ -2478,43 +2478,43 @@ contract('BorrowerOperations', async accounts => {
       assert.isTrue(totalStakesAfter.eq(totalStakesBefore.sub(toBN(dec(5, 17)))))
     })
 
-    it("adjustTrove(): changes ZUSDToken balance by the requested decrease", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
+    it("adjustTrove(): changes ZSUSDToken balance by the requested decrease", async () => {
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
 
-      const alice_ZUSDTokenBalance_Before = await zusdToken.balanceOf(alice)
-      assert.isTrue(alice_ZUSDTokenBalance_Before.gt(toBN('0')))
+      const alice_ZSUSDTokenBalance_Before = await zsusdToken.balanceOf(alice)
+      assert.isTrue(alice_ZSUSDTokenBalance_Before.gt(toBN('0')))
 
       // Alice adjusts trove - coll decrease and debt decrease
       await borrowerOperations.adjustTrove(th._100pct, dec(100, 'finney'), dec(10, 18), false, alice, alice, 0, { from: alice })
 
       // check after
-      const alice_ZUSDTokenBalance_After = await zusdToken.balanceOf(alice)
-      assert.isTrue(alice_ZUSDTokenBalance_After.eq(alice_ZUSDTokenBalance_Before.sub(toBN(dec(10, 18)))))
+      const alice_ZSUSDTokenBalance_After = await zsusdToken.balanceOf(alice)
+      assert.isTrue(alice_ZSUSDTokenBalance_After.eq(alice_ZSUSDTokenBalance_Before.sub(toBN(dec(10, 18)))))
     })
 
-    it("adjustTrove(): changes ZUSDToken balance by the requested increase", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 16)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
+    it("adjustTrove(): changes ZSUSDToken balance by the requested increase", async () => {
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 16)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 16)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 16)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
 
-      const alice_ZUSDTokenBalance_Before = await zusdToken.balanceOf(alice)
-      assert.isTrue(alice_ZUSDTokenBalance_Before.gt(toBN('0')))
+      const alice_ZSUSDTokenBalance_Before = await zsusdToken.balanceOf(alice)
+      assert.isTrue(alice_ZSUSDTokenBalance_Before.gt(toBN('0')))
 
       // Alice adjusts trove - coll increase and debt increase
       await sovToken.approve(borrowerOperations.address, toBN(dec(1, 16)), { from: alice})
       await borrowerOperations.adjustTrove(th._100pct, 0, dec(100, 16), true, alice, alice, toBN(dec(1, 16)), { from: alice })
 
       // check after
-      const alice_ZUSDTokenBalance_After = await zusdToken.balanceOf(alice)
-      assert.isTrue(alice_ZUSDTokenBalance_After.eq(alice_ZUSDTokenBalance_Before.add(toBN(dec(100, 16)))))
+      const alice_ZSUSDTokenBalance_After = await zsusdToken.balanceOf(alice)
+      assert.isTrue(alice_ZSUSDTokenBalance_After.eq(alice_ZSUSDTokenBalance_Before.add(toBN(dec(100, 16)))))
     })
 
     it("adjustTrove(): Changes the activePool SOV and raw SOV balance by the requested decrease", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 16)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 16)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 16)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 16)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
 
       const activePool_SOV_Before = await activePool.getSOV()
       const activePool_RawSOV_Before = await sovToken.balanceOf(activePool.address)
@@ -2532,9 +2532,9 @@ contract('BorrowerOperations', async accounts => {
     })
 
     it("adjustTrove(): Changes the activePool SOV and raw SOV balance by the amount of SOV sent", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 16)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 16)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 16)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 16)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
 
       const activePool_SOV_Before = await activePool.getSOV()
       const activePool_RawSOV_Before = await sovToken.balanceOf(activePool.address)
@@ -2551,42 +2551,42 @@ contract('BorrowerOperations', async accounts => {
       assert.isTrue(activePool_RawSOV_After.eq(activePool_SOV_Before.add(toBN(dec(1, 16)))))
     })
 
-    it("adjustTrove(): Changes the ZUSD debt in ActivePool by requested decrease", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
+    it("adjustTrove(): Changes the ZSUSD debt in ActivePool by requested decrease", async () => {
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
 
-      const activePool_ZUSDDebt_Before = await activePool.getZUSDDebt()
-      assert.isTrue(activePool_ZUSDDebt_Before.gt(toBN('0')))
+      const activePool_ZSUSDDebt_Before = await activePool.getZSUSDDebt()
+      assert.isTrue(activePool_ZSUSDDebt_Before.gt(toBN('0')))
 
       // Alice adjusts trove - coll increase and debt decrease
       await sovToken.approve(borrowerOperations.address, toBN(dec(1, 16)), { from: alice})
       await borrowerOperations.adjustTrove(th._100pct, 0, dec(30, 18), false, alice, alice, toBN(dec(1, 16)), { from: alice })
 
-      const activePool_ZUSDDebt_After = await activePool.getZUSDDebt()
-      assert.isTrue(activePool_ZUSDDebt_After.eq(activePool_ZUSDDebt_Before.sub(toBN(dec(30, 18)))))
+      const activePool_ZSUSDDebt_After = await activePool.getZSUSDDebt()
+      assert.isTrue(activePool_ZSUSDDebt_After.eq(activePool_ZSUSDDebt_Before.sub(toBN(dec(30, 18)))))
     })
 
-    it("adjustTrove(): Changes the ZUSD debt in ActivePool by requested increase", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
+    it("adjustTrove(): Changes the ZSUSD debt in ActivePool by requested increase", async () => {
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
 
-      const activePool_ZUSDDebt_Before = await activePool.getZUSDDebt()
-      assert.isTrue(activePool_ZUSDDebt_Before.gt(toBN('0')))
+      const activePool_ZSUSDDebt_Before = await activePool.getZSUSDDebt()
+      assert.isTrue(activePool_ZSUSDDebt_Before.gt(toBN('0')))
 
       // Alice adjusts trove - coll increase and debt increase
       await sovToken.approve(borrowerOperations.address, toBN(dec(1, 16)), { from: alice})
       await borrowerOperations.adjustTrove(th._100pct, 0, await getNetBorrowingAmount(dec(100, 16)), true, alice, alice, toBN(dec(1, 16)),  { from: alice })
 
-      const activePool_ZUSDDebt_After = await activePool.getZUSDDebt()
+      const activePool_ZSUSDDebt_After = await activePool.getZSUSDDebt()
 
-      th.assertIsApproximatelyEqual(activePool_ZUSDDebt_After, activePool_ZUSDDebt_Before.add(toBN(dec(100, 16))))
+      th.assertIsApproximatelyEqual(activePool_ZSUSDDebt_After, activePool_ZSUSDDebt_Before.add(toBN(dec(100, 16))))
     })
 
     it("adjustTrove(): new coll = 0 and new debt = 0 is not allowed, as gas compensation still counts toward ICR", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
       const aliceColl = await getTroveEntireColl(alice)
       const aliceDebt = await getTroveEntireColl(alice)
       const status_Before = await troveManager.getTroveStatus(alice)
@@ -2602,31 +2602,31 @@ contract('BorrowerOperations', async accounts => {
     })
 
     it("adjustTrove(): Reverts if requested debt increase and amount is zero", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
 
       await assertRevert(borrowerOperations.adjustTrove(th._100pct, 0, 0, true, alice, alice, 0, { from: alice }),
         'BorrowerOps: Debt increase requires non-zero debtChange')
     })
 
     it("adjustTrove(): Reverts if requested coll withdrawal and ether is sent", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
 
       await sovToken.approve(borrowerOperations.address, toBN(dec(3, 'ether')), { from: alice})
       await assertRevert(borrowerOperations.adjustTrove(th._100pct, dec(1, 16), dec(100, 16), true, alice, alice, toBN(dec(3, 'ether')), { from: alice }), 'BorrowerOperations: Cannot withdraw and add coll')
     })
 
     it("adjustTrove(): Reverts if it’s zero adjustment", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
 
       await assertRevert(borrowerOperations.adjustTrove(th._100pct, 0, 0, false, alice, alice, 0, { from: alice }),
         'BorrowerOps: There must be either a collateral change or a debt change')
     })
 
     it("adjustTrove(): Reverts if requested coll withdrawal is greater than trove's collateral", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
 
       const aliceColl = await getTroveEntireColl(alice)
 
@@ -2635,30 +2635,30 @@ contract('BorrowerOperations', async accounts => {
       await assertRevert(borrowerOperations.adjustTrove(th._100pct, aliceColl.add(toBN(dec(37, 'ether'))), 0, false, bob, bob, 0, { from: bob }))
     })
 
-    it("adjustTrove(): Reverts if borrower has insufficient ZUSD balance to cover his debt repayment", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: B } })
+    it("adjustTrove(): Reverts if borrower has insufficient ZSUSD balance to cover his debt repayment", async () => {
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: B } })
       const bobDebt = await getTroveEntireDebt(B)
 
-      // Bob transfers some ZUSD to carol
-      await zusdToken.transfer(C, dec(10, 18), { from: B })
+      // Bob transfers some ZSUSD to carol
+      await zsusdToken.transfer(C, dec(10, 18), { from: B })
 
-      //Confirm B's ZUSD balance is less than 50 ZUSD
-      const B_ZUSDBal = await zusdToken.balanceOf(B)
-      assert.isTrue(B_ZUSDBal.lt(bobDebt))
+      //Confirm B's ZSUSD balance is less than 50 ZSUSD
+      const B_ZSUSDBal = await zsusdToken.balanceOf(B)
+      assert.isTrue(B_ZSUSDBal.lt(bobDebt))
 
-      const repayZUSDPromise_B = borrowerOperations.adjustTrove(th._100pct, 0, bobDebt, false, B, B, 0, { from: B })
+      const repayZSUSDPromise_B = borrowerOperations.adjustTrove(th._100pct, 0, bobDebt, false, B, B, 0, { from: B })
 
       // B attempts to repay all his debt
-      await assertRevert(repayZUSDPromise_B, "revert")
+      await assertRevert(repayZSUSDPromise_B, "revert")
     })
 
     // --- Internal _adjustTrove() ---
 
     if (!withProxy) { // no need to test this with proxies
       it("Internal _adjustTrove(): reverts when op is a withdrawal and _borrower param is not the msg.sender", async () => {
-        await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-        await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: bob } })
+        await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
+        await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: bob } })
 
         const txPromise_A = borrowerOperations.callInternalAdjustLoan(alice, dec(1, 18), dec(1, 18), true, alice, alice, { from: bob })
         await assertRevert(txPromise_A, "BorrowerOps: Caller must be the borrower for a withdrawal")
@@ -2673,12 +2673,12 @@ contract('BorrowerOperations', async accounts => {
 
     it("closeTrove(): reverts when it would lower the TCR below CCR", async () => {
       await openTrove({ ICR: toBN(dec(300, 16)), extraParams: { from: alice } })
-      await openTrove({ ICR: toBN(dec(120, 16)), extraZUSDAmount: toBN(dec(300, 18)), extraParams: { from: bob } })
+      await openTrove({ ICR: toBN(dec(120, 16)), extraZSUSDAmount: toBN(dec(300, 18)), extraParams: { from: bob } })
 
       const price = await priceFeed.getPrice()
 
       // to compensate borrowing fees
-      await zusdToken.transfer(alice, dec(300, 18), { from: bob })
+      await zsusdToken.transfer(alice, dec(300, 18), { from: bob })
 
       assert.isFalse(await troveManager.checkRecoveryMode(price))
 
@@ -2689,8 +2689,8 @@ contract('BorrowerOperations', async accounts => {
     })
 
     it("closeTrove(): reverts when calling address does not have active trove", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: bob } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: bob } })
 
       // Carol with no active trove attempts to close her trove
       try {
@@ -2702,14 +2702,14 @@ contract('BorrowerOperations', async accounts => {
     })
 
     it("closeTrove(): reverts when system is in Recovery Mode", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(100000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: carol } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(100000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: carol } })
 
-      // Alice transfers her ZUSD to Bob and Carol so they can cover fees
-      const aliceBal = await zusdToken.balanceOf(alice)
-      await zusdToken.transfer(bob, aliceBal.div(toBN(2)), { from: alice })
-      await zusdToken.transfer(carol, aliceBal.div(toBN(2)), { from: alice })
+      // Alice transfers her ZSUSD to Bob and Carol so they can cover fees
+      const aliceBal = await zsusdToken.balanceOf(alice)
+      await zsusdToken.transfer(bob, aliceBal.div(toBN(2)), { from: alice })
+      await zsusdToken.transfer(carol, aliceBal.div(toBN(2)), { from: alice })
 
       // check Recovery Mode 
       assert.isFalse(await th.checkRecoveryMode(contracts))
@@ -2727,13 +2727,13 @@ contract('BorrowerOperations', async accounts => {
     })
 
     it("closeTrove(): reverts when trove is the only one in the system", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(100000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(100000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
 
       // Artificially mint to Alice so she has enough to close her trove
-      await zusdToken.unprotectedMint(alice, dec(100000, 18))
+      await zsusdToken.unprotectedMint(alice, dec(100000, 18))
 
-      // Check she has more ZUSD than her trove debt
-      const aliceBal = await zusdToken.balanceOf(alice)
+      // Check she has more ZSUSD than her trove debt
+      const aliceBal = await zsusdToken.balanceOf(alice)
       const aliceDebt = await getTroveEntireDebt(alice)
       assert.isTrue(aliceBal.gt(aliceDebt))
 
@@ -2745,17 +2745,17 @@ contract('BorrowerOperations', async accounts => {
     })
 
     it("closeTrove(): reduces a Trove's collateral to zero", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: dennis } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: dennis } })
 
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
 
       const aliceCollBefore = await getTroveEntireColl(alice)
-      const dennisZUSD = await zusdToken.balanceOf(dennis)
+      const dennisZSUSD = await zsusdToken.balanceOf(dennis)
       assert.isTrue(aliceCollBefore.gt(toBN('0')))
-      assert.isTrue(dennisZUSD.gt(toBN('0')))
+      assert.isTrue(dennisZSUSD.gt(toBN('0')))
 
       // To compensate borrowing fees
-      await zusdToken.transfer(alice, dennisZUSD.div(toBN(2)), { from: dennis })
+      await zsusdToken.transfer(alice, dennisZSUSD.div(toBN(2)), { from: dennis })
 
       // Alice attempts to close trove
       await borrowerOperations.closeTrove({ from: alice })
@@ -2765,17 +2765,17 @@ contract('BorrowerOperations', async accounts => {
     })
 
     it("closeTrove(): reduces a Trove's debt to zero", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: dennis } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: dennis } })
 
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
 
       const aliceDebtBefore = await getTroveEntireColl(alice)
-      const dennisZUSD = await zusdToken.balanceOf(dennis)
+      const dennisZSUSD = await zsusdToken.balanceOf(dennis)
       assert.isTrue(aliceDebtBefore.gt(toBN('0')))
-      assert.isTrue(dennisZUSD.gt(toBN('0')))
+      assert.isTrue(dennisZSUSD.gt(toBN('0')))
 
       // To compensate borrowing fees
-      await zusdToken.transfer(alice, dennisZUSD.div(toBN(2)), { from: dennis })
+      await zsusdToken.transfer(alice, dennisZSUSD.div(toBN(2)), { from: dennis })
 
       // Alice attempts to close trove
       await borrowerOperations.closeTrove({ from: alice })
@@ -2785,19 +2785,19 @@ contract('BorrowerOperations', async accounts => {
     })
 
     it("closeTrove(): sets Trove's stake to zero", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: dennis } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: dennis } })
 
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
 
       const aliceStakeBefore = await getTroveStake(alice)
       assert.isTrue(aliceStakeBefore.gt(toBN('0')))
 
-      const dennisZUSD = await zusdToken.balanceOf(dennis)
+      const dennisZSUSD = await zsusdToken.balanceOf(dennis)
       assert.isTrue(aliceStakeBefore.gt(toBN('0')))
-      assert.isTrue(dennisZUSD.gt(toBN('0')))
+      assert.isTrue(dennisZSUSD.gt(toBN('0')))
 
       // To compensate borrowing fees
-      await zusdToken.transfer(alice, dennisZUSD.div(toBN(2)), { from: dennis })
+      await zsusdToken.transfer(alice, dennisZSUSD.div(toBN(2)), { from: dennis })
 
       // Alice attempts to close trove
       await borrowerOperations.closeTrove({ from: alice })
@@ -2809,9 +2809,9 @@ contract('BorrowerOperations', async accounts => {
 
     it("closeTrove(): zero's the troves reward snapshots", async () => {
       // Dennis opens trove and transfers tokens to alice
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: dennis } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: dennis } })
 
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
 
       // Price drops
       await priceFeed.setPrice(dec(100, 18))
@@ -2824,17 +2824,17 @@ contract('BorrowerOperations', async accounts => {
       await priceFeed.setPrice(dec(200, 18))
 
       // Alice and Carol open troves
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: carol } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: carol } })
 
       // Price drops ...again
       await priceFeed.setPrice(dec(100, 18))
 
       // Get Alice's pending reward snapshots 
       const L_ETH_A_Snapshot = (await troveManager.rewardSnapshots(alice))[0]
-      const L_ZUSDDebt_A_Snapshot = (await troveManager.rewardSnapshots(alice))[1]
+      const L_ZSUSDDebt_A_Snapshot = (await troveManager.rewardSnapshots(alice))[1]
       assert.isTrue(L_ETH_A_Snapshot.gt(toBN('0')))
-      assert.isTrue(L_ZUSDDebt_A_Snapshot.gt(toBN('0')))
+      assert.isTrue(L_ZSUSDDebt_A_Snapshot.gt(toBN('0')))
 
       // Liquidate Carol
       await troveManager.liquidate(carol)
@@ -2842,13 +2842,13 @@ contract('BorrowerOperations', async accounts => {
 
       // Get Alice's pending reward snapshots after Carol's liquidation. Check above 0
       const L_ETH_Snapshot_A_AfterLiquidation = (await troveManager.rewardSnapshots(alice))[0]
-      const L_ZUSDDebt_Snapshot_A_AfterLiquidation = (await troveManager.rewardSnapshots(alice))[1]
+      const L_ZSUSDDebt_Snapshot_A_AfterLiquidation = (await troveManager.rewardSnapshots(alice))[1]
 
       assert.isTrue(L_ETH_Snapshot_A_AfterLiquidation.gt(toBN('0')))
-      assert.isTrue(L_ZUSDDebt_Snapshot_A_AfterLiquidation.gt(toBN('0')))
+      assert.isTrue(L_ZSUSDDebt_Snapshot_A_AfterLiquidation.gt(toBN('0')))
 
       // to compensate borrowing fees
-      await zusdToken.transfer(alice, await zusdToken.balanceOf(dennis), { from: dennis })
+      await zsusdToken.transfer(alice, await zsusdToken.balanceOf(dennis), { from: dennis })
 
       await priceFeed.setPrice(dec(200, 18))
 
@@ -2857,16 +2857,16 @@ contract('BorrowerOperations', async accounts => {
 
       // Check Alice's pending reward snapshots are zero
       const L_ETH_Snapshot_A_afterAliceCloses = (await troveManager.rewardSnapshots(alice))[0]
-      const L_ZUSDDebt_Snapshot_A_afterAliceCloses = (await troveManager.rewardSnapshots(alice))[1]
+      const L_ZSUSDDebt_Snapshot_A_afterAliceCloses = (await troveManager.rewardSnapshots(alice))[1]
 
       assert.equal(L_ETH_Snapshot_A_afterAliceCloses, '0')
-      assert.equal(L_ZUSDDebt_Snapshot_A_afterAliceCloses, '0')
+      assert.equal(L_ZSUSDDebt_Snapshot_A_afterAliceCloses, '0')
     })
 
     it("closeTrove(): sets trove's status to closed and removes it from sorted troves list", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: dennis } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: dennis } })
 
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
 
       // Check Trove is active
       const alice_Trove_Before = await troveManager.Troves(alice)
@@ -2876,7 +2876,7 @@ contract('BorrowerOperations', async accounts => {
       assert.isTrue(await sortedTroves.contains(alice))
 
       // to compensate borrowing fees
-      await zusdToken.transfer(alice, await zusdToken.balanceOf(dennis), { from: dennis })
+      await zsusdToken.transfer(alice, await zsusdToken.balanceOf(dennis), { from: dennis })
 
       // Close the trove
       await borrowerOperations.closeTrove({ from: alice })
@@ -2889,8 +2889,8 @@ contract('BorrowerOperations', async accounts => {
     })
 
     it("closeTrove(): reduces ActivePool SOV and raw SOV by correct amount", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: dennis } })
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: dennis } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
 
       const dennisColl = await getTroveEntireColl(dennis)
       const aliceColl = await getTroveEntireColl(alice)
@@ -2905,7 +2905,7 @@ contract('BorrowerOperations', async accounts => {
       assert.isTrue(activePool_RawSOV_before.eq(activePool_SOV_before))
 
       // to compensate borrowing fees
-      await zusdToken.transfer(alice, await zusdToken.balanceOf(dennis), { from: dennis })
+      await zsusdToken.transfer(alice, await zsusdToken.balanceOf(dennis), { from: dennis })
 
       // Close the trove
       await borrowerOperations.closeTrove({ from: alice })
@@ -2918,8 +2918,8 @@ contract('BorrowerOperations', async accounts => {
     })
 
     it("closeTrove(): reduces ActivePool debt by correct amount", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: dennis } })
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: dennis } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
 
       const dennisDebt = await getTroveEntireDebt(dennis)
       const aliceDebt = await getTroveEntireDebt(alice)
@@ -2927,25 +2927,25 @@ contract('BorrowerOperations', async accounts => {
       assert.isTrue(aliceDebt.gt('0'))
 
       // Check before
-      const activePool_Debt_before = await activePool.getZUSDDebt()
+      const activePool_Debt_before = await activePool.getZSUSDDebt()
       assert.isTrue(activePool_Debt_before.eq(aliceDebt.add(dennisDebt)))
       assert.isTrue(activePool_Debt_before.gt(toBN('0')))
 
       // to compensate borrowing fees
-      await zusdToken.transfer(alice, await zusdToken.balanceOf(dennis), { from: dennis })
+      await zsusdToken.transfer(alice, await zsusdToken.balanceOf(dennis), { from: dennis })
 
       // Close the trove
       await borrowerOperations.closeTrove({ from: alice })
 
       // Check after
-      const activePool_Debt_After = (await activePool.getZUSDDebt()).toString()
+      const activePool_Debt_After = (await activePool.getZSUSDDebt()).toString()
       th.assertIsApproximatelyEqual(activePool_Debt_After, dennisDebt)
     })
 
     it("closeTrove(): updates the the total stakes", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: dennis } })
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: dennis } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
 
       // Get individual stakes
       const aliceStakeBefore = await getTroveStake(alice)
@@ -2960,7 +2960,7 @@ contract('BorrowerOperations', async accounts => {
       assert.isTrue(totalStakesBefore.eq(aliceStakeBefore.add(bobStakeBefore).add(dennisStakeBefore)))
 
       // to compensate borrowing fees
-      await zusdToken.transfer(alice, await zusdToken.balanceOf(dennis), { from: dennis })
+      await zsusdToken.transfer(alice, await zsusdToken.balanceOf(dennis), { from: dennis })
 
       // Alice closes trove
       await borrowerOperations.closeTrove({ from: alice })
@@ -2975,8 +2975,8 @@ contract('BorrowerOperations', async accounts => {
 
     if (!withProxy) { // TODO: wrap web3.eth.getBalance to be able to go through proxies
       it("closeTrove(): sends the correct amount of SOV to the user", async () => {
-        await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: dennis } })
-        await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+        await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: dennis } })
+        await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
 
         const aliceColl = await getTroveEntireColl(alice)
         assert.isTrue(aliceColl.gt(toBN('0')))
@@ -2984,7 +2984,7 @@ contract('BorrowerOperations', async accounts => {
         const alice_SOVBalance_Before = await sovToken.balanceOf(alice)
 
         // to compensate borrowing fees
-        await zusdToken.transfer(alice, await zusdToken.balanceOf(dennis), { from: dennis })
+        await zsusdToken.transfer(alice, await zsusdToken.balanceOf(dennis), { from: dennis })
 
         await borrowerOperations.closeTrove({ from: alice, gasPrice: 0 })
 
@@ -2995,47 +2995,47 @@ contract('BorrowerOperations', async accounts => {
       })
     }
 
-    it("closeTrove(): subtracts the debt of the closed Trove from the Borrower's ZUSDToken balance", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: dennis } })
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+    it("closeTrove(): subtracts the debt of the closed Trove from the Borrower's ZSUSDToken balance", async () => {
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: dennis } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
 
       const aliceDebt = await getTroveEntireDebt(alice)
       assert.isTrue(aliceDebt.gt(toBN('0')))
 
       // to compensate borrowing fees
-      await zusdToken.transfer(alice, await zusdToken.balanceOf(dennis), { from: dennis })
+      await zsusdToken.transfer(alice, await zsusdToken.balanceOf(dennis), { from: dennis })
 
-      const alice_ZUSDBalance_Before = await zusdToken.balanceOf(alice)
-      assert.isTrue(alice_ZUSDBalance_Before.gt(toBN('0')))
+      const alice_ZSUSDBalance_Before = await zsusdToken.balanceOf(alice)
+      assert.isTrue(alice_ZSUSDBalance_Before.gt(toBN('0')))
 
       // close trove
       await borrowerOperations.closeTrove({ from: alice })
 
-      // check alice ZUSD balance after
-      const alice_ZUSDBalance_After = await zusdToken.balanceOf(alice)
-      th.assertIsApproximatelyEqual(alice_ZUSDBalance_After, alice_ZUSDBalance_Before.sub(aliceDebt.sub(ZUSD_GAS_COMPENSATION)))
+      // check alice ZSUSD balance after
+      const alice_ZSUSDBalance_After = await zsusdToken.balanceOf(alice)
+      th.assertIsApproximatelyEqual(alice_ZSUSDBalance_After, alice_ZSUSDBalance_Before.sub(aliceDebt.sub(ZSUSD_GAS_COMPENSATION)))
     })
 
     it("closeTrove(): applies pending rewards", async () => {
       // --- SETUP ---
-      await openTrove({ extraZUSDAmount: toBN(dec(1000000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(1000000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
       const whaleDebt = await getTroveEntireDebt(whale)
       const whaleColl = await getTroveEntireColl(whale)
 
-      await openTrove({ extraZUSDAmount: toBN(dec(15000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: carol } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(15000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: carol } })
 
       const carolDebt = await getTroveEntireDebt(carol)
       const carolColl = await getTroveEntireColl(carol)
 
       // Whale transfers to A and B to cover their fees
-      await zusdToken.transfer(alice, dec(10000, 18), { from: whale })
-      await zusdToken.transfer(bob, dec(10000, 18), { from: whale })
+      await zsusdToken.transfer(alice, dec(10000, 18), { from: whale })
+      await zsusdToken.transfer(bob, dec(10000, 18), { from: whale })
 
       // --- TEST ---
 
-      // price drops to 1ETH:100ZUSD, reducing Carol's ICR below MCR
+      // price drops to 1ETH:100ZSUSD, reducing Carol's ICR below MCR
       await priceFeed.setPrice(dec(100, 18));
       const price = await priceFeed.getPrice()
 
@@ -3044,31 +3044,31 @@ contract('BorrowerOperations', async accounts => {
       const [liquidatedDebt_C, liquidatedColl_C, gasComp_C] = th.getEmittedLiquidationValues(liquidationTx)
 
       // Dennis opens a new Trove 
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: carol } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: carol } })
 
       // check Alice and Bob's reward snapshots are zero before they alter their Troves
       const alice_rewardSnapshot_Before = await troveManager.rewardSnapshots(alice)
       const alice_SOVrewardSnapshot_Before = alice_rewardSnapshot_Before[0]
-      const alice_ZUSDDebtRewardSnapshot_Before = alice_rewardSnapshot_Before[1]
+      const alice_ZSUSDDebtRewardSnapshot_Before = alice_rewardSnapshot_Before[1]
 
       const bob_rewardSnapshot_Before = await troveManager.rewardSnapshots(bob)
       const bob_SOVrewardSnapshot_Before = bob_rewardSnapshot_Before[0]
-      const bob_ZUSDDebtRewardSnapshot_Before = bob_rewardSnapshot_Before[1]
+      const bob_ZSUSDDebtRewardSnapshot_Before = bob_rewardSnapshot_Before[1]
 
       assert.equal(alice_SOVrewardSnapshot_Before, 0)
-      assert.equal(alice_ZUSDDebtRewardSnapshot_Before, 0)
+      assert.equal(alice_ZSUSDDebtRewardSnapshot_Before, 0)
       assert.equal(bob_SOVrewardSnapshot_Before, 0)
-      assert.equal(bob_ZUSDDebtRewardSnapshot_Before, 0)
+      assert.equal(bob_ZSUSDDebtRewardSnapshot_Before, 0)
 
       const defaultPool_SOV = await defaultPool.getSOV()
-      const defaultPool_ZUSDDebt = await defaultPool.getZUSDDebt()
+      const defaultPool_ZSUSDDebt = await defaultPool.getZSUSDDebt()
 
       // Carol's liquidated coll (1 ETH) and drawn debt should have entered the Default Pool
       assert.isAtMost(th.getDifference(defaultPool_SOV, liquidatedColl_C), 100)
-      assert.isAtMost(th.getDifference(defaultPool_ZUSDDebt, liquidatedDebt_C), 100)
+      assert.isAtMost(th.getDifference(defaultPool_ZSUSDDebt, liquidatedDebt_C), 100)
 
       const pendingCollReward_A = await troveManager.getPendingSOVReward(alice)
-      const pendingDebtReward_A = await troveManager.getPendingZUSDDebtReward(alice)
+      const pendingDebtReward_A = await troveManager.getPendingZSUSDDebtReward(alice)
       assert.isTrue(pendingCollReward_A.gt('0'))
       assert.isTrue(pendingDebtReward_A.gt('0'))
 
@@ -3076,12 +3076,12 @@ contract('BorrowerOperations', async accounts => {
       await borrowerOperations.closeTrove({ from: alice })
 
       const defaultPool_SOV_afterAliceCloses = await defaultPool.getSOV()
-      const defaultPool_ZUSDDebt_afterAliceCloses = await defaultPool.getZUSDDebt()
+      const defaultPool_ZSUSDDebt_afterAliceCloses = await defaultPool.getZSUSDDebt()
 
       assert.isAtMost(th.getDifference(defaultPool_SOV_afterAliceCloses,
         defaultPool_SOV.sub(pendingCollReward_A)), 1000)
-      assert.isAtMost(th.getDifference(defaultPool_ZUSDDebt_afterAliceCloses,
-        defaultPool_ZUSDDebt.sub(pendingDebtReward_A)), 1000)
+      assert.isAtMost(th.getDifference(defaultPool_ZSUSDDebt_afterAliceCloses,
+        defaultPool_ZSUSDDebt.sub(pendingDebtReward_A)), 1000)
 
       // whale adjusts trove, pulling their rewards out of DefaultPool
       await borrowerOperations.adjustTrove(th._100pct, 0, dec(1, 18), true, whale, whale, 0, { from: whale })
@@ -3090,35 +3090,35 @@ contract('BorrowerOperations', async accounts => {
       await borrowerOperations.closeTrove({ from: bob })
 
       const defaultPool_SOV_afterBobCloses = await defaultPool.getSOV()
-      const defaultPool_ZUSDDebt_afterBobCloses = await defaultPool.getZUSDDebt()
+      const defaultPool_ZSUSDDebt_afterBobCloses = await defaultPool.getZSUSDDebt()
 
       assert.isAtMost(th.getDifference(defaultPool_SOV_afterBobCloses, 0), 100000)
-      assert.isAtMost(th.getDifference(defaultPool_ZUSDDebt_afterBobCloses, 0), 100000)
+      assert.isAtMost(th.getDifference(defaultPool_ZSUSDDebt_afterBobCloses, 0), 100000)
     })
 
-    it("closeTrove(): reverts if borrower has insufficient ZUSD balance to repay his entire debt", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(15000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+    it("closeTrove(): reverts if borrower has insufficient ZSUSD balance to repay his entire debt", async () => {
+      await openTrove({ extraZSUSDAmount: toBN(dec(15000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
 
-      //Confirm Bob's ZUSD balance is less than his trove debt
-      const B_ZUSDBal = await zusdToken.balanceOf(B)
+      //Confirm Bob's ZSUSD balance is less than his trove debt
+      const B_ZSUSDBal = await zsusdToken.balanceOf(B)
       const B_troveDebt = await getTroveEntireDebt(B)
 
-      assert.isTrue(B_ZUSDBal.lt(B_troveDebt))
+      assert.isTrue(B_ZSUSDBal.lt(B_troveDebt))
 
       const closeTrovePromise_B = borrowerOperations.closeTrove({ from: B })
 
       // Check closing trove reverts
-      await assertRevert(closeTrovePromise_B, "BorrowerOps: Caller doesnt have enough ZUSD to make repayment")
+      await assertRevert(closeTrovePromise_B, "BorrowerOps: Caller doesnt have enough ZSUSD to make repayment")
     })
 
     // --- openTrove() ---
 
     if (!withProxy) { // TODO: use rawLogs instead of logs
       it("openTrove(): emits a TroveUpdated event with the correct collateral and debt", async () => {
-        const txA = (await openTrove({ extraZUSDAmount: toBN(dec(15000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })).tx
-        const txB = (await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })).tx
-        const txC = (await openTrove({ extraZUSDAmount: toBN(dec(3000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })).tx
+        const txA = (await openTrove({ extraZSUSDAmount: toBN(dec(15000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })).tx
+        const txB = (await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })).tx
+        const txC = (await openTrove({ extraZSUSDAmount: toBN(dec(3000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })).tx
 
         const A_Coll = await getTroveEntireColl(A)
         const B_Coll = await getTroveEntireColl(B)
@@ -3152,8 +3152,8 @@ contract('BorrowerOperations', async accounts => {
 
         assert.isTrue((await troveManager.baseRate()).gt(baseRateBefore))
 
-        const txD = (await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })).tx
-        const txE = (await openTrove({ extraZUSDAmount: toBN(dec(3000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: E } })).tx
+        const txD = (await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })).tx
+        const txE = (await openTrove({ extraZSUSDAmount: toBN(dec(3000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: E } })).tx
         const D_Coll = await getTroveEntireColl(D)
         const E_Coll = await getTroveEntireColl(E)
         const D_Debt = await getTroveEntireDebt(D)
@@ -3203,10 +3203,10 @@ contract('BorrowerOperations', async accounts => {
     })
 
     it("openTrove(): decays a non-zero base rate", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-      await openTrove({ extraZUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
 
       // Artificially make baseRate 5%
       await troveManager.setBaseRate(dec(5, 16))
@@ -3220,7 +3220,7 @@ contract('BorrowerOperations', async accounts => {
       th.fastForwardTime(7200, web3.currentProvider)
 
       // D opens trove 
-      await openTrove({ extraZUSDAmount: toBN(dec(37, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(37, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
 
       // Check baseRate has decreased
       const baseRate_2 = await troveManager.baseRate()
@@ -3230,17 +3230,17 @@ contract('BorrowerOperations', async accounts => {
       th.fastForwardTime(3600, web3.currentProvider)
 
       // E opens trove 
-      await openTrove({ extraZUSDAmount: toBN(dec(12, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: E } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(12, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: E } })
 
       const baseRate_3 = await troveManager.baseRate()
       assert.isTrue(baseRate_3.lt(baseRate_2))
     })
 
     it("openTrove(): doesn't change base rate if it is already zero", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-      await openTrove({ extraZUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
 
       // Check baseRate is zero
       const baseRate_1 = await troveManager.baseRate()
@@ -3250,7 +3250,7 @@ contract('BorrowerOperations', async accounts => {
       th.fastForwardTime(7200, web3.currentProvider)
 
       // D opens trove 
-      await openTrove({ extraZUSDAmount: toBN(dec(37, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(37, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
 
       // Check baseRate is still 0
       const baseRate_2 = await troveManager.baseRate()
@@ -3260,17 +3260,17 @@ contract('BorrowerOperations', async accounts => {
       th.fastForwardTime(3600, web3.currentProvider)
 
       // E opens trove 
-      await openTrove({ extraZUSDAmount: toBN(dec(12, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: E } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(12, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: E } })
 
       const baseRate_3 = await troveManager.baseRate()
       assert.equal(baseRate_3, '0')
     })
 
     it("openTrove(): lastFeeOpTime doesn't update if less time than decay interval has passed since the last fee operation", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-      await openTrove({ extraZUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
 
       // Artificially make baseRate 5%
       await troveManager.setBaseRate(dec(5, 16))
@@ -3283,7 +3283,7 @@ contract('BorrowerOperations', async accounts => {
       const lastFeeOpTime_1 = await troveManager.lastFeeOperationTime()
 
       // Borrower D triggers a fee
-      await openTrove({ extraZUSDAmount: toBN(dec(1, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(1, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
 
       const lastFeeOpTime_2 = await troveManager.lastFeeOperationTime()
 
@@ -3299,7 +3299,7 @@ contract('BorrowerOperations', async accounts => {
       assert.isTrue(toBN(timeNow).sub(lastFeeOpTime_1).gte(3600))
 
       // Borrower E triggers a fee
-      await openTrove({ extraZUSDAmount: toBN(dec(1, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: E } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(1, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: E } })
 
       const lastFeeOpTime_3 = await troveManager.lastFeeOperationTime()
 
@@ -3344,11 +3344,11 @@ contract('BorrowerOperations', async accounts => {
     })
 
     it("openTrove(): reverts if fee exceeds max fee percentage", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
 
-      const totalSupply = await zusdToken.totalSupply()
+      const totalSupply = await zsusdToken.totalSupply()
 
       // Artificially make baseRate 5%
       await troveManager.setBaseRate(dec(5, 16))
@@ -3383,9 +3383,9 @@ contract('BorrowerOperations', async accounts => {
     })
 
     it("openTrove(): succeeds when fee is less than max fee percentage", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
 
       // Artificially make baseRate 5%
       await troveManager.setBaseRate(dec(5, 16))
@@ -3431,10 +3431,10 @@ contract('BorrowerOperations', async accounts => {
     })
 
     it("openTrove(): borrower can't grief the baseRate and stop it decaying by issuing debt at higher frequency than the decay granularity", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-      await openTrove({ extraZUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
 
       // Artificially make baseRate 5%
       await troveManager.setBaseRate(dec(5, 16))
@@ -3449,33 +3449,33 @@ contract('BorrowerOperations', async accounts => {
 
       // Assume Borrower also owns accounts D and E
       // Borrower triggers a fee, before decay interval has passed
-      await openTrove({ extraZUSDAmount: toBN(dec(1, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(1, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
 
       // 1 minute pass
       th.fastForwardTime(3540, web3.currentProvider)
 
       // Borrower triggers another fee
-      await openTrove({ extraZUSDAmount: toBN(dec(1, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: E } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(1, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: E } })
 
       // Check base rate has decreased even though Borrower tried to stop it decaying
       const baseRate_2 = await troveManager.baseRate()
       assert.isTrue(baseRate_2.lt(baseRate_1))
     })
 
-    it("openTrove(): borrowing at non-zero base rate sends ZUSD fee to ZERO staking contract", async () => {
+    it("openTrove(): borrowing at non-zero base rate sends ZSUSD fee to ZERO staking contract", async () => {
       // time fast-forwards 1 year, and multisig stakes 1 ZERO
       await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
       await zeroToken.approve(zeroStaking.address, dec(1, 18), { from: multisig })
       await zeroStaking.stake(dec(1, 18), { from: multisig })
 
-      // Check ZERO ZUSD balance before == 0
-      const zeroStaking_ZUSDBalance_Before = await zusdToken.balanceOf(zeroStaking.address)
-      assert.equal(zeroStaking_ZUSDBalance_Before, '0')
+      // Check ZERO ZSUSD balance before == 0
+      const zeroStaking_ZSUSDBalance_Before = await zsusdToken.balanceOf(zeroStaking.address)
+      assert.equal(zeroStaking_ZSUSDBalance_Before, '0')
 
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-      await openTrove({ extraZUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
 
       // Artificially make baseRate 5%
       await troveManager.setBaseRate(dec(5, 16))
@@ -3489,11 +3489,11 @@ contract('BorrowerOperations', async accounts => {
       th.fastForwardTime(7200, web3.currentProvider)
 
       // D opens trove 
-      await openTrove({ extraZUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
 
-      // Check ZERO ZUSD balance after has increased
-      const zeroStaking_ZUSDBalance_After = await zusdToken.balanceOf(zeroStaking.address)
-      assert.isTrue(zeroStaking_ZUSDBalance_After.eq(zeroStaking_ZUSDBalance_Before))
+      // Check ZERO ZSUSD balance after has increased
+      const zeroStaking_ZSUSDBalance_After = await zsusdToken.balanceOf(zeroStaking.address)
+      assert.isTrue(zeroStaking_ZSUSDBalance_After.eq(zeroStaking_ZSUSDBalance_Before))
     })
 
     if (!withProxy) { // TODO: use rawLogs instead of logs
@@ -3503,10 +3503,10 @@ contract('BorrowerOperations', async accounts => {
         await zeroToken.approve(zeroStaking.address, dec(1, 18), { from: multisig })
         await zeroStaking.stake(dec(1, 18), { from: multisig })
 
-        await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-        await openTrove({ extraZUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-        await openTrove({ extraZUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-        await openTrove({ extraZUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+        await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
+        await openTrove({ extraZSUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+        await openTrove({ extraZSUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+        await openTrove({ extraZSUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
 
         // Artificially make baseRate 5%
         await troveManager.setBaseRate(dec(5, 16))
@@ -3519,36 +3519,36 @@ contract('BorrowerOperations', async accounts => {
         // 2 hours pass
         th.fastForwardTime(7200, web3.currentProvider)
 
-        const D_ZUSDRequest = toBN(dec(20000, 18))
+        const D_ZSUSDRequest = toBN(dec(20000, 18))
 
-        // D withdraws ZUSD
+        // D withdraws ZSUSD
         await sovToken.approve(borrowerOperations.address, toBN(dec(200, 'ether')), { from: D })
-        const openTroveTx = await borrowerOperations.openTrove(th._100pct, D_ZUSDRequest, ZERO_ADDRESS, ZERO_ADDRESS, toBN(dec(200, 'ether')), { from: D })
+        const openTroveTx = await borrowerOperations.openTrove(th._100pct, D_ZSUSDRequest, ZERO_ADDRESS, ZERO_ADDRESS, toBN(dec(200, 'ether')), { from: D })
 
-        const emittedFee = toBN(th.getZUSDFeeFromZUSDBorrowingEvent(openTroveTx))
+        const emittedFee = toBN(th.getZSUSDFeeFromZSUSDBorrowingEvent(openTroveTx))
         assert.isTrue(toBN(emittedFee).gt(toBN('0')))
 
         const newDebt = (await troveManager.Troves(D))[0]
 
         // Check debt on Trove struct equals drawn debt plus emitted fee
-        th.assertIsApproximatelyEqual(newDebt, D_ZUSDRequest.add(emittedFee).add(ZUSD_GAS_COMPENSATION), 100000)
+        th.assertIsApproximatelyEqual(newDebt, D_ZSUSDRequest.add(emittedFee).add(ZSUSD_GAS_COMPENSATION), 100000)
       })
     }
 
-    it("openTrove(): Borrowing at non-zero base rate increases the ZERO staking contract ZUSD fees-per-unit-staked", async () => {
+    it("openTrove(): Borrowing at non-zero base rate increases the ZERO staking contract ZSUSD fees-per-unit-staked", async () => {
       // time fast-forwards 1 year, and multisig stakes 1 ZERO
       await th.fastForwardTime(timeValues.SECONDS_IN_ONE_YEAR, web3.currentProvider)
       await zeroToken.approve(zeroStaking.address, dec(1, 18), { from: multisig })
       await zeroStaking.stake(dec(1, 18), { from: multisig })
 
-      // Check ZERO contract ZUSD fees-per-unit-staked is zero
-      const F_ZUSD_Before = await zeroStaking.F_ZUSD()
-      assert.equal(F_ZUSD_Before, '0')
+      // Check ZERO contract ZSUSD fees-per-unit-staked is zero
+      const F_ZSUSD_Before = await zeroStaking.F_ZSUSD()
+      assert.equal(F_ZSUSD_Before, '0')
 
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-      await openTrove({ extraZUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
 
       // Artificially make baseRate 5%
       await troveManager.setBaseRate(dec(5, 16))
@@ -3562,11 +3562,11 @@ contract('BorrowerOperations', async accounts => {
       th.fastForwardTime(7200, web3.currentProvider)
 
       // D opens trove 
-      await openTrove({ extraZUSDAmount: toBN(dec(37, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(37, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
 
-      // Check ZERO contract ZUSD fees-per-unit-staked has increased
-      const F_ZUSD_After = await zeroStaking.F_ZUSD()
-      assert.isTrue(F_ZUSD_After.eq(F_ZUSD_Before))
+      // Check ZERO contract ZSUSD fees-per-unit-staked has increased
+      const F_ZSUSD_After = await zeroStaking.F_ZSUSD()
+      assert.isTrue(F_ZSUSD_After.eq(F_ZSUSD_Before))
     })
 
     it("openTrove(): Borrowing at non-zero base rate sends requested amount to the user", async () => {
@@ -3576,13 +3576,13 @@ contract('BorrowerOperations', async accounts => {
       await zeroStaking.stake(dec(1, 18), { from: multisig })
 
       // Check ZERO Staking contract balance before == 0
-      const zeroStaking_ZUSDBalance_Before = await zusdToken.balanceOf(zeroStaking.address)
-      assert.equal(zeroStaking_ZUSDBalance_Before, '0')
+      const zeroStaking_ZSUSDBalance_Before = await zsusdToken.balanceOf(zeroStaking.address)
+      assert.equal(zeroStaking_ZSUSDBalance_Before, '0')
 
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
-      await openTrove({ extraZUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openTrove({ extraZUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(20000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(30000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(40000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
 
       // Artificially make baseRate 5%
       await troveManager.setBaseRate(dec(5, 16))
@@ -3596,23 +3596,23 @@ contract('BorrowerOperations', async accounts => {
       th.fastForwardTime(7200, web3.currentProvider)
 
       // D opens trove 
-      const ZUSDRequest_D = toBN(dec(40000, 18))
+      const ZSUSDRequest_D = toBN(dec(40000, 18))
       await sovToken.approve(borrowerOperations.address, toBN(dec(500, 'ether')), { from: D })
-      await borrowerOperations.openTrove(th._100pct, ZUSDRequest_D, D, D, toBN(dec(500, 'ether')), { from: D })
+      await borrowerOperations.openTrove(th._100pct, ZSUSDRequest_D, D, D, toBN(dec(500, 'ether')), { from: D })
 
-      // Check ZERO staking ZUSD balance has increased
-      const zeroStaking_ZUSDBalance_After = await zusdToken.balanceOf(zeroStaking.address)
-      assert.isTrue(zeroStaking_ZUSDBalance_After.eq(zeroStaking_ZUSDBalance_Before))
+      // Check ZERO staking ZSUSD balance has increased
+      const zeroStaking_ZSUSDBalance_After = await zsusdToken.balanceOf(zeroStaking.address)
+      assert.isTrue(zeroStaking_ZSUSDBalance_After.eq(zeroStaking_ZSUSDBalance_Before))
 
-      // Check D's ZUSD balance now equals their requested ZUSD
-      const ZUSDBalance_D = await zusdToken.balanceOf(D)
-      assert.isTrue(ZUSDRequest_D.eq(ZUSDBalance_D))
+      // Check D's ZSUSD balance now equals their requested ZSUSD
+      const ZSUSDBalance_D = await zsusdToken.balanceOf(D)
+      assert.isTrue(ZSUSDRequest_D.eq(ZSUSDBalance_D))
     })
 
-    it("openTrove(): Borrowing at zero base rate changes the ZERO staking contract ZUSD fees-per-unit-staked", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
-      await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
+    it("openTrove(): Borrowing at zero base rate changes the ZERO staking contract ZSUSD fees-per-unit-staked", async () => {
+      await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: C } })
 
       // Check baseRate is zero
       const baseRate_1 = await troveManager.baseRate()
@@ -3621,38 +3621,38 @@ contract('BorrowerOperations', async accounts => {
       // 2 hours pass
       th.fastForwardTime(7200, web3.currentProvider)
 
-      // Check ZUSD reward per ZERO staked == 0
-      const F_ZUSD_Before = await zeroStaking.F_ZUSD()
-      assert.equal(F_ZUSD_Before, '0')
+      // Check ZSUSD reward per ZERO staked == 0
+      const F_ZSUSD_Before = await zeroStaking.F_ZSUSD()
+      assert.equal(F_ZSUSD_Before, '0')
 
       // A stakes ZERO
       await zeroToken.unprotectedMint(A, dec(100, 16))
       await zeroStaking.stake(dec(100, 16), { from: A })
 
       // D opens trove 
-      await openTrove({ extraZUSDAmount: toBN(dec(37, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(37, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: D } })
 
-      // Check ZUSD reward per ZERO staked > 0
-      const F_ZUSD_After = await zeroStaking.F_ZUSD()
-      assert.isTrue(F_ZUSD_After.eq(toBN('0')))
+      // Check ZSUSD reward per ZERO staked > 0
+      const F_ZSUSD_After = await zeroStaking.F_ZSUSD()
+      assert.isTrue(F_ZSUSD_After.eq(toBN('0')))
     })
 
     it("openTrove(): Borrowing at zero base rate charges minimum fee", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
-      await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: A } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: B } })
 
-      const ZUSDRequest = toBN(dec(10000, 18))
+      const ZSUSDRequest = toBN(dec(10000, 18))
       await sovToken.approve(borrowerOperations.address, toBN(dec(100, 'ether')), { from: C })
-      const txC = await borrowerOperations.openTrove(th._100pct, ZUSDRequest, ZERO_ADDRESS, ZERO_ADDRESS, toBN(dec(100, 'ether')), { from: C })
-      const _ZUSDFee = toBN(th.getEventArgByName(txC, "ZUSDBorrowingFeePaid", "_ZUSDFee"))
+      const txC = await borrowerOperations.openTrove(th._100pct, ZSUSDRequest, ZERO_ADDRESS, ZERO_ADDRESS, toBN(dec(100, 'ether')), { from: C })
+      const _ZSUSDFee = toBN(th.getEventArgByName(txC, "ZSUSDBorrowingFeePaid", "_ZSUSDFee"))
 
-      const expectedFee = BORROWING_FEE_FLOOR.mul(toBN(ZUSDRequest)).div(toBN(dec(1, 18)))
-      assert.isTrue(_ZUSDFee.eq(expectedFee))
+      const expectedFee = BORROWING_FEE_FLOOR.mul(toBN(ZSUSDRequest)).div(toBN(dec(1, 18)))
+      assert.isTrue(_ZSUSDFee.eq(expectedFee))
     })
 
     it("openTrove(): reverts when system is in Recovery Mode and ICR < CCR", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: whale } })
-      await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: whale } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
       assert.isFalse(await th.checkRecoveryMode(contracts))
 
       // price drops, and Recovery Mode kicks in
@@ -3662,7 +3662,7 @@ contract('BorrowerOperations', async accounts => {
 
       // Bob tries to open a trove with 149% ICR during Recovery Mode
       try {
-        const txBob = await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(149, 16)), extraParams: { from: alice } })
+        const txBob = await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(149, 16)), extraParams: { from: alice } })
         assert.isFalse(txBob.receipt.status)
       } catch (err) {
         assert.include(err.message, "revert")
@@ -3670,14 +3670,14 @@ contract('BorrowerOperations', async accounts => {
     })
 
     it("openTrove(): reverts when trove ICR < MCR", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: whale } })
-      await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: whale } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
 
       assert.isFalse(await th.checkRecoveryMode(contracts))
 
       // Bob attempts to open a 109% ICR trove in Normal Mode
       try {
-        const txBob = (await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(109, 16)), extraParams: { from: bob } })).tx
+        const txBob = (await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(109, 16)), extraParams: { from: bob } })).tx
         assert.isFalse(txBob.receipt.status)
       } catch (err) {
         assert.include(err.message, "revert")
@@ -3690,7 +3690,7 @@ contract('BorrowerOperations', async accounts => {
 
       // Bob attempts to open a 109% ICR trove in Recovery Mode
       try {
-        const txBob = await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(109, 16)), extraParams: { from: bob } })
+        const txBob = await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(109, 16)), extraParams: { from: bob } })
         assert.isFalse(txBob.receipt.status)
       } catch (err) {
         assert.include(err.message, "revert")
@@ -3701,7 +3701,7 @@ contract('BorrowerOperations', async accounts => {
       await priceFeed.setPrice(dec(100, 18))
 
       // Alice creates trove with 150% ICR.  System TCR = 150%.
-      await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(15, 17)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(15, 17)), extraParams: { from: alice } })
 
       const TCR = await th.getTCR(contracts)
       assert.equal(TCR, dec(150, 16))
@@ -3709,7 +3709,7 @@ contract('BorrowerOperations', async accounts => {
       // Bob attempts to open a trove with ICR = 149% 
       // System TCR would fall below 150%
       try {
-        const txBob = await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(149, 16)), extraParams: { from: bob } })
+        const txBob = await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(149, 16)), extraParams: { from: bob } })
         assert.isFalse(txBob.receipt.status)
       } catch (err) {
         assert.include(err.message, "revert")
@@ -3717,13 +3717,13 @@ contract('BorrowerOperations', async accounts => {
     })
 
     it("openTrove(): reverts if trove is already active", async () => {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(10, 18)), extraParams: { from: whale } })
 
-      await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(15, 17)), extraParams: { from: alice } })
-      await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(15, 17)), extraParams: { from: bob } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(15, 17)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(15, 17)), extraParams: { from: bob } })
 
       try {
-        const txB_1 = await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(3, 18)), extraParams: { from: bob } })
+        const txB_1 = await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(3, 18)), extraParams: { from: bob } })
 
         assert.isFalse(txB_1.receipt.status)
       } catch (err) {
@@ -3742,20 +3742,20 @@ contract('BorrowerOperations', async accounts => {
     it("openTrove(): Can open a trove with ICR >= CCR when system is in Recovery Mode", async () => {
       // --- SETUP ---
       //  Alice and Bob add coll and withdraw such  that the TCR is ~150%
-      await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(15, 17)), extraParams: { from: alice } })
-      await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(15, 17)), extraParams: { from: bob } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(15, 17)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(15, 17)), extraParams: { from: bob } })
 
       const TCR = (await th.getTCR(contracts)).toString()
       assert.equal(TCR, '1500000000000000000')
 
-      // price drops to 1ETH:100ZUSD, reducing TCR below 150%
+      // price drops to 1ETH:100ZSUSD, reducing TCR below 150%
       await priceFeed.setPrice('1000000000000000000');
       const price = await priceFeed.getPrice()
 
       assert.isTrue(await th.checkRecoveryMode(contracts))
 
       // Carol opens at 150% ICR in Recovery Mode
-      const txCarol = (await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(15, 17)), extraParams: { from: carol } })).tx
+      const txCarol = (await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(15, 17)), extraParams: { from: carol } })).tx
       assert.isTrue(txCarol.receipt.status)
       assert.isTrue(await sortedTroves.contains(carol))
 
@@ -3769,13 +3769,13 @@ contract('BorrowerOperations', async accounts => {
     it("openTrove(): Reverts opening a trove with min debt when system is in Recovery Mode", async () => {
       // --- SETUP ---
       //  Alice and Bob add coll and withdraw such  that the TCR is ~150%
-      await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(15, 17)), extraParams: { from: alice } })
-      await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(15, 17)), extraParams: { from: bob } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(15, 17)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(15, 17)), extraParams: { from: bob } })
 
       const TCR = (await th.getTCR(contracts)).toString()
       assert.equal(TCR, '1500000000000000000')
 
-      // price drops to 1ETH:100ZUSD, reducing TCR below 150%
+      // price drops to 1ETH:100ZSUSD, reducing TCR below 150%
       await priceFeed.setPrice('1000000000000000000');
 
       assert.isTrue(await th.checkRecoveryMode(contracts))
@@ -3796,14 +3796,14 @@ contract('BorrowerOperations', async accounts => {
       // check non-existent status
       assert.equal(status_Before, 0)
 
-      const ZUSDRequest = MIN_NET_DEBT
+      const ZSUSDRequest = MIN_NET_DEBT
       await sovToken.approve(borrowerOperations.address, toBN(dec(100, 'ether')), { from: alice })
       borrowerOperations.openTrove(th._100pct, MIN_NET_DEBT, carol, carol, toBN(dec(100, 'ether')), { from: alice })
 
-      // Get the expected debt based on the ZUSD request (adding fee and liq. reserve on top)
-      const expectedDebt = ZUSDRequest
-        .add(await troveManager.getBorrowingFee(ZUSDRequest))
-        .add(ZUSD_GAS_COMPENSATION)
+      // Get the expected debt based on the ZSUSD request (adding fee and liq. reserve on top)
+      const expectedDebt = ZSUSDRequest
+        .add(await troveManager.getBorrowingFee(ZSUSDRequest))
+        .add(ZSUSD_GAS_COMPENSATION)
 
       const debt_After = await getTroveEntireDebt(alice)
       const coll_After = await getTroveEntireColl(alice)
@@ -3823,7 +3823,7 @@ contract('BorrowerOperations', async accounts => {
       const TroveOwnersCount_Before = (await troveManager.getTroveOwnersCount()).toString();
       assert.equal(TroveOwnersCount_Before, '0')
 
-      await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(15, 17)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(15, 17)), extraParams: { from: alice } })
 
       const TroveOwnersCount_After = (await troveManager.getTroveOwnersCount()).toString();
       assert.equal(TroveOwnersCount_After, '1')
@@ -3836,7 +3836,7 @@ contract('BorrowerOperations', async accounts => {
       assert.equal(aliceStakeBefore, '0')
       assert.equal(totalStakesBefore, '0')
 
-      await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
       const aliceCollAfter = await getTroveEntireColl(alice)
       const aliceStakeAfter = await getTroveStake(alice)
       assert.isTrue(aliceCollAfter.gt(toBN('0')))
@@ -3854,7 +3854,7 @@ contract('BorrowerOperations', async accounts => {
       assert.equal(aliceTroveInList_Before, false)
       assert.equal(listIsEmpty_Before, true)
 
-      await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
 
       // check after
       const aliceTroveInList_After = await sortedTroves.contains(alice)
@@ -3869,7 +3869,7 @@ contract('BorrowerOperations', async accounts => {
       assert.equal(activePool_SOV_Before, 0)
       assert.equal(activePool_RawSOV_Before, 0)
 
-      await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
       const aliceCollAfter = await getTroveEntireColl(alice)
 
       const activePool_SOV_After = await activePool.getSOV()
@@ -3878,47 +3878,47 @@ contract('BorrowerOperations', async accounts => {
       assert.isTrue(activePool_RawSOV_After.eq(aliceCollAfter))
     })
 
-    it("openTrove(): records up-to-date initial snapshots of L_ETH and L_ZUSDDebt", async () => {
+    it("openTrove(): records up-to-date initial snapshots of L_ETH and L_ZSUSDDebt", async () => {
       // --- SETUP ---
 
-      await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: carol } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: carol } })
 
       // --- TEST ---
 
-      // price drops to 1ETH:100ZUSD, reducing Carol's ICR below MCR
+      // price drops to 1ETH:100ZSUSD, reducing Carol's ICR below MCR
       await priceFeed.setPrice(dec(100, 18));
 
-      // close Carol's Trove, liquidating her 1 ether and 180ZUSD.
+      // close Carol's Trove, liquidating her 1 ether and 180ZSUSD.
       const liquidationTx = await troveManager.liquidate(carol, { from: owner });
       const [liquidatedDebt, liquidatedColl, gasComp] = th.getEmittedLiquidationValues(liquidationTx)
 
       /* with total stakes = 10 ether, after liquidation, L_ETH should equal 1/10 ether per-ether-staked,
-       and L_ZUSD should equal 18 ZUSD per-ether-staked. */
+       and L_ZSUSD should equal 18 ZSUSD per-ether-staked. */
 
       const L_SOV = await troveManager.L_SOV()
-      const L_ZUSD = await troveManager.L_ZUSDDebt()
+      const L_ZSUSD = await troveManager.L_ZSUSDDebt()
 
       assert.isTrue(L_SOV.gt(toBN('0')))
-      assert.isTrue(L_ZUSD.gt(toBN('0')))
+      assert.isTrue(L_ZSUSD.gt(toBN('0')))
 
       // Bob opens trove
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: bob } })
 
-      // Check Bob's snapshots of L_ETH and L_ZUSD equal the respective current values
+      // Check Bob's snapshots of L_ETH and L_ZSUSD equal the respective current values
       const bob_rewardSnapshot = await troveManager.rewardSnapshots(bob)
       const bob_SOVrewardSnapshot = bob_rewardSnapshot[0]
-      const bob_ZUSDDebtRewardSnapshot = bob_rewardSnapshot[1]
+      const bob_ZSUSDDebtRewardSnapshot = bob_rewardSnapshot[1]
 
       assert.isAtMost(th.getDifference(bob_SOVrewardSnapshot, L_SOV), 1000)
-      assert.isAtMost(th.getDifference(bob_ZUSDDebtRewardSnapshot, L_ZUSD), 1000)
+      assert.isAtMost(th.getDifference(bob_ZSUSDDebtRewardSnapshot, L_ZSUSD), 1000)
     })
 
     it("openTrove(): allows a user to open a Trove, then close it, then re-open it", async () => {
       // Open Troves
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: whale } })
-      await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
-      await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: carol } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: whale } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: carol } })
 
       // Check Trove is active
       const alice_Trove_1 = await troveManager.Troves(alice)
@@ -3927,7 +3927,7 @@ contract('BorrowerOperations', async accounts => {
       assert.isTrue(await sortedTroves.contains(alice))
 
       // to compensate borrowing fees
-      await zusdToken.transfer(alice, dec(10000, 18), { from: whale })
+      await zsusdToken.transfer(alice, dec(10000, 18), { from: whale })
 
       // Repay and close Trove
       await borrowerOperations.closeTrove({ from: alice })
@@ -3939,7 +3939,7 @@ contract('BorrowerOperations', async accounts => {
       assert.isFalse(await sortedTroves.contains(alice))
 
       // Re-open Trove
-      await openTrove({ extraZUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(5000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
 
       // Check Trove is re-opened
       const alice_Trove_3 = await troveManager.Troves(alice)
@@ -3948,14 +3948,14 @@ contract('BorrowerOperations', async accounts => {
       assert.isTrue(await sortedTroves.contains(alice))
     })
 
-    it("openTrove(): increases the Trove's ZUSD debt by the correct amount", async () => {
+    it("openTrove(): increases the Trove's ZSUSD debt by the correct amount", async () => {
       // check before
       const alice_Trove_Before = await troveManager.Troves(alice)
       const debt_Before = alice_Trove_Before[0]
       assert.equal(debt_Before, 0)
 
       await sovToken.approve(borrowerOperations.address, toBN(dec(100, 'ether')), { from: alice})
-      await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(10000, 18)), alice, alice, toBN(dec(100, 'ether')), { from: alice })
+      await borrowerOperations.openTrove(th._100pct, await getOpenTroveZSUSDAmount(dec(10000, 18)), alice, alice, toBN(dec(100, 'ether')), { from: alice })
 
       // check after
       const alice_Trove_After = await troveManager.Troves(alice)
@@ -3963,29 +3963,29 @@ contract('BorrowerOperations', async accounts => {
       th.assertIsApproximatelyEqual(debt_After, dec(10000, 18), 10000)
     })
 
-    it("openTrove(): increases ZUSD debt in ActivePool by the debt of the trove", async () => {
-      const activePool_ZUSDDebt_Before = await activePool.getZUSDDebt()
-      assert.equal(activePool_ZUSDDebt_Before, 0)
+    it("openTrove(): increases ZSUSD debt in ActivePool by the debt of the trove", async () => {
+      const activePool_ZSUSDDebt_Before = await activePool.getZSUSDDebt()
+      assert.equal(activePool_ZSUSDDebt_Before, 0)
 
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: alice } })
       const aliceDebt = await getTroveEntireDebt(alice)
       assert.isTrue(aliceDebt.gt(toBN('0')))
 
-      const activePool_ZUSDDebt_After = await activePool.getZUSDDebt()
-      assert.isTrue(activePool_ZUSDDebt_After.eq(aliceDebt))
+      const activePool_ZSUSDDebt_After = await activePool.getZSUSDDebt()
+      assert.isTrue(activePool_ZSUSDDebt_After.eq(aliceDebt))
     })
 
-    it("openTrove(): increases user ZUSDToken balance by correct amount", async () => {
+    it("openTrove(): increases user ZSUSDToken balance by correct amount", async () => {
       // check before
-      const alice_ZUSDTokenBalance_Before = await zusdToken.balanceOf(alice)
-      assert.equal(alice_ZUSDTokenBalance_Before, 0)
+      const alice_ZSUSDTokenBalance_Before = await zsusdToken.balanceOf(alice)
+      assert.equal(alice_ZSUSDTokenBalance_Before, 0)
 
       await sovToken.approve(borrowerOperations.address, toBN(dec(100, 'ether')), { from: alice })
       await borrowerOperations.openTrove(th._100pct, dec(10000, 18), alice, alice, toBN(dec(100, 'ether')), { from: alice })
 
       // check after
-      const alice_ZUSDTokenBalance_After = await zusdToken.balanceOf(alice)
-      assert.equal(alice_ZUSDTokenBalance_After, dec(10000, 18))
+      const alice_ZSUSDTokenBalance_After = await zsusdToken.balanceOf(alice)
+      assert.equal(alice_ZSUSDTokenBalance_After, dec(10000, 18))
     })
 
     //  --- getNewICRFromTroveChange - (external wrapper in Tester contract calls internal function) ---
@@ -4106,13 +4106,13 @@ contract('BorrowerOperations', async accounts => {
 
     it("getCompositeDebt(): returns debt + gas comp", async () => {
       const res1 = await borrowerOperations.getCompositeDebt('0')
-      assert.equal(res1, ZUSD_GAS_COMPENSATION.toString())
+      assert.equal(res1, ZSUSD_GAS_COMPENSATION.toString())
 
       const res2 = await borrowerOperations.getCompositeDebt(dec(90, 18))
-      th.assertIsApproximatelyEqual(res2, ZUSD_GAS_COMPENSATION.add(toBN(dec(90, 18))))
+      th.assertIsApproximatelyEqual(res2, ZSUSD_GAS_COMPENSATION.add(toBN(dec(90, 18))))
 
       const res3 = await borrowerOperations.getCompositeDebt(dec(24423422357345049, 12))
-      th.assertIsApproximatelyEqual(res3, ZUSD_GAS_COMPENSATION.add(toBN(dec(24423422357345049, 12))))
+      th.assertIsApproximatelyEqual(res3, ZSUSD_GAS_COMPENSATION.add(toBN(dec(24423422357345049, 12))))
     })
 
     //  --- getNewTCRFromTroveChange  - (external wrapper in Tester contract calls internal function) ---
@@ -4124,11 +4124,11 @@ contract('BorrowerOperations', async accounts => {
         // --- SETUP --- Create a Liquity instance with an Active Pool and pending rewards (Default Pool)
         const troveColl = toBN(dec(1000, 'ether'))
         const troveTotalDebt = toBN(dec(100000, 18))
-        const troveZUSDAmount = await getOpenTroveZUSDAmount(troveTotalDebt)
+        const troveZSUSDAmount = await getOpenTroveZSUSDAmount(troveTotalDebt)
         await sovToken.approve(borrowerOperations.address, troveColl, { from: alice })
-        await borrowerOperations.openTrove(th._100pct, troveZUSDAmount, alice, alice, troveColl, { from: alice })
+        await borrowerOperations.openTrove(th._100pct, troveZSUSDAmount, alice, alice, troveColl, { from: alice })
         await sovToken.approve(borrowerOperations.address, troveColl, { from: bob })
-        await borrowerOperations.openTrove(th._100pct, troveZUSDAmount, bob, bob, troveColl, { from: bob })
+        await borrowerOperations.openTrove(th._100pct, troveZSUSDAmount, bob, bob, troveColl, { from: bob })
 
         await priceFeed.setPrice(dec(100, 18))
 
@@ -4156,11 +4156,11 @@ contract('BorrowerOperations', async accounts => {
         // --- SETUP --- Create a Liquity instance with an Active Pool and pending rewards (Default Pool)
         const troveColl = toBN(dec(1000, 'ether'))
         const troveTotalDebt = toBN(dec(100000, 18))
-        const troveZUSDAmount = await getOpenTroveZUSDAmount(troveTotalDebt)
+        const troveZSUSDAmount = await getOpenTroveZSUSDAmount(troveTotalDebt)
         await sovToken.approve(borrowerOperations.address, troveColl, { from: alice })
-        await borrowerOperations.openTrove(th._100pct, troveZUSDAmount, alice, alice, troveColl, { from: alice })
+        await borrowerOperations.openTrove(th._100pct, troveZSUSDAmount, alice, alice, troveColl, { from: alice })
         await sovToken.approve(borrowerOperations.address, troveColl, { from: bob })
-        await borrowerOperations.openTrove(th._100pct, troveZUSDAmount, bob, bob, troveColl, { from: bob })
+        await borrowerOperations.openTrove(th._100pct, troveZSUSDAmount, bob, bob, troveColl, { from: bob })
 
         await priceFeed.setPrice(dec(100, 18))
 
@@ -4188,11 +4188,11 @@ contract('BorrowerOperations', async accounts => {
         // --- SETUP --- Create a Liquity instance with an Active Pool and pending rewards (Default Pool)
         const troveColl = toBN(dec(1000, 'ether'))
         const troveTotalDebt = toBN(dec(100000, 18))
-        const troveZUSDAmount = await getOpenTroveZUSDAmount(troveTotalDebt)
+        const troveZSUSDAmount = await getOpenTroveZSUSDAmount(troveTotalDebt)
         await sovToken.approve(borrowerOperations.address, troveColl, { from: alice })
-        await borrowerOperations.openTrove(th._100pct, troveZUSDAmount, alice, alice, troveColl, { from: alice })
+        await borrowerOperations.openTrove(th._100pct, troveZSUSDAmount, alice, alice, troveColl, { from: alice })
         await sovToken.approve(borrowerOperations.address, troveColl, { from: bob })
-        await borrowerOperations.openTrove(th._100pct, troveZUSDAmount, bob, bob, troveColl, { from: bob })
+        await borrowerOperations.openTrove(th._100pct, troveZSUSDAmount, bob, bob, troveColl, { from: bob })
 
         await priceFeed.setPrice(dec(100, 18))
 
@@ -4219,11 +4219,11 @@ contract('BorrowerOperations', async accounts => {
         // --- SETUP --- Create a Liquity instance with an Active Pool and pending rewards (Default Pool)
         const troveColl = toBN(dec(1000, 'ether'))
         const troveTotalDebt = toBN(dec(100000, 18))
-        const troveZUSDAmount = await getOpenTroveZUSDAmount(troveTotalDebt)
+        const troveZSUSDAmount = await getOpenTroveZSUSDAmount(troveTotalDebt)
         await sovToken.approve(borrowerOperations.address, troveColl, { from: alice })
-        await borrowerOperations.openTrove(th._100pct, troveZUSDAmount, alice, alice, troveColl, { from: alice })
+        await borrowerOperations.openTrove(th._100pct, troveZSUSDAmount, alice, alice, troveColl, { from: alice })
         await sovToken.approve(borrowerOperations.address, troveColl, { from: bob })
-        await borrowerOperations.openTrove(th._100pct, troveZUSDAmount, bob, bob, troveColl, { from: bob })
+        await borrowerOperations.openTrove(th._100pct, troveZSUSDAmount, bob, bob, troveColl, { from: bob })
 
         await priceFeed.setPrice(dec(100, 18))
 
@@ -4250,11 +4250,11 @@ contract('BorrowerOperations', async accounts => {
         // --- SETUP --- Create a Liquity instance with an Active Pool and pending rewards (Default Pool)
         const troveColl = toBN(dec(1000, 16))
         const troveTotalDebt = toBN(dec(100000, 16))
-        const troveZUSDAmount = await getOpenTroveZUSDAmount(troveTotalDebt)
+        const troveZSUSDAmount = await getOpenTroveZSUSDAmount(troveTotalDebt)
         await sovToken.approve(borrowerOperations.address, troveColl, { from: alice })
-        await borrowerOperations.openTrove(th._100pct, troveZUSDAmount, alice, alice, troveColl, { from: alice })
+        await borrowerOperations.openTrove(th._100pct, troveZSUSDAmount, alice, alice, troveColl, { from: alice })
         await sovToken.approve(borrowerOperations.address, troveColl, { from: bob })
-        await borrowerOperations.openTrove(th._100pct, troveZUSDAmount, bob, bob, troveColl, { from: bob })
+        await borrowerOperations.openTrove(th._100pct, troveZSUSDAmount, bob, bob, troveColl, { from: bob })
 
         await priceFeed.setPrice(dec(100, 18))
 
@@ -4282,11 +4282,11 @@ contract('BorrowerOperations', async accounts => {
         // --- SETUP --- Create a Liquity instance with an Active Pool and pending rewards (Default Pool)
         const troveColl = toBN(dec(1000, 16))
         const troveTotalDebt = toBN(dec(100000, 16))
-        const troveZUSDAmount = await getOpenTroveZUSDAmount(troveTotalDebt)
+        const troveZSUSDAmount = await getOpenTroveZSUSDAmount(troveTotalDebt)
         await sovToken.approve(borrowerOperations.address, troveColl, { from: alice })
-        await borrowerOperations.openTrove(th._100pct, troveZUSDAmount, alice, alice, troveColl, { from: alice })
+        await borrowerOperations.openTrove(th._100pct, troveZSUSDAmount, alice, alice, troveColl, { from: alice })
         await sovToken.approve(borrowerOperations.address, troveColl, { from: bob })
-        await borrowerOperations.openTrove(th._100pct, troveZUSDAmount, bob, bob, troveColl, { from: bob })
+        await borrowerOperations.openTrove(th._100pct, troveZSUSDAmount, bob, bob, troveColl, { from: bob })
 
         await priceFeed.setPrice(dec(100, 18))
 
@@ -4314,11 +4314,11 @@ contract('BorrowerOperations', async accounts => {
         // --- SETUP --- Create a Liquity instance with an Active Pool and pending rewards (Default Pool)
         const troveColl = toBN(dec(1000, 'ether'))
         const troveTotalDebt = toBN(dec(100000, 18))
-        const troveZUSDAmount = await getOpenTroveZUSDAmount(troveTotalDebt)
+        const troveZSUSDAmount = await getOpenTroveZSUSDAmount(troveTotalDebt)
         await sovToken.approve(borrowerOperations.address, troveColl, { from: alice })
-        await borrowerOperations.openTrove(th._100pct, troveZUSDAmount, alice, alice, troveColl, { from: alice })
+        await borrowerOperations.openTrove(th._100pct, troveZSUSDAmount, alice, alice, troveColl, { from: alice })
         await sovToken.approve(borrowerOperations.address, troveColl, { from: bob })
-        await borrowerOperations.openTrove(th._100pct, troveZUSDAmount, bob, bob, troveColl, { from: bob })
+        await borrowerOperations.openTrove(th._100pct, troveZSUSDAmount, bob, bob, troveColl, { from: bob })
 
         await priceFeed.setPrice(dec(100, 18))
 
@@ -4346,11 +4346,11 @@ contract('BorrowerOperations', async accounts => {
         // --- SETUP --- Create a Liquity instance with an Active Pool and pending rewards (Default Pool)
         const troveColl = toBN(dec(1000, 'ether'))
         const troveTotalDebt = toBN(dec(100000, 18))
-        const troveZUSDAmount = await getOpenTroveZUSDAmount(troveTotalDebt)
+        const troveZSUSDAmount = await getOpenTroveZSUSDAmount(troveTotalDebt)
          await sovToken.approve(borrowerOperations.address, troveColl, { from: alice })
-        await borrowerOperations.openTrove(th._100pct, troveZUSDAmount, alice, alice, troveColl, { from: alice })
+        await borrowerOperations.openTrove(th._100pct, troveZSUSDAmount, alice, alice, troveColl, { from: alice })
          await sovToken.approve(borrowerOperations.address, troveColl, { from: bob })
-        await borrowerOperations.openTrove(th._100pct, troveZUSDAmount, bob, bob, troveColl, {from: bob })
+        await borrowerOperations.openTrove(th._100pct, troveZSUSDAmount, bob, bob, troveColl, {from: bob })
 
         await priceFeed.setPrice(dec(100, 18))
 
@@ -4378,11 +4378,11 @@ contract('BorrowerOperations', async accounts => {
         // --- SETUP --- Create a Liquity instance with an Active Pool and pending rewards (Default Pool)
         const troveColl = toBN(dec(1000, 'ether'))
         const troveTotalDebt = toBN(dec(100000, 18))
-        const troveZUSDAmount = await getOpenTroveZUSDAmount(troveTotalDebt)
+        const troveZSUSDAmount = await getOpenTroveZSUSDAmount(troveTotalDebt)
         await sovToken.approve(borrowerOperations.address, troveColl, { from: alice })
-        await borrowerOperations.openTrove(th._100pct, troveZUSDAmount, alice, alice, troveColl, { from: alice })
+        await borrowerOperations.openTrove(th._100pct, troveZSUSDAmount, alice, alice, troveColl, { from: alice })
         await sovToken.approve(borrowerOperations.address, troveColl, { from: bob })
-        await borrowerOperations.openTrove(th._100pct, troveZUSDAmount, bob, bob, troveColl, { from: bob })
+        await borrowerOperations.openTrove(th._100pct, troveZSUSDAmount, bob, bob, troveColl, { from: bob })
 
         await priceFeed.setPrice(dec(100, 18))
 
@@ -4421,7 +4421,7 @@ contract('Reset chain state', async accounts => { })
 /* TODO:
 
  1) Test SortedList re-ordering by ICR. ICR ratio
- changes with addColl, withdrawColl, withdrawZUSD, repayZUSD, etc. Can split them up and put them with
+ changes with addColl, withdrawColl, withdrawZSUSD, repayZSUSD, etc. Can split them up and put them with
  individual functions, or give ordering it's own 'describe' block.
 
  2)In security phase:

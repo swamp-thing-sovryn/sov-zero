@@ -4,8 +4,8 @@ import {
   LiquityStoreState,
   Decimal,
   Trove,
-  ZUSD_LIQUIDATION_RESERVE,
-  ZUSD_MINIMUM_NET_DEBT,
+  ZSUSD_LIQUIDATION_RESERVE,
+  ZSUSD_MINIMUM_NET_DEBT,
   Percent
 } from "@liquity/lib-base";
 import { useLiquitySelector } from "@liquity/lib-react";
@@ -53,7 +53,7 @@ export const Opening: React.FC = () => {
 
   const fee = borrowAmount.mul(borrowingRate);
   const feePct = new Percent(borrowingRate);
-  const totalDebt = borrowAmount.add(ZUSD_LIQUIDATION_RESERVE).add(fee);
+  const totalDebt = borrowAmount.add(ZSUSD_LIQUIDATION_RESERVE).add(fee);
   const isDirty = !collateral.isZero || !borrowAmount.isZero;
   const trove = isDirty ? new Trove(collateral, totalDebt) : EMPTY_TROVE;
   const maxEth = accountBalance.gt(GAS_ROOM_ETH) ? accountBalance.sub(GAS_ROOM_ETH) : Decimal.ZERO;
@@ -86,7 +86,7 @@ export const Opening: React.FC = () => {
 
   useEffect(() => {
     if (!collateral.isZero && borrowAmount.isZero) {
-      setBorrowAmount(ZUSD_MINIMUM_NET_DEBT);
+      setBorrowAmount(ZSUSD_MINIMUM_NET_DEBT);
     }
   }, [collateral, borrowAmount]);
 
@@ -128,7 +128,7 @@ export const Opening: React.FC = () => {
         <StaticRow
           label="Liquidation Reserve"
           inputId="trove-liquidation-reserve"
-          amount={`${ZUSD_LIQUIDATION_RESERVE}`}
+          amount={`${ZSUSD_LIQUIDATION_RESERVE}`}
           unit={borrowedToken}
           infoIcon={
             <InfoIcon
@@ -173,8 +173,8 @@ export const Opening: React.FC = () => {
                   The total amount of {borrowedToken} your Line of Credit will hold.{" "}
                   {isDirty && (
                     <>
-                      You will need to repay {totalDebt.sub(ZUSD_LIQUIDATION_RESERVE).prettify(2)}{" "}
-                      {borrowedToken} to reclaim your collateral ({ZUSD_LIQUIDATION_RESERVE.toString()} ZUSD
+                      You will need to repay {totalDebt.sub(ZSUSD_LIQUIDATION_RESERVE).prettify(2)}{" "}
+                      {borrowedToken} to reclaim your collateral ({ZSUSD_LIQUIDATION_RESERVE.toString()} ZSUSD
                       Liquidation Reserve excluded).
                     </>
                   )}

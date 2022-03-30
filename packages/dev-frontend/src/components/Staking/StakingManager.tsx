@@ -74,7 +74,7 @@ const StakingManagerActionDescription: React.FC<StakingManagerActionDescriptionP
   const stakeZERO = change.stakeZERO?.prettify().concat(" ", GT);
   const unstakeZERO = change.unstakeZERO?.prettify().concat(" ", GT);
   const collateralGain = originalStake.collateralGain.nonZero?.prettify(4).concat(" RBTC");
-  const zusdGain = originalStake.zusdGain.nonZero?.prettify().concat(" ", COIN);
+  const zsusdGain = originalStake.zsusdGain.nonZero?.prettify().concat(" ", COIN);
 
   if (originalStake.isEmpty && stakeZERO) {
     return (
@@ -96,17 +96,17 @@ const StakingManagerActionDescription: React.FC<StakingManagerActionDescriptionP
           You are withdrawing <Amount>{unstakeZERO}</Amount> to your wallet
         </>
       )}
-      {(collateralGain || zusdGain) && (
+      {(collateralGain || zsusdGain) && (
         <>
           {" "}
           and claiming{" "}
-          {collateralGain && zusdGain ? (
+          {collateralGain && zsusdGain ? (
             <>
-              <Amount>{collateralGain}</Amount> and <Amount>{zusdGain}</Amount>
+              <Amount>{collateralGain}</Amount> and <Amount>{zsusdGain}</Amount>
             </>
           ) : (
             <>
-              <Amount>{collateralGain ?? zusdGain}</Amount>
+              <Amount>{collateralGain ?? zsusdGain}</Amount>
             </>
           )}
         </>

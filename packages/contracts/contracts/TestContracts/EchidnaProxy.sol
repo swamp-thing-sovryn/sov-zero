@@ -5,27 +5,27 @@ pragma solidity 0.6.11;
 import "../TroveManager.sol";
 import "../BorrowerOperations.sol";
 import "../StabilityPool.sol";
-import "../ZUSDToken.sol";
+import "../ZSUSDToken.sol";
 import "../Dependencies/IERC20.sol";
 
 contract EchidnaProxy {
     TroveManager troveManager;
     BorrowerOperations borrowerOperations;
     StabilityPool stabilityPool;
-    ZUSDToken zusdToken;
+    ZSUSDToken zsusdToken;
     IERC20 sovToken;
 
     constructor(
         TroveManager _troveManager,
         BorrowerOperations _borrowerOperations,
         StabilityPool _stabilityPool,
-        ZUSDToken _zusdToken,
+        ZSUSDToken _zsusdToken,
         IERC20 _sovToken
     ) public {
         troveManager = _troveManager;
         borrowerOperations = _borrowerOperations;
         stabilityPool = _stabilityPool;
-        zusdToken = _zusdToken;
+        zsusdToken = _zsusdToken;
         sovToken = _sovToken;
     }
 
@@ -48,7 +48,7 @@ contract EchidnaProxy {
     }
 
     function redeemCollateralPrx(
-        uint _ZUSDAmount,
+        uint _ZSUSDAmount,
         address _firstRedemptionHint,
         address _upperPartialRedemptionHint,
         address _lowerPartialRedemptionHint,
@@ -56,14 +56,14 @@ contract EchidnaProxy {
         uint _maxIterations,
         uint _maxFee
     ) external {
-        troveManager.redeemCollateral(_ZUSDAmount, _firstRedemptionHint, _upperPartialRedemptionHint, _lowerPartialRedemptionHint, _partialRedemptionHintNICR, _maxIterations, _maxFee);
+        troveManager.redeemCollateral(_ZSUSDAmount, _firstRedemptionHint, _upperPartialRedemptionHint, _lowerPartialRedemptionHint, _partialRedemptionHintNICR, _maxIterations, _maxFee);
     }
 
     // Borrower Operations
-    function openTrovePrx(uint _SOV, uint _ZUSDAmount, address _upperHint, address _lowerHint, uint _maxFee) external {
+    function openTrovePrx(uint _SOV, uint _ZSUSDAmount, address _upperHint, address _lowerHint, uint _maxFee) external {
         sovToken.transferFrom(msg.sender, address(this), _SOV);
         sovToken.approve(address(borrowerOperations), _SOV);
-        borrowerOperations.openTrove(_maxFee, _ZUSDAmount, _upperHint, _lowerHint, _SOV);
+        borrowerOperations.openTrove(_maxFee, _ZSUSDAmount, _upperHint, _lowerHint, _SOV);
     }
 
     function addCollPrx(uint _SOV, address _upperHint, address _lowerHint) external {
@@ -76,12 +76,12 @@ contract EchidnaProxy {
         borrowerOperations.withdrawColl(_amount, _upperHint, _lowerHint);
     }
 
-    function withdrawZUSDPrx(uint _amount, address _upperHint, address _lowerHint, uint _maxFee) external {
-        borrowerOperations.withdrawZUSD(_maxFee, _amount, _upperHint, _lowerHint);
+    function withdrawZSUSDPrx(uint _amount, address _upperHint, address _lowerHint, uint _maxFee) external {
+        borrowerOperations.withdrawZSUSD(_maxFee, _amount, _upperHint, _lowerHint);
     }
 
-    function repayZUSDPrx(uint _amount, address _upperHint, address _lowerHint) external {
-        borrowerOperations.repayZUSD(_amount, _upperHint, _lowerHint);
+    function repayZSUSDPrx(uint _amount, address _upperHint, address _lowerHint) external {
+        borrowerOperations.repayZSUSD(_amount, _upperHint, _lowerHint);
     }
 
     function closeTrovePrx() external {
@@ -103,25 +103,25 @@ contract EchidnaProxy {
         stabilityPool.withdrawFromSP(_amount);
     }
 
-    // ZUSD Token
+    // ZSUSD Token
 
     function transferPrx(address recipient, uint256 amount) external returns (bool) {
-        return zusdToken.transfer(recipient, amount);
+        return zsusdToken.transfer(recipient, amount);
     }
 
     function approvePrx(address spender, uint256 amount) external returns (bool) {
-        return zusdToken.approve(spender, amount);
+        return zsusdToken.approve(spender, amount);
     }
 
     function transferFromPrx(address sender, address recipient, uint256 amount) external returns (bool) {
-        return zusdToken.transferFrom(sender, recipient, amount);
+        return zsusdToken.transferFrom(sender, recipient, amount);
     }
 
     function increaseAllowancePrx(address spender, uint256 addedValue) external returns (bool) {
-        return zusdToken.increaseAllowance(spender, addedValue);
+        return zsusdToken.increaseAllowance(spender, addedValue);
     }
 
     function decreaseAllowancePrx(address spender, uint256 subtractedValue) external returns (bool) {
-        return zusdToken.decreaseAllowance(spender, subtractedValue);
+        return zsusdToken.decreaseAllowance(spender, subtractedValue);
     }
 }

@@ -4,7 +4,7 @@
 
 ## EthersLiquity.withdrawGainsFromStaking() method
 
-Withdraw [collateral gain](./lib-base.zerostake.collateralgain.md) and [ZUSD gain](./lib-base.zerostake.zusdgain.md) from ZERO stake.
+Withdraw [collateral gain](./lib-base.zerostake.collateralgain.md) and [ZSUSD gain](./lib-base.zerostake.zsusdgain.md) from ZERO stake.
 
 <b>Signature:</b>
 

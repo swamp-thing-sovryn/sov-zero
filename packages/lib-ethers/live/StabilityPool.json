@@ -1076,7 +1076,7 @@
     },
     {
       "inputs": [],
-      "name": "zusdToken",
+      "name": "zsusdToken",
       "outputs": [
         {
           "internalType": "contract ILUSDToken",
@@ -1181,7 +1181,7 @@
         },
         {
           "internalType": "address",
-          "name": "_zusdTokenAddress",
+          "name": "_zsusdTokenAddress",
           "type": "address"
         },
         {

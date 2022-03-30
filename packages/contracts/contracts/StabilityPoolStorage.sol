@@ -6,7 +6,7 @@ import './Interfaces/IBorrowerOperations.sol';
 import './Interfaces/IStabilityPool.sol';
 import './Interfaces/IBorrowerOperations.sol';
 import './Interfaces/ITroveManager.sol';
-import './Interfaces/IZUSDToken.sol';
+import './Interfaces/IZSUSDToken.sol';
 import './Interfaces/ISortedTroves.sol';
 import "./Interfaces/ICommunityIssuance.sol";
 import "./Dependencies/Ownable.sol";
@@ -20,7 +20,7 @@ contract StabilityPoolStorage is Ownable, BaseMath {
 
     ITroveManager public troveManager;
 
-    IZUSDToken public zusdToken;
+    IZSUSDToken public zsusdToken;
 
     IERC20 public sovToken;
 
@@ -29,8 +29,8 @@ contract StabilityPoolStorage is Ownable, BaseMath {
 
     ICommunityIssuance public communityIssuance;
 
-    // Tracker for ZUSD held in the pool. Changes when users deposit/withdraw, and when Trove debt is offset.
-    uint256 internal totalZUSDDeposits;
+    // Tracker for ZSUSD held in the pool. Changes when users deposit/withdraw, and when Trove debt is offset.
+    uint256 internal totalZSUSDDeposits;
 
    // --- Data structures ---
 
@@ -60,7 +60,7 @@ contract StabilityPoolStorage is Ownable, BaseMath {
     mapping (address => Snapshots) public frontEndSnapshots; // front end address -> snapshots struct
 
     /*  Product 'P': Running product by which to multiply an initial deposit, in order to find the current compounded deposit,
-    * after a series of liquidations have occurred, each of which cancel some ZUSD debt with the deposit.
+    * after a series of liquidations have occurred, each of which cancel some ZSUSD debt with the deposit.
     *
     * During its lifetime, a deposit's value evolves from d_t to d_t * P / P_t , where P_t
     * is the snapshot of P taken at the instant the deposit was made. 18-digit decimal.
@@ -98,6 +98,6 @@ contract StabilityPoolStorage is Ownable, BaseMath {
     uint public lastZEROError;
     // Error trackers for the error correction in the offset calculation
     uint public lastSOVError_Offset;
-    uint public lastZUSDLossError_Offset;
+    uint public lastZSUSDLossError_Offset;
 
 }

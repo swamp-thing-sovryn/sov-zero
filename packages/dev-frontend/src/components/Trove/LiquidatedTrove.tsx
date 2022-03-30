@@ -25,7 +25,7 @@ export const LiquidatedTrove: React.FC = () => {
         <InfoMessage title="Your Line of Credit has been liquidated.">
           {hasSurplusCollateral
             ? "Please reclaim your remaining collateral before opening a new Line of Credit."
-            : "You can borrow ZUSD by opening a new Line of Credit."}
+            : "You can borrow ZSUSD by opening a new Line of Credit."}
         </InfoMessage>
 
         <Flex variant="layout.actions">
