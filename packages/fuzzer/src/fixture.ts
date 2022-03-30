@@ -35,9 +35,9 @@ type GasHistograms = Pick<
   | "openTrove"
   | "adjustTrove"
   | "closeTrove"
-  | "redeemZUSD"
-  | "depositZUSDInStabilityPool"
-  | "withdrawZUSDFromStabilityPool"
+  | "redeemZSUSD"
+  | "depositZSUSDInStabilityPool"
+  | "withdrawZSUSDFromStabilityPool"
   | "stakeZERO"
   | "unstakeZERO"
 >;
@@ -73,9 +73,9 @@ export class Fixture {
       openTrove: new GasHistogram(),
       adjustTrove: new GasHistogram(),
       closeTrove: new GasHistogram(),
-      redeemZUSD: new GasHistogram(),
-      depositZUSDInStabilityPool: new GasHistogram(),
-      withdrawZUSDFromStabilityPool: new GasHistogram(),
+      redeemZSUSD: new GasHistogram(),
+      depositZSUSDInStabilityPool: new GasHistogram(),
+      withdrawZSUSDFromStabilityPool: new GasHistogram(),
       stakeZERO: new GasHistogram(),
       unstakeZERO: new GasHistogram()
     };
@@ -103,12 +103,12 @@ export class Fixture {
     );
   }
 
-  private async sendZUSDFromFunder(toAddress: string, amount: Decimalish) {
+  private async sendZSUSDFromFunder(toAddress: string, amount: Decimalish) {
     amount = Decimal.from(amount);
 
-    const zusdBalance = await this.funderLiquity.getZUSDBalance();
+    const zsusdBalance = await this.funderLiquity.getZSUSDBalance();
 
-    if (zusdBalance.lt(amount)) {
+    if (zsusdBalance.lt(amount)) {
       const trove = await this.funderLiquity.getTrove();
       const total = await this.funderLiquity.getTotal();
       const fees = await this.funderLiquity.getFees();
@@ -119,7 +119,7 @@ export class Fixture {
           : Decimal.max(trove.collateralRatio(this.price).add(0.00001), 1.11);
 
       let newTrove = trove.isEmpty ? Trove.create({ depositCollateral: 1 }) : trove;
-      newTrove = newTrove.adjust({ borrowZUSD: amount.sub(zusdBalance).mul(2) });
+      newTrove = newTrove.adjust({ borrowZSUSD: amount.sub(zsusdBalance).mul(2) });
       newTrove = newTrove.setCollateral(newTrove.debt.mulDiv(targetCollateralRatio, this.price));
 
       if (trove.isEmpty) {
@@ -143,7 +143,7 @@ export class Fixture {
       }
     }
 
-    await this.funderLiquity.sendZUSD(toAddress, amount);
+    await this.funderLiquity.sendZSUSD(toAddress, amount);
   }
 
   async setRandomPrice() {
@@ -155,8 +155,8 @@ export class Fixture {
   }
 
   async liquidateRandomNumberOfTroves(price: Decimal) {
-    const zusdInStabilityPoolBefore = await this.deployerLiquity.getZUSDInStabilityPool();
-    console.log(`// Stability Pool balance: ${zusdInStabilityPoolBefore}`);
+    const zsusdInStabilityPoolBefore = await this.deployerLiquity.getZSUSDInStabilityPool();
+    console.log(`// Stability Pool balance: ${zsusdInStabilityPoolBefore}`);
 
     const trovesBefore = await getListOfTroves(this.deployerLiquity);
 
@@ -188,8 +188,8 @@ export class Fixture {
 
     this.totalNumberOfLiquidations += liquidatedTroves.length;
 
-    const zusdInStabilityPoolAfter = await this.deployerLiquity.getZUSDInStabilityPool();
-    console.log(`// Stability Pool balance: ${zusdInStabilityPoolAfter}`);
+    const zsusdInStabilityPoolAfter = await this.deployerLiquity.getZSUSDInStabilityPool();
+    console.log(`// Stability Pool balance: ${zsusdInStabilityPoolAfter}`);
   }
 
   async openRandomTrove(userAddress: string, liquity: Liquity) {
@@ -245,14 +245,14 @@ export class Fixture {
         : { ...randomCollateralChange(trove), ...randomDebtChange(trove) };
 
     const cannotAdjust = (trove: Trove, params: TroveAdjustmentParams<Decimal>) => {
-      if (params.withdrawCollateral?.gte(trove.collateral) || params.repayZUSD?.gt(trove.netDebt)) {
+      if (params.withdrawCollateral?.gte(trove.collateral) || params.repayZSUSD?.gt(trove.netDebt)) {
         return true;
       }
 
       const adjusted = trove.adjust(params, fees.borrowingRate());
 
       return (
-        (params.withdrawCollateral?.nonZero || params.borrowZUSD?.nonZero) &&
+        (params.withdrawCollateral?.nonZero || params.borrowZSUSD?.nonZero) &&
         (adjusted.collateralRatioIsBelowMinimum(this.price) ||
           (total.collateralRatioIsBelowCritical(this.price)
             ? adjusted._nominalCollateralRatio.lt(trove._nominalCollateralRatio)
@@ -267,8 +267,8 @@ export class Fixture {
       });
     }
 
-    if (params.repayZUSD) {
-      await this.sendZUSDFromFunder(userAddress, params.repayZUSD);
+    if (params.repayZSUSD) {
+      await this.sendZSUSDFromFunder(userAddress, params.repayZSUSD);
     }
 
     if (cannotAdjust(trove, params)) {
@@ -297,7 +297,7 @@ export class Fixture {
       return;
     }
 
-    await this.sendZUSDFromFunder(userAddress, trove.netDebt);
+    await this.sendZSUSDFromFunder(userAddress, trove.netDebt);
 
     console.log(`[${shortenAddress(userAddress)}] closeTrove()`);
 
@@ -310,29 +310,29 @@ export class Fixture {
     const total = await liquity.getTotal();
 
     if (total.collateralRatioIsBelowMinimum(this.price)) {
-      console.log("// Skipping redeemZUSD() when TCR < MCR");
+      console.log("// Skipping redeemZSUSD() when TCR < MCR");
       return;
     }
 
     const amount = benford(10000);
-    await this.sendZUSDFromFunder(userAddress, amount);
+    await this.sendZSUSDFromFunder(userAddress, amount);
 
-    console.log(`[${shortenAddress(userAddress)}] redeemZUSD(${amount})`);
+    console.log(`[${shortenAddress(userAddress)}] redeemZSUSD(${amount})`);
 
-    await this.gasHistograms.redeemZUSD.expectSuccess(() =>
-      liquity.send.redeemZUSD(amount, { gasPrice: 0 })
+    await this.gasHistograms.redeemZSUSD.expectSuccess(() =>
+      liquity.send.redeemZSUSD(amount, { gasPrice: 0 })
     );
   }
 
   async depositRandomAmountInStabilityPool(userAddress: string, liquity: Liquity) {
     const amount = benford(20000);
 
-    await this.sendZUSDFromFunder(userAddress, amount);
+    await this.sendZSUSDFromFunder(userAddress, amount);
 
-    console.log(`[${shortenAddress(userAddress)}] depositZUSDInStabilityPool(${amount})`);
+    console.log(`[${shortenAddress(userAddress)}] depositZSUSDInStabilityPool(${amount})`);
 
-    await this.gasHistograms.depositZUSDInStabilityPool.expectSuccess(() =>
-      liquity.send.depositZUSDInStabilityPool(amount, this.frontendAddress, {
+    await this.gasHistograms.depositZSUSDInStabilityPool.expectSuccess(() =>
+      liquity.send.depositZSUSDInStabilityPool(amount, this.frontendAddress, {
         gasPrice: 0
       })
     );
@@ -348,7 +348,7 @@ export class Fixture {
       sortedBy: "ascendingCollateralRatio"
     });
 
-    const amount = deposit.currentZUSD.mul(1.1 * Math.random()).add(10 * Math.random());
+    const amount = deposit.currentZSUSD.mul(1.1 * Math.random()).add(10 * Math.random());
 
     const cannotWithdraw = (amount: Decimal) =>
       amount.nonZero && lastTrove.collateralRatioIsBelowMinimum(this.price);
@@ -356,17 +356,17 @@ export class Fixture {
     if (cannotWithdraw(amount)) {
       console.log(
         `// [${shortenAddress(userAddress)}] ` +
-          `withdrawZUSDFromStabilityPool(${amount}) expected to fail`
+          `withdrawZSUSDFromStabilityPool(${amount}) expected to fail`
       );
 
-      await this.gasHistograms.withdrawZUSDFromStabilityPool.expectFailure(() =>
-        liquity.withdrawZUSDFromStabilityPool(amount, { gasPrice: 0 })
+      await this.gasHistograms.withdrawZSUSDFromStabilityPool.expectFailure(() =>
+        liquity.withdrawZSUSDFromStabilityPool(amount, { gasPrice: 0 })
       );
     } else {
-      console.log(`[${shortenAddress(userAddress)}] withdrawZUSDFromStabilityPool(${amount})`);
+      console.log(`[${shortenAddress(userAddress)}] withdrawZSUSDFromStabilityPool(${amount})`);
 
-      await this.gasHistograms.withdrawZUSDFromStabilityPool.expectSuccess(() =>
-        liquity.send.withdrawZUSDFromStabilityPool(amount, { gasPrice: 0 })
+      await this.gasHistograms.withdrawZSUSDFromStabilityPool.expectSuccess(() =>
+        liquity.send.withdrawZSUSDFromStabilityPool(amount, { gasPrice: 0 })
       );
     }
   }
@@ -394,11 +394,11 @@ export class Fixture {
     );
   }
 
-  async sweepZUSD(liquity: Liquity) {
-    const zusdBalance = await liquity.getZUSDBalance();
+  async sweepZSUSD(liquity: Liquity) {
+    const zsusdBalance = await liquity.getZSUSDBalance();
 
-    if (zusdBalance.nonZero) {
-      await liquity.sendZUSD(this.funderAddress, zusdBalance, { gasPrice: 0 });
+    if (zsusdBalance.nonZero) {
+      await liquity.sendZSUSD(this.funderAddress, zsusdBalance, { gasPrice: 0 });
     }
   }
 

@@ -4,7 +4,7 @@
 
 ## PopulatableEthersLiquity.openTrove() method
 
-Open a new Trove by depositing collateral and borrowing ZUSD.
+Open a new Trove by depositing collateral and borrowing ZSUSD.
 
 <b>Signature:</b>
 

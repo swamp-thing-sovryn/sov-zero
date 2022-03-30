@@ -18,10 +18,10 @@ contract BorrowerOperationsScript is CheckContract {
         sovToken = _sovToken;
     }
 
-    function openTrove(uint _maxFee, uint _ZUSDAmount, address _upperHint, address _lowerHint, uint _amount) external {
+    function openTrove(uint _maxFee, uint _ZSUSDAmount, address _upperHint, address _lowerHint, uint _amount) external {
         sovToken.transferFrom(msg.sender, address(this), _amount);
         sovToken.approve(address(borrowerOperations), _amount);
-        borrowerOperations.openTrove(_maxFee, _ZUSDAmount, _upperHint, _lowerHint, _amount);
+        borrowerOperations.openTrove(_maxFee, _ZSUSDAmount, _upperHint, _lowerHint, _amount);
     }
 
     function addColl(address _upperHint, address _lowerHint, uint _amount) external {
@@ -34,12 +34,12 @@ contract BorrowerOperationsScript is CheckContract {
         borrowerOperations.withdrawColl(_amount, _upperHint, _lowerHint);
     }
 
-    function withdrawZUSD(uint _maxFee, uint _amount, address _upperHint, address _lowerHint) external {
-        borrowerOperations.withdrawZUSD(_maxFee, _amount, _upperHint, _lowerHint);
+    function withdrawZSUSD(uint _maxFee, uint _amount, address _upperHint, address _lowerHint) external {
+        borrowerOperations.withdrawZSUSD(_maxFee, _amount, _upperHint, _lowerHint);
     }
 
-    function repayZUSD(uint _amount, address _upperHint, address _lowerHint) external {
-        borrowerOperations.repayZUSD(_amount, _upperHint, _lowerHint);
+    function repayZSUSD(uint _amount, address _upperHint, address _lowerHint) external {
+        borrowerOperations.repayZSUSD(_amount, _upperHint, _lowerHint);
     }
 
     function closeTrove() external {

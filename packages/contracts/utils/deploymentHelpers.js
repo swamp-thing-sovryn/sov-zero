@@ -4,7 +4,7 @@ const LiquityBaseParams = artifacts.require("./LiquityBaseParams.sol")
 const TroveManagerRedeemOps = artifacts.require("./Dependencies/TroveManagerRedeemOps.sol")
 const TroveManager = artifacts.require("./TroveManager.sol")
 const PriceFeedTestnet = artifacts.require("./PriceFeedTestnet.sol")
-const ZUSDToken = artifacts.require("./ZUSDToken.sol")
+const ZSUSDToken = artifacts.require("./ZSUSDToken.sol")
 const ActivePool = artifacts.require("./ActivePool.sol");
 const DefaultPool = artifacts.require("./DefaultPool.sol");
 const StabilityPool = artifacts.require("./StabilityPool.sol")
@@ -28,7 +28,7 @@ const DefaultPoolTester = artifacts.require("./DefaultPoolTester.sol")
 const LiquityMathTester = artifacts.require("./LiquityMathTester.sol")
 const BorrowerOperationsTester = artifacts.require("./BorrowerOperationsTester.sol")
 const TroveManagerTester = artifacts.require("./TroveManagerTester.sol")
-const ZUSDTokenTester = artifacts.require("./ZUSDTokenTester.sol")
+const ZSUSDTokenTester = artifacts.require("./ZSUSDTokenTester.sol")
 const WRBTCTokenTester = artifacts.require("./WRBTCTokenTester.sol")
 const SOVTokenTester = artifacts.require("./SOVTokenTester.sol")
 
@@ -109,17 +109,17 @@ class DeploymentHelper {
     const functionCaller = await FunctionCaller.new()
     const borrowerOperations = await BorrowerOperations.new()
     const hintHelpers = await HintHelpers.new()
-    const zusdToken = await ZUSDToken.new()
+    const zsusdToken = await ZSUSDToken.new()
     const feeDistributor = await FeeDistributor.new()
     const wrbtcTokenTester = await WRBTCTokenTester.new()
     const sovTokenTester = await SOVTokenTester.new()
-    await zusdToken.initialize(
+    await zsusdToken.initialize(
       troveManager.address,
       stabilityPool.address,
       borrowerOperations.address
     )
     await liquityBaseParams.initialize()
-    ZUSDToken.setAsDeployed(zusdToken)
+    ZSUSDToken.setAsDeployed(zsusdToken)
     DefaultPool.setAsDeployed(defaultPool)
     PriceFeedTestnet.setAsDeployed(priceFeedTestnet)
     SortedTroves.setAsDeployed(sortedTroves)
@@ -139,7 +139,7 @@ class DeploymentHelper {
 
     const coreContracts = {
       priceFeedTestnet,
-      zusdToken,
+      zsusdToken,
       sortedTroves,
       liquityBaseParams,
       troveManagerRedeemOps,
@@ -179,7 +179,7 @@ class DeploymentHelper {
     testerContracts.troveManager = await TroveManagerTester.new()
     testerContracts.functionCaller = await FunctionCaller.new()
     testerContracts.hintHelpers = await HintHelpers.new()
-    testerContracts.zusdToken =  await ZUSDTokenTester.new(
+    testerContracts.zsusdToken =  await ZSUSDTokenTester.new(
       testerContracts.troveManager.address,
       testerContracts.stabilityPool.address,
       testerContracts.borrowerOperations.address
@@ -274,9 +274,9 @@ class DeploymentHelper {
     const functionCaller = await FunctionCaller.new()
     const borrowerOperations = await BorrowerOperations.new()
     const hintHelpers = await HintHelpers.new()
-    const zusdToken = await ZUSDToken.new()
+    const zsusdToken = await ZSUSDToken.new()
     const feeDistributor = await FeeDistributor.new()
-    await zusdToken.initialize(
+    await zsusdToken.initialize(
       troveManager.address,
       stabilityPool.address,
       borrowerOperations.address
@@ -284,7 +284,7 @@ class DeploymentHelper {
     await liquityBaseParams.initialize()
     const coreContracts = {
       priceFeedTestnet,
-      zusdToken,
+      zsusdToken,
       sortedTroves,
       liquityBaseParams,
       troveManagerRedeemOps,
@@ -328,9 +328,9 @@ class DeploymentHelper {
     return ZEROContracts
   }
 
-  static async deployZUSDToken(contracts) {
-    contracts.zusdToken = await ZUSDToken.new()
-    await contracts.zusdToken.initialize(
+  static async deployZSUSDToken(contracts) {
+    contracts.zsusdToken = await ZSUSDToken.new()
+    await contracts.zsusdToken.initialize(
       contracts.troveManager.address,
       contracts.stabilityPool.address,
       contracts.borrowerOperations.address
@@ -338,8 +338,8 @@ class DeploymentHelper {
     return contracts
   }
 
-  static async deployZUSDTokenTester(contracts) {
-    contracts.zusdToken = await ZUSDTokenTester.new(
+  static async deployZSUSDTokenTester(contracts) {
+    contracts.zsusdToken = await ZSUSDTokenTester.new(
       contracts.troveManager.address,
       contracts.stabilityPool.address,
       contracts.borrowerOperations.address
@@ -356,7 +356,7 @@ class DeploymentHelper {
       ZEROContracts.zeroStaking.address,
       contracts.stabilityPool.address,
       contracts.priceFeedTestnet.address,
-      contracts.zusdToken.address,
+      contracts.zsusdToken.address,
       ZEROContracts.zeroToken.address,
       contracts.sovTokenTester.address
     )
@@ -373,8 +373,8 @@ class DeploymentHelper {
 
     contracts.sortedTroves = new SortedTrovesProxy(owner, proxies, contracts.sortedTroves)
 
-    const zusdTokenScript = await TokenScript.new(contracts.zusdToken.address)
-    contracts.zusdToken = new TokenProxy(owner, proxies, zusdTokenScript.address, contracts.zusdToken)
+    const zsusdTokenScript = await TokenScript.new(contracts.zsusdToken.address)
+    contracts.zsusdToken = new TokenProxy(owner, proxies, zsusdTokenScript.address, contracts.zsusdToken)
 
     const zeroTokenScript = await TokenScript.new(ZEROContracts.zeroToken.address)
     ZEROContracts.zeroToken = new TokenProxy(owner, proxies, zeroTokenScript.address, ZEROContracts.zeroToken)
@@ -411,7 +411,7 @@ class DeploymentHelper {
         contracts.gasPool.address,
         contracts.collSurplusPool.address,
         contracts.priceFeedTestnet.address,
-        contracts.zusdToken.address,
+        contracts.zsusdToken.address,
         contracts.sortedTroves.address,
         ZEROContracts.zeroToken.address,
         ZEROContracts.zeroStaking.address
@@ -431,7 +431,7 @@ class DeploymentHelper {
       contracts.collSurplusPool.address,
       contracts.priceFeedTestnet.address,
       contracts.sortedTroves.address,
-      contracts.zusdToken.address,
+      contracts.zsusdToken.address,
       ZEROContracts.zeroStaking.address
     )
 
@@ -443,7 +443,7 @@ class DeploymentHelper {
       contracts.borrowerOperations.address,
       contracts.troveManager.address,
       contracts.wrbtcTokenTester.address,
-      contracts.zusdToken.address,
+      contracts.zsusdToken.address,
       contracts.activePool.address
     )
 
@@ -454,7 +454,7 @@ class DeploymentHelper {
       contracts.borrowerOperations.address,
       contracts.troveManager.address,
       contracts.activePool.address,
-      contracts.zusdToken.address,
+      contracts.zsusdToken.address,
       contracts.sortedTroves.address,
       contracts.priceFeedTestnet.address,
       ZEROContracts.communityIssuance.address
@@ -498,7 +498,7 @@ class DeploymentHelper {
     await ZEROContracts.zeroStaking.setAddresses(
       coreContracts.sovTokenTester.address,
       ZEROContracts.zeroToken.address,
-      coreContracts.zusdToken.address,
+      coreContracts.zsusdToken.address,
       coreContracts.feeDistributor.address, 
       coreContracts.activePool.address
     )

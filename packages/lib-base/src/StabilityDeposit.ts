@@ -6,8 +6,8 @@ import { Decimal, Decimalish } from "./Decimal";
  * @public
  */
 export type StabilityDepositChange<T> =
-  | { depositZUSD: T; withdrawZUSD?: undefined }
-  | { depositZUSD?: undefined; withdrawZUSD: T; withdrawAllZUSD: boolean };
+  | { depositZSUSD: T; withdrawZSUSD?: undefined }
+  | { depositZSUSD?: undefined; withdrawZSUSD: T; withdrawAllZSUSD: boolean };
 
 /**
  * A Stability Deposit and its accrued gains.
@@ -15,13 +15,13 @@ export type StabilityDepositChange<T> =
  * @public
  */
 export class StabilityDeposit {
-  /** Amount of ZUSD in the Stability Deposit at the time of the last direct modification. */
-  readonly initialZUSD: Decimal;
+  /** Amount of ZSUSD in the Stability Deposit at the time of the last direct modification. */
+  readonly initialZSUSD: Decimal;
 
-  /** Amount of ZUSD left in the Stability Deposit. */
-  readonly currentZUSD: Decimal;
+  /** Amount of ZSUSD left in the Stability Deposit. */
+  readonly currentZSUSD: Decimal;
 
-  /** Amount of native currency (e.g. Ether) received in exchange for the used-up ZUSD. */
+  /** Amount of native currency (e.g. Ether) received in exchange for the used-up ZSUSD. */
   readonly collateralGain: Decimal;
 
   /** Amount of ZERO rewarded since the last modification of the Stability Deposit. */
@@ -38,27 +38,27 @@ export class StabilityDeposit {
 
   /** @internal */
   constructor(
-    initialZUSD: Decimal,
-    currentZUSD: Decimal,
+    initialZSUSD: Decimal,
+    currentZSUSD: Decimal,
     collateralGain: Decimal,
     zeroReward: Decimal,
     frontendTag: string
   ) {
-    this.initialZUSD = initialZUSD;
-    this.currentZUSD = currentZUSD;
+    this.initialZSUSD = initialZSUSD;
+    this.currentZSUSD = currentZSUSD;
     this.collateralGain = collateralGain;
     this.zeroReward = zeroReward;
     this.frontendTag = frontendTag;
 
-    if (this.currentZUSD.gt(this.initialZUSD)) {
-      throw new Error("currentZUSD can't be greater than initialZUSD");
+    if (this.currentZSUSD.gt(this.initialZSUSD)) {
+      throw new Error("currentZSUSD can't be greater than initialZSUSD");
     }
   }
 
   get isEmpty(): boolean {
     return (
-      this.initialZUSD.isZero &&
-      this.currentZUSD.isZero &&
+      this.initialZSUSD.isZero &&
+      this.currentZSUSD.isZero &&
       this.collateralGain.isZero &&
       this.zeroReward.isZero
     );
@@ -67,8 +67,8 @@ export class StabilityDeposit {
   /** @internal */
   toString(): string {
     return (
-      `{ initialZUSD: ${this.initialZUSD}` +
-      `, currentZUSD: ${this.currentZUSD}` +
+      `{ initialZSUSD: ${this.initialZSUSD}` +
+      `, currentZSUSD: ${this.currentZSUSD}` +
       `, collateralGain: ${this.collateralGain}` +
       `, zeroReward: ${this.zeroReward}` +
       `, frontendTag: "${this.frontendTag}" }`
@@ -80,8 +80,8 @@ export class StabilityDeposit {
    */
   equals(that: StabilityDeposit): boolean {
     return (
-      this.initialZUSD.eq(that.initialZUSD) &&
-      this.currentZUSD.eq(that.currentZUSD) &&
+      this.initialZSUSD.eq(that.initialZSUSD) &&
+      this.currentZSUSD.eq(that.currentZSUSD) &&
       this.collateralGain.eq(that.collateralGain) &&
       this.zeroReward.eq(that.zeroReward) &&
       this.frontendTag === that.frontendTag
@@ -89,38 +89,38 @@ export class StabilityDeposit {
   }
 
   /**
-   * Calculate the difference between the `currentZUSD` in this Stability Deposit and `thatZUSD`.
+   * Calculate the difference between the `currentZSUSD` in this Stability Deposit and `thatZSUSD`.
    *
    * @returns An object representing the change, or `undefined` if the deposited amounts are equal.
    */
-  whatChanged(thatZUSD: Decimalish): StabilityDepositChange<Decimal> | undefined {
-    thatZUSD = Decimal.from(thatZUSD);
+  whatChanged(thatZSUSD: Decimalish): StabilityDepositChange<Decimal> | undefined {
+    thatZSUSD = Decimal.from(thatZSUSD);
 
-    if (thatZUSD.lt(this.currentZUSD)) {
-      return { withdrawZUSD: this.currentZUSD.sub(thatZUSD), withdrawAllZUSD: thatZUSD.isZero };
+    if (thatZSUSD.lt(this.currentZSUSD)) {
+      return { withdrawZSUSD: this.currentZSUSD.sub(thatZSUSD), withdrawAllZSUSD: thatZSUSD.isZero };
     }
 
-    if (thatZUSD.gt(this.currentZUSD)) {
-      return { depositZUSD: thatZUSD.sub(this.currentZUSD) };
+    if (thatZSUSD.gt(this.currentZSUSD)) {
+      return { depositZSUSD: thatZSUSD.sub(this.currentZSUSD) };
     }
   }
 
   /**
    * Apply a {@link StabilityDepositChange} to this Stability Deposit.
    *
-   * @returns The new deposited ZUSD amount.
+   * @returns The new deposited ZSUSD amount.
    */
   apply(change: StabilityDepositChange<Decimalish> | undefined): Decimal {
     if (!change) {
-      return this.currentZUSD;
+      return this.currentZSUSD;
     }
 
-    if (change.withdrawZUSD !== undefined) {
-      return change.withdrawAllZUSD || this.currentZUSD.lte(change.withdrawZUSD)
+    if (change.withdrawZSUSD !== undefined) {
+      return change.withdrawAllZSUSD || this.currentZSUSD.lte(change.withdrawZSUSD)
         ? Decimal.ZERO
-        : this.currentZUSD.sub(change.withdrawZUSD);
+        : this.currentZSUSD.sub(change.withdrawZSUSD);
     } else {
-      return this.currentZUSD.add(change.depositZUSD);
+      return this.currentZSUSD.add(change.depositZSUSD);
     }
   }
 }

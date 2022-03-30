@@ -17,12 +17,12 @@ interface IBorrowerOperations {
     event CollSurplusPoolAddressChanged(address _collSurplusPoolAddress);
     event PriceFeedAddressChanged(address  _newPriceFeedAddress);
     event SortedTrovesAddressChanged(address _sortedTrovesAddress);
-    event ZUSDTokenAddressChanged(address _zusdTokenAddress);
+    event ZSUSDTokenAddressChanged(address _zsusdTokenAddress);
     event ZEROStakingAddressChanged(address _zeroStakingAddress);
 
     event TroveCreated(address indexed _borrower, uint arrayIndex);
     event TroveUpdated(address indexed _borrower, uint _debt, uint _coll, uint stake, uint8 operation);
-    event ZUSDBorrowingFeePaid(address indexed _borrower, uint _ZUSDFee);
+    event ZSUSDBorrowingFeePaid(address indexed _borrower, uint _ZSUSDFee);
 
     // --- Functions ---
     
@@ -40,7 +40,7 @@ interface IBorrowerOperations {
      * @param _collSurplusPoolAddress CollSurplusPool contract address
      * @param _priceFeedAddress PrideFeed contract address
      * @param _sortedTrovesAddress SortedTroves contract address
-     * @param _zusdTokenAddress ZUSDToken contract address
+     * @param _zsusdTokenAddress ZSUSDToken contract address
      * @param _zeroStakingAddress ZEROStaking contract address
      */
     function setAddresses(
@@ -55,7 +55,7 @@ interface IBorrowerOperations {
         address _collSurplusPoolAddress,
         address _priceFeedAddress,
         address _sortedTrovesAddress,
-        address _zusdTokenAddress,
+        address _zsusdTokenAddress,
         address _zeroStakingAddress
     ) external;
 
@@ -68,12 +68,12 @@ interface IBorrowerOperations {
      * @dev This function can only be called from the SOV contract otherwise it will fail
      * 
      * @param _maxFee max fee percentage to acept in case of a fee slippage
-     * @param _ZUSDAmount ZUSD requested debt 
+     * @param _ZSUSDAmount ZSUSD requested debt 
      * @param _upperHint upper trove id hint
      * @param _lowerHint lower trove id hint
      * @param _amount SOV received as collateral
      */
-    function openTroveFrom(address _owner, uint _maxFee, uint _ZUSDAmount, address _upperHint, address _lowerHint, uint _amount) external;
+    function openTroveFrom(address _owner, uint _maxFee, uint _ZSUSDAmount, address _upperHint, address _lowerHint, uint _amount) external;
 
 
     /**
@@ -82,12 +82,12 @@ interface IBorrowerOperations {
      * In addition to the requested debt, extra debt is issued to pay the issuance fee, and cover the gas compensation. 
      * The borrower has to provide a `_maxFeePercentage` that he/she is willing to accept in case of a fee slippage, i.e. when a redemption transaction is processed first, driving up the issuance fee. 
      * @param _maxFee max fee percentage to acept in case of a fee slippage
-     * @param _ZUSDAmount ZUSD requested debt 
+     * @param _ZSUSDAmount ZSUSD requested debt 
      * @param _upperHint upper trove id hint
      * @param _lowerHint lower trove id hint
      * @param _amount SOV received as collateral
      */
-    function openTrove(uint _maxFee, uint _ZUSDAmount, address _upperHint, address _lowerHint, uint _amount) external;
+    function openTrove(uint _maxFee, uint _ZSUSDAmount, address _upperHint, address _lowerHint, uint _amount) external;
 
     /// @notice Function that adds the received SOV to the caller's active Trove.
     /// @param _upperHint upper trove id hint
@@ -122,25 +122,25 @@ interface IBorrowerOperations {
     function withdrawColl(uint _amount, address _upperHint, address _lowerHint) external;
 
     /**
-     * @notice issues `_amount` of ZUSD from the caller’s Trove to the caller. 
+     * @notice issues `_amount` of ZSUSD from the caller’s Trove to the caller. 
      * Executes only if the Trove's collateralization ratio would remain above the minimum, and the resulting total collateralization ratio is above 150%. 
      * The borrower has to provide a `_maxFeePercentage` that he/she is willing to accept in case of a fee slippage, i.e. when a redemption transaction is processed first, driving up the issuance fee.
      * @param _maxFee max fee percentage to acept in case of a fee slippage
-     * @param _amount ZUSD amount to withdraw 
+     * @param _amount ZSUSD amount to withdraw 
      * @param _upperHint upper trove id hint
      * @param _lowerHint lower trove id hint
      */
-    function withdrawZUSD(uint _maxFee, uint _amount, address _upperHint, address _lowerHint) external;
+    function withdrawZSUSD(uint _maxFee, uint _amount, address _upperHint, address _lowerHint) external;
 
-    /// @notice repay `_amount` of ZUSD to the caller’s Trove, subject to leaving 50 debt in the Trove (which corresponds to the 50 ZUSD gas compensation).
-    /// @param _amount ZUSD amount to repay
+    /// @notice repay `_amount` of ZSUSD to the caller’s Trove, subject to leaving 50 debt in the Trove (which corresponds to the 50 ZSUSD gas compensation).
+    /// @param _amount ZSUSD amount to repay
     /// @param _upperHint upper trove id hint
     /// @param _lowerHint lower trove id hint
-    function repayZUSD(uint _amount, address _upperHint, address _lowerHint) external;
+    function repayZSUSD(uint _amount, address _upperHint, address _lowerHint) external;
 
     /**
      * @notice allows a borrower to repay all debt, withdraw all their collateral, and close their Trove. 
-     * Requires the borrower have a ZUSD balance sufficient to repay their trove's debt, excluding gas compensation - i.e. `(debt - 50)` ZUSD.
+     * Requires the borrower have a ZSUSD balance sufficient to repay their trove's debt, excluding gas compensation - i.e. `(debt - 50)` ZSUSD.
      */
     function closeTrove() external;
 
@@ -151,7 +151,7 @@ interface IBorrowerOperations {
      * The parameter is ignored if the debt is not increased with the transaction.
      * @param _maxFee max fee percentage to acept in case of a fee slippage
      * @param _collWithdrawal collateral amount to withdraw 
-     * @param _debtChange ZUSD amount to change 
+     * @param _debtChange ZSUSD amount to change 
      * @param isDebtIncrease indicates if increases debt
      * @param _upperHint upper trove id hint
      * @param _lowerHint lower trove id hint

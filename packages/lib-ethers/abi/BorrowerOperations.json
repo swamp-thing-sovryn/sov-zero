@@ -229,11 +229,11 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "_ZUSDFee",
+        "name": "_ZSUSDFee",
         "type": "uint256"
       }
     ],
-    "name": "ZUSDBorrowingFeePaid",
+    "name": "ZSUSDBorrowingFeePaid",
     "type": "event"
   },
   {
@@ -242,11 +242,11 @@
       {
         "indexed": false,
         "internalType": "address",
-        "name": "_zusdTokenAddress",
+        "name": "_zsusdTokenAddress",
         "type": "address"
       }
     ],
-    "name": "ZUSDTokenAddressChanged",
+    "name": "ZSUSDTokenAddressChanged",
     "type": "event"
   },
   {
@@ -303,7 +303,7 @@
   },
   {
     "inputs": [],
-    "name": "ZUSD_GAS_COMPENSATION",
+    "name": "ZSUSD_GAS_COMPENSATION",
     "outputs": [
       {
         "internalType": "uint256",
@@ -405,7 +405,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "_ZUSDChange",
+        "name": "_ZSUSDChange",
         "type": "uint256"
       },
       {
@@ -595,7 +595,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "_ZUSDAmount",
+        "name": "_ZSUSDAmount",
         "type": "uint256"
       },
       {
@@ -633,7 +633,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "_ZUSDAmount",
+        "name": "_ZSUSDAmount",
         "type": "uint256"
       },
       {
@@ -702,7 +702,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_ZUSDAmount",
+        "name": "_ZSUSDAmount",
         "type": "uint256"
       },
       {
@@ -716,7 +716,7 @@
         "type": "address"
       }
     ],
-    "name": "repayZUSD",
+    "name": "repayZSUSD",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -780,7 +780,7 @@
       },
       {
         "internalType": "address",
-        "name": "_zusdTokenAddress",
+        "name": "_zsusdTokenAddress",
         "type": "address"
       },
       {
@@ -891,7 +891,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "_ZUSDAmount",
+        "name": "_ZSUSDAmount",
         "type": "uint256"
       },
       {
@@ -905,7 +905,7 @@
         "type": "address"
       }
     ],
-    "name": "withdrawZUSD",
+    "name": "withdrawZSUSD",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -938,10 +938,10 @@
   },
   {
     "inputs": [],
-    "name": "zusdToken",
+    "name": "zsusdToken",
     "outputs": [
       {
-        "internalType": "contract IZUSDToken",
+        "internalType": "contract IZSUSDToken",
         "name": "",
         "type": "address"
       }

@@ -24,7 +24,7 @@ contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, 
     ITroveManager immutable troveManager;
     IStabilityPool immutable stabilityPool;
     IPriceFeed immutable priceFeed;
-    IERC20 immutable zusdToken;
+    IERC20 immutable zsusdToken;
     IERC20 immutable zeroToken;
     IZEROStaking immutable zeroStaking;
 
@@ -34,7 +34,7 @@ contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, 
         address _zeroStakingAddress,
         address _stabilityPoolAddress,
         address _priceFeedAddress,
-        address _zusdTokenAddress,
+        address _zsusdTokenAddress,
         address _zeroTokenAddress,
         address _sovTokenAddress
     )
@@ -54,8 +54,8 @@ contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, 
         checkContract(_priceFeedAddress);
         priceFeed = priceFeedCached;
 
-        checkContract(_zusdTokenAddress);
-        zusdToken = IERC20(_zusdTokenAddress);
+        checkContract(_zsusdTokenAddress);
+        zsusdToken = IERC20(_zsusdTokenAddress);
 
         checkContract(_zeroTokenAddress);
         zeroToken = IERC20(_zeroTokenAddress);
@@ -65,7 +65,7 @@ contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, 
         zeroStaking = zeroStakingCached;
     }
 
-    function claimCollateralAndOpenTrove(uint _maxFee, uint _ZUSDAmount, address _upperHint, address _lowerHint, uint _amount) external {
+    function claimCollateralAndOpenTrove(uint _maxFee, uint _ZSUSDAmount, address _upperHint, address _lowerHint, uint _amount) external {
         sovToken.transferFrom(msg.sender, address(this), _amount);
         uint balanceBefore = sovToken.balanceOf(address(this));
 
@@ -81,7 +81,7 @@ contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, 
 
         // Open trove with obtained collateral, plus collateral sent by user
         sovToken.approve(address(borrowerOperations), totalCollateral);
-        borrowerOperations.openTrove(_maxFee, _ZUSDAmount, _upperHint, _lowerHint, totalCollateral);
+        borrowerOperations.openTrove(_maxFee, _ZSUSDAmount, _upperHint, _lowerHint, totalCollateral);
     }
 
     function claimSPRewardsAndRecycle(uint _maxFee, address _upperHint, address _lowerHint) external {
@@ -95,15 +95,15 @@ contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, 
         uint zeroBalanceAfter = zeroToken.balanceOf(address(this));
         uint claimedCollateral = collBalanceAfter.sub(collBalanceBefore);
 
-        // Add claimed SOV to trove, get more ZUSD and stake it into the Stability Pool
+        // Add claimed SOV to trove, get more ZSUSD and stake it into the Stability Pool
         if (claimedCollateral > 0) {
             _requireUserHasTrove(address(this));
-            uint ZUSDAmount = _getNetZUSDAmount(claimedCollateral);
+            uint ZSUSDAmount = _getNetZSUSDAmount(claimedCollateral);
             sovToken.approve(address(borrowerOperations), claimedCollateral);
-            borrowerOperations.adjustTrove(_maxFee, 0, ZUSDAmount, true, _upperHint, _lowerHint, claimedCollateral);
-            // Provide withdrawn ZUSD to Stability Pool
-            if (ZUSDAmount > 0) {
-                stabilityPool.provideToSP(ZUSDAmount, address(0));
+            borrowerOperations.adjustTrove(_maxFee, 0, ZSUSDAmount, true, _upperHint, _lowerHint, claimedCollateral);
+            // Provide withdrawn ZSUSD to Stability Pool
+            if (ZSUSDAmount > 0) {
+                stabilityPool.provideToSP(ZSUSDAmount, address(0));
             }
         }
 
@@ -116,27 +116,27 @@ contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, 
 
     function claimStakingGainsAndRecycle(uint _maxFee, address _upperHint, address _lowerHint) external {
         uint collBalanceBefore = sovToken.balanceOf(address(this));
-        uint zusdBalanceBefore = zusdToken.balanceOf(address(this));
+        uint zsusdBalanceBefore = zsusdToken.balanceOf(address(this));
         uint zeroBalanceBefore = zeroToken.balanceOf(address(this));
 
         // Claim gains
         zeroStaking.unstake(0);
 
         uint gainedCollateral = sovToken.balanceOf(address(this)).sub(collBalanceBefore); // stack too deep issues :'(
-        uint gainedZUSD = zusdToken.balanceOf(address(this)).sub(zusdBalanceBefore);
+        uint gainedZSUSD = zsusdToken.balanceOf(address(this)).sub(zsusdBalanceBefore);
 
-        uint netZUSDAmount;
-        // Top up trove and get more ZUSD, keeping ICR constant
+        uint netZSUSDAmount;
+        // Top up trove and get more ZSUSD, keeping ICR constant
         if (gainedCollateral > 0) {
             _requireUserHasTrove(address(this));
-            netZUSDAmount = _getNetZUSDAmount(gainedCollateral);
+            netZSUSDAmount = _getNetZSUSDAmount(gainedCollateral);
             sovToken.approve(address(borrowerOperations), gainedCollateral);
-            borrowerOperations.adjustTrove(_maxFee, 0, netZUSDAmount, true, _upperHint, _lowerHint, gainedCollateral);
+            borrowerOperations.adjustTrove(_maxFee, 0, netZSUSDAmount, true, _upperHint, _lowerHint, gainedCollateral);
         }
 
-        uint totalZUSD = gainedZUSD.add(netZUSDAmount);
-        if (totalZUSD > 0) {
-            stabilityPool.provideToSP(totalZUSD, address(0));
+        uint totalZSUSD = gainedZSUSD.add(netZSUSDAmount);
+        if (totalZSUSD > 0) {
+            stabilityPool.provideToSP(totalZSUSD, address(0));
 
             // Providing to Stability Pool also triggers ZERO claim, so stake it if any
             uint zeroBalanceAfter = zeroToken.balanceOf(address(this));
@@ -148,13 +148,13 @@ contract BorrowerWrappersScript is BorrowerOperationsScript, ETHTransferScript, 
 
     }
 
-    function _getNetZUSDAmount(uint _collateral) internal returns (uint) {
+    function _getNetZSUSDAmount(uint _collateral) internal returns (uint) {
         uint price = priceFeed.fetchPrice();
         uint ICR = troveManager.getCurrentICR(address(this), price);
 
-        uint ZUSDAmount = _collateral.mul(price).div(ICR);
+        uint ZSUSDAmount = _collateral.mul(price).div(ICR);
         uint borrowingRate = troveManager.getBorrowingRateWithDecay();
-        uint netDebt = ZUSDAmount.mul(LiquityMath.DECIMAL_PRECISION).div(LiquityMath.DECIMAL_PRECISION.add(borrowingRate));
+        uint netDebt = ZSUSDAmount.mul(LiquityMath.DECIMAL_PRECISION).div(LiquityMath.DECIMAL_PRECISION.add(borrowingRate));
 
         return netDebt;
     }

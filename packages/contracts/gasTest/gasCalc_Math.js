@@ -30,7 +30,7 @@ contract('Gas costs for math functions', async accounts => {
     const ZEROContracts = await deploymentHelper.deployZEROContracts(bountyAddress)
 
     priceFeed = contracts.priceFeedTestnet
-    zusdToken = contracts.zusdToken
+    zsusdToken = contracts.zsusdToken
     sortedTroves = contracts.sortedTroves
     troveManager = contracts.troveManager
     activePool = contracts.activePool

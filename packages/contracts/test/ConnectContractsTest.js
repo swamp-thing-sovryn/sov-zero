@@ -6,7 +6,7 @@ contract('Deployment script - Sets correct contract addresses dependencies after
   const multisig = accounts[999];
   
   let priceFeed
-  let zusdToken
+  let zsusdToken
   let sortedTroves
   let troveManager
   let activePool
@@ -24,7 +24,7 @@ contract('Deployment script - Sets correct contract addresses dependencies after
     const ZEROContracts = await deploymentHelper.deployZEROContracts(multisig)
 
     priceFeed = coreContracts.priceFeedTestnet
-    zusdToken = coreContracts.zusdToken
+    zsusdToken = coreContracts.zsusdToken
     sortedTroves = coreContracts.sortedTroves
     troveManager = coreContracts.troveManager
     activePool = coreContracts.activePool
@@ -51,12 +51,12 @@ contract('Deployment script - Sets correct contract addresses dependencies after
     assert.equal(priceFeedAddress, recordedPriceFeedAddress)
   })
 
-  it('Sets the correct ZUSDToken address in TroveManager', async () => {
-    const zusdTokenAddress = zusdToken.address
+  it('Sets the correct ZSUSDToken address in TroveManager', async () => {
+    const zsusdTokenAddress = zsusdToken.address
 
-    const recordedClvTokenAddress = await troveManager._zusdToken()
+    const recordedClvTokenAddress = await troveManager._zsusdToken()
 
-    assert.equal(zusdTokenAddress, recordedClvTokenAddress)
+    assert.equal(zsusdTokenAddress, recordedClvTokenAddress)
   })
 
   it('Sets the correct SortedTroves address in TroveManager', async () => {
@@ -160,12 +160,12 @@ contract('Deployment script - Sets correct contract addresses dependencies after
     assert.equal(borrowerOperationsAddress, recordedBorrowerOperationsAddress)
   })
 
-  it('Sets the correct ZUSDToken address in StabilityPool', async () => {
-    const zusdTokenAddress = zusdToken.address
+  it('Sets the correct ZSUSDToken address in StabilityPool', async () => {
+    const zsusdTokenAddress = zsusdToken.address
 
-    const recordedClvTokenAddress = await stabilityPool.zusdToken()
+    const recordedClvTokenAddress = await stabilityPool.zsusdToken()
 
-    assert.equal(zusdTokenAddress, recordedClvTokenAddress)
+    assert.equal(zsusdTokenAddress, recordedClvTokenAddress)
   })
 
   it('Sets the correct TroveManager address in StabilityPool', async () => {
@@ -274,12 +274,12 @@ contract('Deployment script - Sets correct contract addresses dependencies after
     assert.equal(activePoolAddress, recordedActivePoolAddress)
   })
 
-  // Sets ZUSDToken in ZEROStaking
+  // Sets ZSUSDToken in ZEROStaking
   it('Sets the correct ActivePool address in ZEROStaking', async () => {
-    const zusdTokenAddress = zusdToken.address
+    const zsusdTokenAddress = zsusdToken.address
 
-    const recordedZUSDTokenAddress = await zeroStaking.zusdToken()
-    assert.equal(zusdTokenAddress, recordedZUSDTokenAddress)
+    const recordedZSUSDTokenAddress = await zeroStaking.zsusdToken()
+    assert.equal(zsusdTokenAddress, recordedZSUSDTokenAddress)
   })
 
   // Sets FeeDistributor in ZEROStaking
@@ -324,12 +324,12 @@ contract('Deployment script - Sets correct contract addresses dependencies after
     assert.equal(activePoolAddress, recordedActivePoolAddress)
   })
 
-  // Sets ZUSDToken in feeDistributor
-  it('Sets the correct ZUSDToken address in feeDistributor', async () => {
-    const zusdTokenAddress = zusdToken.address
+  // Sets ZSUSDToken in feeDistributor
+  it('Sets the correct ZSUSDToken address in feeDistributor', async () => {
+    const zsusdTokenAddress = zsusdToken.address
 
-    const recordedZUSDTokenAddress = await feeDistributor.zusdToken()
-    assert.equal(zusdTokenAddress, recordedZUSDTokenAddress)
+    const recordedZSUSDTokenAddress = await feeDistributor.zsusdToken()
+    assert.equal(zsusdTokenAddress, recordedZSUSDTokenAddress)
   })
 
 

@@ -26,7 +26,7 @@ borrowingRate(when?: Date): Decimal;
 
 By default, the fee is calculated at the time of the latest block. This can be overridden using the `when` parameter.
 
-To calculate the borrowing fee in ZUSD, multiply the borrowed ZUSD amount by the borrowing rate.
+To calculate the borrowing fee in ZSUSD, multiply the borrowed ZSUSD amount by the borrowing rate.
 
 ## Example
 
@@ -34,9 +34,9 @@ To calculate the borrowing fee in ZUSD, multiply the borrowed ZUSD amount by the
 ```typescript
 const fees = await liquity.getFees();
 
-const borrowedZUSDAmount = 100;
+const borrowedZSUSDAmount = 100;
 const borrowingRate = fees.borrowingRate();
-const borrowingFeeZUSD = borrowingRate.mul(borrowedZUSDAmount);
+const borrowingFeeZSUSD = borrowingRate.mul(borrowedZSUSDAmount);
 
 ```
 

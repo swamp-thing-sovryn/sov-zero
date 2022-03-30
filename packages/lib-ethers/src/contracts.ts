@@ -16,7 +16,7 @@ import activePoolAbi from "../abi/ActivePool.json";
 import borrowerOperationsAbi from "../abi/BorrowerOperations.json";
 import troveManagerAbi from "../abi/TroveManager.json";
 import troveManagerRedeemOpsAbi from "../abi/TroveManagerRedeemOps.json";
-import zusdTokenAbi from "../abi/ZUSDToken.json";
+import zsusdTokenAbi from "../abi/ZSUSDToken.json";
 import nueTokenAbi from "../abi/IERC20.json";
 import collSurplusPoolAbi from "../abi/CollSurplusPool.json";
 import communityIssuanceAbi from "../abi/CommunityIssuance.json";
@@ -38,7 +38,7 @@ import {
   BorrowerOperations,
   TroveManager,
   TroveManagerRedeemOps,
-  ZUSDToken,
+  ZSUSDToken,
   CollSurplusPool,
   CommunityIssuance,
   DefaultPool,
@@ -157,7 +157,7 @@ export interface _LiquityContracts {
   borrowerOperations: BorrowerOperations;
   troveManager: TroveManager;
   troveManagerRedeemOps: TroveManagerRedeemOps;
-  zusdToken: ZUSDToken;
+  zsusdToken: ZSUSDToken;
   nueToken?: IERC20;
   collSurplusPool: CollSurplusPool;
   communityIssuance: CommunityIssuance;
@@ -190,7 +190,7 @@ const getAbi = (priceFeedIsTestnet: boolean): LiquityContractAbis => ({
   borrowerOperations: borrowerOperationsAbi,
   troveManager: troveManagerAbi,
   troveManagerRedeemOps: troveManagerRedeemOpsAbi,
-  zusdToken: zusdTokenAbi,
+  zsusdToken: zsusdTokenAbi,
   nueToken: nueTokenAbi,
   communityIssuance: communityIssuanceAbi,
   defaultPool: defaultPoolAbi,

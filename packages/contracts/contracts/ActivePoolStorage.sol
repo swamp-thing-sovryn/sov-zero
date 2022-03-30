@@ -6,7 +6,7 @@ import "./Dependencies/IERC20.sol";
 
 /**
  * @title Active Pool Storage
- * @dev Stores Active Pool required addresses and internal SOV and ZUSD debt states
+ * @dev Stores Active Pool required addresses and internal SOV and ZSUSD debt states
  * Extends Ownable
  */
 contract ActivePoolStorage is Ownable {
@@ -18,5 +18,5 @@ contract ActivePoolStorage is Ownable {
     address public troveManagerAddress;
     address public stabilityPoolAddress;
     address public defaultPoolAddress;
-    uint256 internal ZUSDDebt;
+    uint256 internal ZSUSDDebt;
 }

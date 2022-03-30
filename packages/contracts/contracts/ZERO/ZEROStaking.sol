@@ -10,7 +10,7 @@ import "../Dependencies/console.sol";
 import "../Interfaces/IZEROToken.sol";
 import "../Interfaces/IZEROStaking.sol";
 import "../Dependencies/LiquityMath.sol";
-import "../Interfaces/IZUSDToken.sol";
+import "../Interfaces/IZSUSDToken.sol";
 import "./ZEROStakingStorage.sol";
 
 contract ZEROStaking is ZEROStakingStorage, IZEROStaking, CheckContract, BaseMath {
@@ -20,16 +20,16 @@ contract ZEROStaking is ZEROStakingStorage, IZEROStaking, CheckContract, BaseMat
 
     event SOVTokenAddressSet(address _sovTokenAddress);
     event ZEROTokenAddressSet(address _zeroTokenAddress);
-    event ZUSDTokenAddressSet(address _zusdTokenAddress);
+    event ZSUSDTokenAddressSet(address _zsusdTokenAddress);
     event FeeDistributorAddressSet(address _feeDistributorAddress);
     event ActivePoolAddressSet(address _activePoolAddress);
 
     event StakeChanged(address indexed staker, uint newStake);
-    event StakingGainsWithdrawn(address indexed staker, uint ZUSDGain, uint SOVGain);
+    event StakingGainsWithdrawn(address indexed staker, uint ZSUSDGain, uint SOVGain);
     event F_SOVUpdated(uint _F_SOV);
-    event F_ZUSDUpdated(uint _F_ZUSD);
+    event F_ZSUSDUpdated(uint _F_ZSUSD);
     event TotalZEROStakedUpdated(uint _totalZEROStaked);
-    event StakerSnapshotsUpdated(address _staker, uint _F_SOV, uint _F_ZUSD);
+    event StakerSnapshotsUpdated(address _staker, uint _F_SOV, uint _F_ZSUSD);
 
     // --- Functions ---
 
@@ -37,7 +37,7 @@ contract ZEROStaking is ZEROStakingStorage, IZEROStaking, CheckContract, BaseMat
     (
         address _sovTokenAddress,
         address _zeroTokenAddress,
-        address _zusdTokenAddress,
+        address _zsusdTokenAddress,
         address _feeDistributorAddress, 
         address _activePoolAddress
     ) 
@@ -47,37 +47,37 @@ contract ZEROStaking is ZEROStakingStorage, IZEROStaking, CheckContract, BaseMat
     {
         checkContract(_sovTokenAddress);
         checkContract(_zeroTokenAddress);
-        checkContract(_zusdTokenAddress);
+        checkContract(_zsusdTokenAddress);
         checkContract(_feeDistributorAddress);
         checkContract(_activePoolAddress);
 
         sovToken = IERC20(_sovTokenAddress);
         zeroToken = IZEROToken(_zeroTokenAddress);
-        zusdToken = IZUSDToken(_zusdTokenAddress);
+        zsusdToken = IZSUSDToken(_zsusdTokenAddress);
         feeDistributorAddress = _feeDistributorAddress;
         activePoolAddress = _activePoolAddress;
 
         emit SOVTokenAddressSet(_sovTokenAddress);
         emit ZEROTokenAddressSet(_zeroTokenAddress);
-        emit ZEROTokenAddressSet(_zusdTokenAddress);
+        emit ZEROTokenAddressSet(_zsusdTokenAddress);
         emit FeeDistributorAddressSet(_feeDistributorAddress);
         emit ActivePoolAddressSet(_activePoolAddress);
 
         
     }
 
-    // If caller has a pre-existing stake, send any accumulated SOV and ZUSD gains to them. 
+    // If caller has a pre-existing stake, send any accumulated SOV and ZSUSD gains to them. 
     function stake(uint _ZEROamount) external override {
         _requireNonZeroAmount(_ZEROamount);
 
         uint currentStake = stakes[msg.sender];
 
         uint SOVGain;
-        uint ZUSDGain;
-        // Grab any accumulated SOV and ZUSD gains from the current stake
+        uint ZSUSDGain;
+        // Grab any accumulated SOV and ZSUSD gains from the current stake
         if (currentStake != 0) {
             SOVGain = _getPendingSOVGain(msg.sender);
-            ZUSDGain = _getPendingZUSDGain(msg.sender);
+            ZSUSDGain = _getPendingZSUSDGain(msg.sender);
         }
     
        _updateUserSnapshots(msg.sender);
@@ -93,24 +93,24 @@ contract ZEROStaking is ZEROStakingStorage, IZEROStaking, CheckContract, BaseMat
         zeroToken.sendToZEROStaking(msg.sender, _ZEROamount);
 
         emit StakeChanged(msg.sender, newStake);
-        emit StakingGainsWithdrawn(msg.sender, ZUSDGain, SOVGain);
+        emit StakingGainsWithdrawn(msg.sender, ZSUSDGain, SOVGain);
 
-         // Send accumulated ZUSD and SOV gains to the caller
+         // Send accumulated ZSUSD and SOV gains to the caller
         if (currentStake != 0) {
-            zusdToken.transfer(msg.sender, ZUSDGain);
+            zsusdToken.transfer(msg.sender, ZSUSDGain);
             sovToken.transfer(msg.sender, SOVGain);
         }
     }
 
-    /// Unstake the ZERO and send the it back to the caller, along with their accumulated ZUSD & SOV gains. 
+    /// Unstake the ZERO and send the it back to the caller, along with their accumulated ZSUSD & SOV gains. 
     /// If requested amount > stake, send their entire stake.
     function unstake(uint _ZEROamount) external override {
         uint currentStake = stakes[msg.sender];
         _requireUserHasStake(currentStake);
 
-        // Grab any accumulated SOV and ZUSD gains from the current stake
+        // Grab any accumulated SOV and ZSUSD gains from the current stake
         uint SOVGain = _getPendingSOVGain(msg.sender);
-        uint ZUSDGain = _getPendingZUSDGain(msg.sender);
+        uint ZSUSDGain = _getPendingZSUSDGain(msg.sender);
         
         _updateUserSnapshots(msg.sender);
 
@@ -130,10 +130,10 @@ contract ZEROStaking is ZEROStakingStorage, IZEROStaking, CheckContract, BaseMat
             emit StakeChanged(msg.sender, newStake);
         }
 
-        emit StakingGainsWithdrawn(msg.sender, ZUSDGain, SOVGain);
+        emit StakingGainsWithdrawn(msg.sender, ZSUSDGain, SOVGain);
 
-        // Send accumulated ZUSD and SOV gains to the caller
-        zusdToken.transfer(msg.sender, ZUSDGain);
+        // Send accumulated ZSUSD and SOV gains to the caller
+        zsusdToken.transfer(msg.sender, ZSUSDGain);
         sovToken.transfer(msg.sender, SOVGain);
     }
 
@@ -149,14 +149,14 @@ contract ZEROStaking is ZEROStakingStorage, IZEROStaking, CheckContract, BaseMat
         emit F_SOVUpdated(F_SOV);
     }
 
-    function increaseF_ZUSD(uint _ZUSDFee) external override {
+    function increaseF_ZSUSD(uint _ZSUSDFee) external override {
         _requireCallerIsFeeDistributor();
-        uint ZUSDFeePerZEROStaked;
+        uint ZSUSDFeePerZEROStaked;
         
-        if (totalZEROStaked > 0) {ZUSDFeePerZEROStaked = _ZUSDFee.mul(DECIMAL_PRECISION).div(totalZEROStaked);}
+        if (totalZEROStaked > 0) {ZSUSDFeePerZEROStaked = _ZSUSDFee.mul(DECIMAL_PRECISION).div(totalZEROStaked);}
         
-        F_ZUSD = F_ZUSD.add(ZUSDFeePerZEROStaked);
-        emit F_ZUSDUpdated(F_ZUSD);
+        F_ZSUSD = F_ZSUSD.add(ZSUSDFeePerZEROStaked);
+        emit F_ZSUSDUpdated(F_ZSUSD);
     }
 
     // --- Pending reward functions ---
@@ -171,22 +171,22 @@ contract ZEROStaking is ZEROStakingStorage, IZEROStaking, CheckContract, BaseMat
         return SOVGain;
     }
 
-    function getPendingZUSDGain(address _user) external view override returns (uint) {
-        return _getPendingZUSDGain(_user);
+    function getPendingZSUSDGain(address _user) external view override returns (uint) {
+        return _getPendingZSUSDGain(_user);
     }
 
-    function _getPendingZUSDGain(address _user) internal view returns (uint) {
-        uint F_ZUSD_Snapshot = snapshots[_user].F_ZUSD_Snapshot;
-        uint ZUSDGain = stakes[_user].mul(F_ZUSD.sub(F_ZUSD_Snapshot)).div(DECIMAL_PRECISION);
-        return ZUSDGain;
+    function _getPendingZSUSDGain(address _user) internal view returns (uint) {
+        uint F_ZSUSD_Snapshot = snapshots[_user].F_ZSUSD_Snapshot;
+        uint ZSUSDGain = stakes[_user].mul(F_ZSUSD.sub(F_ZSUSD_Snapshot)).div(DECIMAL_PRECISION);
+        return ZSUSDGain;
     }
 
     // --- Internal helper functions ---
 
     function _updateUserSnapshots(address _user) internal {
         snapshots[_user].F_SOV_Snapshot = F_SOV;
-        snapshots[_user].F_ZUSD_Snapshot = F_ZUSD;
-        emit StakerSnapshotsUpdated(_user, F_SOV, F_ZUSD);
+        snapshots[_user].F_ZSUSD_Snapshot = F_ZSUSD;
+        emit StakerSnapshotsUpdated(_user, F_SOV, F_ZSUSD);
     }
 
     // --- 'require' functions ---

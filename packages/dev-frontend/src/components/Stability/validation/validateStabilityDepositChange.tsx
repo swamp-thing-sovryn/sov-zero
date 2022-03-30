@@ -12,12 +12,12 @@ import { StabilityActionDescription } from "../StabilityActionDescription";
 
 export const selectForStabilityDepositChangeValidation = ({
   trove,
-  zusdBalance,
+  zsusdBalance,
   ownFrontend,
   haveUndercollateralizedTroves
 }: LiquityStoreState) => ({
   trove,
-  zusdBalance,
+  zsusdBalance,
   haveOwnFrontend: ownFrontend.status === "registered",
   haveUndercollateralizedTroves
 });
@@ -28,9 +28,9 @@ type StabilityDepositChangeValidationContext = ReturnType<
 
 export const validateStabilityDepositChange = (
   originalDeposit: StabilityDeposit,
-  editedZUSD: Decimal,
+  editedZSUSD: Decimal,
   {
-    zusdBalance,
+    zsusdBalance,
     haveOwnFrontend,
     haveUndercollateralizedTroves
   }: StabilityDepositChangeValidationContext
@@ -38,7 +38,7 @@ export const validateStabilityDepositChange = (
   validChange: StabilityDepositChange<Decimal> | undefined,
   description: JSX.Element | undefined
 ] => {
-  const change = originalDeposit.whatChanged(editedZUSD);
+  const change = originalDeposit.whatChanged(editedZSUSD);
 
   if (haveOwnFrontend) {
     return [
@@ -53,24 +53,24 @@ export const validateStabilityDepositChange = (
     return [undefined, undefined];
   }
 
-  if (change.depositZUSD?.gt(zusdBalance)) {
+  if (change.depositZSUSD?.gt(zsusdBalance)) {
     return [
       undefined,
       <ErrorDescription>
         The amount you're trying to deposit exceeds your balance by{" "}
         <Amount>
-          {change.depositZUSD.sub(zusdBalance).prettify()} {COIN}
+          {change.depositZSUSD.sub(zsusdBalance).prettify()} {COIN}
         </Amount>
         .
       </ErrorDescription>
     ];
   }
 
-  if (change.withdrawZUSD && haveUndercollateralizedTroves) {
+  if (change.withdrawZSUSD && haveUndercollateralizedTroves) {
     return [
       undefined,
       <ErrorDescription>
-        You're not allowed to withdraw ZUSD from your Stability Deposit when there are
+        You're not allowed to withdraw ZSUSD from your Stability Deposit when there are
         undercollateralized Credit Lines. Please liquidate those Credit Lines or try again later.
       </ErrorDescription>
     ];

@@ -4,7 +4,7 @@ pragma solidity 0.6.11;
 
 import "./Interfaces/IStabilityPool.sol";
 import "./Interfaces/ICollSurplusPool.sol";
-import "./Interfaces/IZUSDToken.sol";
+import "./Interfaces/IZSUSDToken.sol";
 import "./Interfaces/ISortedTroves.sol";
 import "./Interfaces/IZEROToken.sol";
 import "./Interfaces/IZEROStaking.sol";
@@ -29,7 +29,7 @@ contract TroveManagerStorage is Ownable, BaseMath {
 
     ICollSurplusPool collSurplusPool;
 
-    IZUSDToken public _zusdToken;
+    IZSUSDToken public _zsusdToken;
 
     IZEROToken public _zeroToken;
 
@@ -46,7 +46,7 @@ contract TroveManagerStorage is Ownable, BaseMath {
 
     uint public baseRate;
 
-    // The timestamp of the latest fee operation (redemption or new ZUSD issuance)
+    // The timestamp of the latest fee operation (redemption or new ZSUSD issuance)
     uint public lastFeeOperationTime;
 
     enum Status {
@@ -77,26 +77,26 @@ contract TroveManagerStorage is Ownable, BaseMath {
     uint public totalCollateralSnapshot;
 
     /*
-    * L_SOV and L_ZUSDDebt track the sums of accumulated liquidation rewards per unit staked. During its lifetime, each stake earns:
+    * L_SOV and L_ZSUSDDebt track the sums of accumulated liquidation rewards per unit staked. During its lifetime, each stake earns:
     *
     * An SOV gain of ( stake * [L_SOV - L_SOV(0)] )
-    * A ZUSDDebt increase  of ( stake * [L_ZUSDDebt - L_ZUSDDebt(0)] )
+    * A ZSUSDDebt increase  of ( stake * [L_ZSUSDDebt - L_ZSUSDDebt(0)] )
     *
-    * Where L_SOV(0) and L_ZUSDDebt(0) are snapshots of L_SOV and L_ZUSDDebt for the active Trove taken at the instant the stake was made
+    * Where L_SOV(0) and L_ZSUSDDebt(0) are snapshots of L_SOV and L_ZSUSDDebt for the active Trove taken at the instant the stake was made
     */
     uint public L_SOV;
-    uint public L_ZUSDDebt;
+    uint public L_ZSUSDDebt;
 
     // Map addresses with active troves to their RewardSnapshot
     mapping (address => RewardSnapshot) public rewardSnapshots;
 
-    // Object containing the SOV and ZUSD snapshots for a given active trove
-    struct RewardSnapshot { uint SOV; uint ZUSDDebt;}
+    // Object containing the SOV and ZSUSD snapshots for a given active trove
+    struct RewardSnapshot { uint SOV; uint ZSUSDDebt;}
 
     // Array of all active trove addresses - used to to compute an approximate hint off-chain, for the sorted list insertion
     address[] public TroveOwners;
 
     // Error trackers for the trove redistribution calculation
     uint public lastSOVError_Redistribution;
-    uint public lastZUSDDebtError_Redistribution;
+    uint public lastZSUSDDebtError_Redistribution;
 }

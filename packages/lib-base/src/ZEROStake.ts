@@ -24,18 +24,18 @@ export class ZEROStake {
   /** Collateral gain available to withdraw. */
   readonly collateralGain: Decimal;
 
-  /** ZUSD gain available to withdraw. */
-  readonly zusdGain: Decimal;
+  /** ZSUSD gain available to withdraw. */
+  readonly zsusdGain: Decimal;
 
   /** @internal */
-  constructor(stakedZERO = Decimal.ZERO, collateralGain = Decimal.ZERO, zusdGain = Decimal.ZERO) {
+  constructor(stakedZERO = Decimal.ZERO, collateralGain = Decimal.ZERO, zsusdGain = Decimal.ZERO) {
     this.stakedZERO = stakedZERO;
     this.collateralGain = collateralGain;
-    this.zusdGain = zusdGain;
+    this.zsusdGain = zsusdGain;
   }
 
   get isEmpty(): boolean {
-    return this.stakedZERO.isZero && this.collateralGain.isZero && this.zusdGain.isZero;
+    return this.stakedZERO.isZero && this.collateralGain.isZero && this.zsusdGain.isZero;
   }
 
   /** @internal */
@@ -43,7 +43,7 @@ export class ZEROStake {
     return (
       `{ stakedZERO: ${this.stakedZERO}` +
       `, collateralGain: ${this.collateralGain}` +
-      `, zusdGain: ${this.zusdGain} }`
+      `, zsusdGain: ${this.zsusdGain} }`
     );
   }
 
@@ -54,7 +54,7 @@ export class ZEROStake {
     return (
       this.stakedZERO.eq(that.stakedZERO) &&
       this.collateralGain.eq(that.collateralGain) &&
-      this.zusdGain.eq(that.zusdGain)
+      this.zsusdGain.eq(that.zsusdGain)
     );
   }
 

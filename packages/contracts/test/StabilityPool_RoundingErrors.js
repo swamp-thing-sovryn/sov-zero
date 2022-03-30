@@ -16,7 +16,7 @@ contract('Pool Manager: Sum-Product rounding errors', async accounts => {
   let contracts
 
   let priceFeed
-  let zusdToken
+  let zsusdToken
   let stabilityPool
   let troveManager
   let borrowerOperations
@@ -25,7 +25,7 @@ contract('Pool Manager: Sum-Product rounding errors', async accounts => {
     contracts = await deployLiquity()
     
     priceFeed = contracts.priceFeedTestnet
-    zusdToken = contracts.zusdToken
+    zsusdToken = contracts.zsusdToken
     stabilityPool = contracts.stabilityPool
     troveManager = contracts.troveManager
     borrowerOperations = contracts.borrowerOperations
@@ -35,13 +35,13 @@ contract('Pool Manager: Sum-Product rounding errors', async accounts => {
   })
 
   // skipped to not slow down CI
-  it.skip("Rounding errors: 100 deposits of 100ZUSD into SP, then 200 liquidations of 49ZUSD", async () => {
+  it.skip("Rounding errors: 100 deposits of 100ZSUSD into SP, then 200 liquidations of 49ZSUSD", async () => {
     const owner = accounts[0]
     const depositors = accounts.slice(1, 101)
     const defaulters = accounts.slice(101, 301)
 
     for (let account of depositors) {
-      await openTrove({ extraZUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: account } })
+      await openTrove({ extraZSUSDAmount: toBN(dec(10000, 18)), ICR: toBN(dec(2, 18)), extraParams: { from: account } })
       await stabilityPool.provideToSP(dec(100, 18), { from: account })
     }
 
@@ -59,9 +59,9 @@ contract('Pool Manager: Sum-Product rounding errors', async accounts => {
       await troveManager.liquidate(defaulter, { from: owner });
     }
 
-    const SP_TotalDeposits = await stabilityPool.getTotalZUSDDeposits()
+    const SP_TotalDeposits = await stabilityPool.getTotalZSUSDDeposits()
     const SP_ETH = await stabilityPool.getETH()
-    const compoundedDeposit = await stabilityPool.getCompoundedZUSDDeposit(depositors[0])
+    const compoundedDeposit = await stabilityPool.getCompoundedZSUSDDeposit(depositors[0])
     const ETH_Gain = await stabilityPool.getCurrentETHGain(depositors[0])
 
     // Check depostiors receive their share without too much error

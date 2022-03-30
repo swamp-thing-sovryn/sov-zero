@@ -31,11 +31,11 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "_F_ZUSD",
+        "name": "_F_ZSUSD",
         "type": "uint256"
       }
     ],
-    "name": "F_ZUSDUpdated",
+    "name": "F_ZSUSDUpdated",
     "type": "event"
   },
   {
@@ -133,7 +133,7 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "_F_ZUSD",
+        "name": "_F_ZSUSD",
         "type": "uint256"
       }
     ],
@@ -152,7 +152,7 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "ZUSDGain",
+        "name": "ZSUSDGain",
         "type": "uint256"
       },
       {
@@ -197,11 +197,11 @@
       {
         "indexed": false,
         "internalType": "address",
-        "name": "_zusdTokenAddress",
+        "name": "_zsusdTokenAddress",
         "type": "address"
       }
     ],
-    "name": "ZUSDTokenAddressSet",
+    "name": "ZSUSDTokenAddressSet",
     "type": "event"
   },
   {
@@ -232,7 +232,7 @@
   },
   {
     "inputs": [],
-    "name": "F_ZUSD",
+    "name": "F_ZSUSD",
     "outputs": [
       {
         "internalType": "uint256",
@@ -322,7 +322,7 @@
         "type": "address"
       }
     ],
-    "name": "getPendingZUSDGain",
+    "name": "getPendingZSUSDGain",
     "outputs": [
       {
         "internalType": "uint256",
@@ -350,11 +350,11 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_ZUSDFee",
+        "name": "_ZSUSDFee",
         "type": "uint256"
       }
     ],
-    "name": "increaseF_ZUSD",
+    "name": "increaseF_ZSUSD",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -373,7 +373,7 @@
       },
       {
         "internalType": "address",
-        "name": "_zusdTokenAddress",
+        "name": "_zsusdTokenAddress",
         "type": "address"
       },
       {
@@ -422,7 +422,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "F_ZUSD_Snapshot",
+        "name": "F_ZSUSD_Snapshot",
         "type": "uint256"
       }
     ],
@@ -515,10 +515,10 @@
   },
   {
     "inputs": [],
-    "name": "zusdToken",
+    "name": "zsusdToken",
     "outputs": [
       {
-        "internalType": "contract IZUSDToken",
+        "internalType": "contract IZSUSDToken",
         "name": "",
         "type": "address"
       }

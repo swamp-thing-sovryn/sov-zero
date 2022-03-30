@@ -13,5 +13,5 @@ contract DefaultPoolStorage is Ownable {
 
     address public troveManagerAddress;
     address public activePoolAddress;
-    uint256 internal ZUSDDebt;  // debt
+    uint256 internal ZSUSDDebt;  // debt
 }

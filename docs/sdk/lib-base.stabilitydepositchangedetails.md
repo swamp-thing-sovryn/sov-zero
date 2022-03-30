@@ -4,7 +4,7 @@
 
 ## StabilityDepositChangeDetails interface
 
-Details of a [depositZUSDInStabilityPool()](./lib-base.transactableliquity.depositzusdinstabilitypool.md) or [withdrawZUSDFromStabilityPool()](./lib-base.transactableliquity.withdrawzusdfromstabilitypool.md) transaction.
+Details of a [depositZSUSDInStabilityPool()](./lib-base.transactableliquity.depositzsusdinstabilitypool.md) or [withdrawZSUSDFromStabilityPool()](./lib-base.transactableliquity.withdrawzsusdfromstabilitypool.md) transaction.
 
 <b>Signature:</b>
 

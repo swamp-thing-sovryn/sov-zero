@@ -159,7 +159,7 @@ export class ReadableEthersLiquity implements ReadableLiquity {
 
     const [collateral, debt] = await Promise.all([
       troveManager.L_SOV({ ...overrides }).then(decimalify),
-      troveManager.L_ZUSDDebt({ ...overrides }).then(decimalify)
+      troveManager.L_ZSUSDDebt({ ...overrides }).then(decimalify)
     ]);
 
     return new Trove(collateral, debt);
@@ -185,7 +185,7 @@ export class ReadableEthersLiquity implements ReadableLiquity {
         decimalify(trove.coll),
         decimalify(trove.debt),
         decimalify(trove.stake),
-        new Trove(decimalify(snapshot.SOV), decimalify(snapshot.ZUSDDebt))
+        new Trove(decimalify(snapshot.SOV), decimalify(snapshot.ZSUSDDebt))
       );
     } else {
       return new TroveWithPendingRedistribution(address, userTroveStatusFrom(trove.status));
@@ -223,7 +223,7 @@ export class ReadableEthersLiquity implements ReadableLiquity {
     const [activeCollateral, activeDebt] = await Promise.all(
       [
         activePool.getSOV({ ...overrides }),
-        activePool.getZUSDDebt({ ...overrides })
+        activePool.getZSUSDDebt({ ...overrides })
       ].map(getBigNumber => getBigNumber.then(decimalify))
     );
 
@@ -237,7 +237,7 @@ export class ReadableEthersLiquity implements ReadableLiquity {
     const [liquidatedCollateral, closedDebt] = await Promise.all(
       [
         defaultPool.getSOV({ ...overrides }),
-        defaultPool.getZUSDDebt({ ...overrides })
+        defaultPool.getZSUSDDebt({ ...overrides })
       ].map(getBigNumber => getBigNumber.then(decimalify))
     );
 
@@ -264,18 +264,18 @@ export class ReadableEthersLiquity implements ReadableLiquity {
 
     const [
       { frontEndTag, initialValue },
-      currentZUSD,
+      currentZSUSD,
       collateralGain,
     ] = await Promise.all([
       stabilityPool.deposits(address, { ...overrides }),
-      stabilityPool.getCompoundedZUSDDeposit(address, { ...overrides }),
+      stabilityPool.getCompoundedZSUSDDeposit(address, { ...overrides }),
       stabilityPool.getDepositorSOVGain(address, { ...overrides }),
       //stabilityPool.getDepositorZEROGain(address, { ...overrides })
     ]);
 
     return new StabilityDeposit(
       decimalify(initialValue),
-      decimalify(currentZUSD),
+      decimalify(currentZSUSD),
       decimalify(collateralGain),
       Decimal.from(0),
       frontEndTag
@@ -296,19 +296,19 @@ export class ReadableEthersLiquity implements ReadableLiquity {
     return remaining;
   }
 
-  /** {@inheritDoc @liquity/lib-base#ReadableLiquity.getZUSDInStabilityPool} */
-  getZUSDInStabilityPool(overrides?: EthersCallOverrides): Promise<Decimal> {
+  /** {@inheritDoc @liquity/lib-base#ReadableLiquity.getZSUSDInStabilityPool} */
+  getZSUSDInStabilityPool(overrides?: EthersCallOverrides): Promise<Decimal> {
     const { stabilityPool } = _getContracts(this.connection);
 
-    return stabilityPool.getTotalZUSDDeposits({ ...overrides }).then(decimalify);
+    return stabilityPool.getTotalZSUSDDeposits({ ...overrides }).then(decimalify);
   }
 
-  /** {@inheritDoc @liquity/lib-base#ReadableLiquity.getZUSDBalance} */
-  getZUSDBalance(address?: string, overrides?: EthersCallOverrides): Promise<Decimal> {
+  /** {@inheritDoc @liquity/lib-base#ReadableLiquity.getZSUSDBalance} */
+  getZSUSDBalance(address?: string, overrides?: EthersCallOverrides): Promise<Decimal> {
     address ??= _requireAddress(this.connection);
-    const { zusdToken } = _getContracts(this.connection);
+    const { zsusdToken } = _getContracts(this.connection);
 
-    return zusdToken.balanceOf(address, { ...overrides }).then(decimalify);
+    return zsusdToken.balanceOf(address, { ...overrides }).then(decimalify);
   }
 
   /** {@inheritDoc @liquity/lib-base#ReadableLiquity.getNUEBalance} */
@@ -422,15 +422,15 @@ export class ReadableEthersLiquity implements ReadableLiquity {
     address ??= _requireAddress(this.connection);
     const { zeroStaking } = _getContracts(this.connection);
 
-    const [stakedZERO, collateralGain, zusdGain] = await Promise.all(
+    const [stakedZERO, collateralGain, zsusdGain] = await Promise.all(
       [
         zeroStaking.stakes(address, { ...overrides }),
         zeroStaking.getPendingSOVGain(address, { ...overrides }),
-        zeroStaking.getPendingZUSDGain(address, { ...overrides })
+        zeroStaking.getPendingZSUSDGain(address, { ...overrides })
       ].map(getBigNumber => getBigNumber.then(decimalify))
     );
 
-    return new ZEROStake(stakedZERO, collateralGain, zusdGain);
+    return new ZEROStake(stakedZERO, collateralGain, zsusdGain);
   }
 
   /** {@inheritDoc @liquity/lib-base#ReadableLiquity.getTotalStakedZERO} */
@@ -468,7 +468,7 @@ const mapBackendTroves = (troves: BackendTroves): TroveWithPendingRedistribution
         decimalify(trove.coll),
         decimalify(trove.debt),
         decimalify(trove.stake),
-        new Trove(decimalify(trove.snapshotSOV), decimalify(trove.snapshotZUSDDebt))
+        new Trove(decimalify(trove.snapshotSOV), decimalify(trove.snapshotZSUSDDebt))
       )
   );
 
@@ -567,15 +567,15 @@ class BlockPolledLiquityStoreBasedCache
     }
   }
 
-  getZUSDInStabilityPool(overrides?: EthersCallOverrides): Decimal | undefined {
+  getZSUSDInStabilityPool(overrides?: EthersCallOverrides): Decimal | undefined {
     if (this._blockHit(overrides)) {
-      return this._store.state.zusdInStabilityPool;
+      return this._store.state.zsusdInStabilityPool;
     }
   }
 
-  getZUSDBalance(address?: string, overrides?: EthersCallOverrides): Decimal | undefined {
+  getZSUSDBalance(address?: string, overrides?: EthersCallOverrides): Decimal | undefined {
     if (this._userHit(address, overrides)) {
-      return this._store.state.zusdBalance;
+      return this._store.state.zsusdBalance;
     }
   }
 

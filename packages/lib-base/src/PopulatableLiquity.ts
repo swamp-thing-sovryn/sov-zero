@@ -42,16 +42,16 @@ export interface PopulatedLiquityTransaction<
  * @remarks
  * The Liquity protocol fulfills redemptions by repaying the debt of Troves in ascending order of
  * their collateralization ratio, and taking a portion of their collateral in exchange. Due to the
- * {@link @liquity/lib-base#ZUSD_MINIMUM_DEBT | minimum debt} requirement that Troves must fulfill,
- * some ZUSD amounts are not possible to redeem exactly.
+ * {@link @liquity/lib-base#ZSUSD_MINIMUM_DEBT | minimum debt} requirement that Troves must fulfill,
+ * some ZSUSD amounts are not possible to redeem exactly.
  *
- * When {@link @liquity/lib-base#PopulatableLiquity.redeemZUSD | redeemZUSD()} is called with an
- * amount that can't be fully redeemed, the amount will be truncated (see the `redeemableZUSDAmount`
+ * When {@link @liquity/lib-base#PopulatableLiquity.redeemZSUSD | redeemZSUSD()} is called with an
+ * amount that can't be fully redeemed, the amount will be truncated (see the `redeemableZSUSDAmount`
  * property). When this happens, the redeemer can either redeem the truncated amount by sending the
  * transaction unchanged, or prepare a new transaction by
  * {@link @liquity/lib-base#PopulatedRedemption.increaseAmountByMinimumNetDebt | increasing the amount}
  * to the next lowest possible value, which is the sum of the truncated amount and
- * {@link @liquity/lib-base#ZUSD_MINIMUM_NET_DEBT}.
+ * {@link @liquity/lib-base#ZSUSD_MINIMUM_NET_DEBT}.
  *
  * @public
  */
@@ -60,13 +60,13 @@ export interface PopulatedRedemption<P = unknown, S = unknown, R = unknown>
     P,
     SentLiquityTransaction<S, LiquityReceipt<R, RedemptionDetails>>
   > {
-  /** Amount of ZUSD the redeemer is trying to redeem. */
-  readonly attemptedZUSDAmount: Decimal;
+  /** Amount of ZSUSD the redeemer is trying to redeem. */
+  readonly attemptedZSUSDAmount: Decimal;
 
-  /** Maximum amount of ZUSD that is currently redeemable from `attemptedZUSDAmount`. */
-  readonly redeemableZUSDAmount: Decimal;
+  /** Maximum amount of ZSUSD that is currently redeemable from `attemptedZSUSDAmount`. */
+  readonly redeemableZSUSDAmount: Decimal;
 
-  /** Whether `redeemableZUSDAmount` is less than `attemptedZUSDAmount`. */
+  /** Whether `redeemableZSUSDAmount` is less than `attemptedZSUSDAmount`. */
   readonly isTruncated: boolean;
 
   /**
@@ -158,8 +158,8 @@ export interface PopulatableLiquity<R = unknown, S = unknown, P = unknown>
     >
   >;
 
-  /** {@inheritDoc TransactableLiquity.borrowZUSD} */
-  borrowZUSD(
+  /** {@inheritDoc TransactableLiquity.borrowZSUSD} */
+  borrowZSUSD(
     amount: Decimalish,
     maxBorrowingRate?: Decimalish
   ): Promise<
@@ -169,8 +169,8 @@ export interface PopulatableLiquity<R = unknown, S = unknown, P = unknown>
     >
   >;
 
-  /** {@inheritDoc TransactableLiquity.repayZUSD} */
-  repayZUSD(
+  /** {@inheritDoc TransactableLiquity.repayZSUSD} */
+  repayZSUSD(
     amount: Decimalish
   ): Promise<
     PopulatedLiquityTransaction<
@@ -198,8 +198,8 @@ export interface PopulatableLiquity<R = unknown, S = unknown, P = unknown>
     PopulatedLiquityTransaction<P, SentLiquityTransaction<S, LiquityReceipt<R, LiquidationDetails>>>
   >;
 
-  /** {@inheritDoc TransactableLiquity.depositZUSDInStabilityPool} */
-  depositZUSDInStabilityPool(
+  /** {@inheritDoc TransactableLiquity.depositZSUSDInStabilityPool} */
+  depositZSUSDInStabilityPool(
     amount: Decimalish,
     frontendTag?: string
   ): Promise<
@@ -209,8 +209,8 @@ export interface PopulatableLiquity<R = unknown, S = unknown, P = unknown>
     >
   >;
 
-  /** {@inheritDoc TransactableLiquity.withdrawZUSDFromStabilityPool} */
-  withdrawZUSDFromStabilityPool(
+  /** {@inheritDoc TransactableLiquity.withdrawZSUSDFromStabilityPool} */
+  withdrawZSUSDFromStabilityPool(
     amount: Decimalish
   ): Promise<
     PopulatedLiquityTransaction<
@@ -235,8 +235,8 @@ export interface PopulatableLiquity<R = unknown, S = unknown, P = unknown>
     >
   >;
 
-  /** {@inheritDoc TransactableLiquity.sendZUSD} */
-  sendZUSD(
+  /** {@inheritDoc TransactableLiquity.sendZSUSD} */
+  sendZSUSD(
     toAddress: string,
     amount: Decimalish
   ): Promise<PopulatedLiquityTransaction<P, SentLiquityTransaction<S, LiquityReceipt<R, void>>>>;
@@ -247,8 +247,8 @@ export interface PopulatableLiquity<R = unknown, S = unknown, P = unknown>
     amount: Decimalish
   ): Promise<PopulatedLiquityTransaction<P, SentLiquityTransaction<S, LiquityReceipt<R, void>>>>;
 
-  /** {@inheritDoc TransactableLiquity.redeemZUSD} */
-  redeemZUSD(
+  /** {@inheritDoc TransactableLiquity.redeemZSUSD} */
+  redeemZSUSD(
     amount: Decimalish,
     maxRedemptionRate?: Decimalish
   ): Promise<PopulatedRedemption<P, S, R>>;

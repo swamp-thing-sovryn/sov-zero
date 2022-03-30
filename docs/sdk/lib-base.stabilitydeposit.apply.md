@@ -22,5 +22,5 @@ apply(change: StabilityDepositChange<Decimalish> | undefined): Decimal;
 
 [Decimal](./lib-base.decimal.md)
 
-The new deposited ZUSD amount.
+The new deposited ZSUSD amount.
 

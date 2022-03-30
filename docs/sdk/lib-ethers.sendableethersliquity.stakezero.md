@@ -25,5 +25,5 @@ Promise&lt;[SentEthersLiquityTransaction](./lib-ethers.sentethersliquitytransact
 
 ## Remarks
 
-As a side-effect, the transaction will also pay out an existing ZERO stake's [collateral gain](./lib-base.zerostake.collateralgain.md) and [ZUSD gain](./lib-base.zerostake.zusdgain.md)<!-- -->.
+As a side-effect, the transaction will also pay out an existing ZERO stake's [collateral gain](./lib-base.zerostake.collateralgain.md) and [ZSUSD gain](./lib-base.zerostake.zsusdgain.md)<!-- -->.
 

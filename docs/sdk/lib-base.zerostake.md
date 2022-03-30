@@ -25,7 +25,7 @@ The constructor for this class is marked as internal. Third-party code should no
 |  [collateralGain](./lib-base.zerostake.collateralgain.md) |  | [Decimal](./lib-base.decimal.md) | Collateral gain available to withdraw. |
 |  [isEmpty](./lib-base.zerostake.isempty.md) |  | boolean |  |
 |  [stakedZERO](./lib-base.zerostake.stakedzero.md) |  | [Decimal](./lib-base.decimal.md) | The amount of ZERO that's staked. |
-|  [zusdGain](./lib-base.zerostake.zusdgain.md) |  | [Decimal](./lib-base.decimal.md) | ZUSD gain available to withdraw. |
+|  [zsusdGain](./lib-base.zerostake.zsusdgain.md) |  | [Decimal](./lib-base.decimal.md) | ZSUSD gain available to withdraw. |
 
 ## Methods
 

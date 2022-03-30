@@ -19,7 +19,7 @@ import {
 
 const init = ({ stabilityDeposit }: LiquityStoreState) => ({
   originalDeposit: stabilityDeposit,
-  editedZUSD: stabilityDeposit.currentZUSD,
+  editedZSUSD: stabilityDeposit.currentZSUSD,
   changePending: false
 });
 
@@ -43,7 +43,7 @@ const reduce = (
   // console.log(state);
   // console.log(action);
 
-  const { originalDeposit, editedZUSD, changePending } = state;
+  const { originalDeposit, editedZSUSD, changePending } = state;
 
   switch (action.type) {
     case "startChange": {
@@ -55,10 +55,10 @@ const reduce = (
       return { ...state, changePending: false };
 
     case "setDeposit":
-      return { ...state, editedZUSD: Decimal.from(action.newValue) };
+      return { ...state, editedZSUSD: Decimal.from(action.newValue) };
 
     case "revert":
-      return { ...state, editedZUSD: originalDeposit.currentZUSD };
+      return { ...state, editedZSUSD: originalDeposit.currentZSUSD };
 
     case "updateStore": {
       const {
@@ -72,8 +72,8 @@ const reduce = (
       const newState = { ...state, originalDeposit: updatedDeposit };
 
       const changeCommitted =
-        !updatedDeposit.initialZUSD.eq(originalDeposit.initialZUSD) ||
-        updatedDeposit.currentZUSD.gt(originalDeposit.currentZUSD) ||
+        !updatedDeposit.initialZSUSD.eq(originalDeposit.initialZSUSD) ||
+        updatedDeposit.currentZSUSD.gt(originalDeposit.currentZSUSD) ||
         updatedDeposit.collateralGain.lt(originalDeposit.collateralGain) ||
         updatedDeposit.zeroReward.lt(originalDeposit.zeroReward);
 
@@ -83,7 +83,7 @@ const reduce = (
 
       return {
         ...newState,
-        editedZUSD: updatedDeposit.apply(originalDeposit.whatChanged(editedZUSD))
+        editedZSUSD: updatedDeposit.apply(originalDeposit.whatChanged(editedZSUSD))
       };
     }
   }
@@ -92,7 +92,7 @@ const reduce = (
 const transactionId = "stability-deposit";
 
 export const StabilityDepositManager: React.FC = () => {
-  const [{ originalDeposit, editedZUSD, changePending }, dispatch] = useLiquityReducer(reduce, init);
+  const [{ originalDeposit, editedZSUSD, changePending }, dispatch] = useLiquityReducer(reduce, init);
   const validationContext = useLiquitySelector(selectForStabilityDepositChangeValidation);
   const { dispatchEvent } = useStabilityView();
 
@@ -102,7 +102,7 @@ export const StabilityDepositManager: React.FC = () => {
 
   const [validChange, description] = validateStabilityDepositChange(
     originalDeposit,
-    editedZUSD,
+    editedZSUSD,
     validationContext
   );
 
@@ -126,7 +126,7 @@ export const StabilityDepositManager: React.FC = () => {
   return (
     <StabilityDepositEditor
       originalDeposit={originalDeposit}
-      editedZUSD={editedZUSD}
+      editedZSUSD={editedZSUSD}
       changePending={changePending}
       dispatch={dispatch}
     >

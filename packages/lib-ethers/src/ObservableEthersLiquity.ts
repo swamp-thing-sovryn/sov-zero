@@ -164,47 +164,47 @@ export class ObservableEthersLiquity implements ObservableLiquity {
     };
   }
 
-  watchZUSDInStabilityPool(
-    onZUSDInStabilityPoolChanged: (zusdInStabilityPool: Decimal) => void
+  watchZSUSDInStabilityPool(
+    onZSUSDInStabilityPoolChanged: (zsusdInStabilityPool: Decimal) => void
   ): () => void {
-    const { zusdToken, stabilityPool } = _getContracts(this._readable.connection);
-    const { Transfer } = zusdToken.filters;
+    const { zsusdToken, stabilityPool } = _getContracts(this._readable.connection);
+    const { Transfer } = zsusdToken.filters;
 
-    const transferZUSDFromStabilityPool = Transfer(stabilityPool.address);
-    const transferZUSDToStabilityPool = Transfer(null, stabilityPool.address);
+    const transferZSUSDFromStabilityPool = Transfer(stabilityPool.address);
+    const transferZSUSDToStabilityPool = Transfer(null, stabilityPool.address);
 
-    const stabilityPoolZUSDFilters = [transferZUSDFromStabilityPool, transferZUSDToStabilityPool];
+    const stabilityPoolZSUSDFilters = [transferZSUSDFromStabilityPool, transferZSUSDToStabilityPool];
 
-    const stabilityPoolZUSDListener = debounce((blockTag: number) => {
-      this._readable.getZUSDInStabilityPool({ blockTag }).then(onZUSDInStabilityPoolChanged);
+    const stabilityPoolZSUSDListener = debounce((blockTag: number) => {
+      this._readable.getZSUSDInStabilityPool({ blockTag }).then(onZSUSDInStabilityPoolChanged);
     });
 
-    stabilityPoolZUSDFilters.forEach(filter => zusdToken.on(filter, stabilityPoolZUSDListener));
+    stabilityPoolZSUSDFilters.forEach(filter => zsusdToken.on(filter, stabilityPoolZSUSDListener));
 
     return () =>
-      stabilityPoolZUSDFilters.forEach(filter =>
-        zusdToken.removeListener(filter, stabilityPoolZUSDListener)
+      stabilityPoolZSUSDFilters.forEach(filter =>
+        zsusdToken.removeListener(filter, stabilityPoolZSUSDListener)
       );
   }
 
-  watchZUSDBalance(onZUSDBalanceChanged: (balance: Decimal) => void, address?: string): () => void {
+  watchZSUSDBalance(onZSUSDBalanceChanged: (balance: Decimal) => void, address?: string): () => void {
     address ??= _requireAddress(this._readable.connection);
 
-    const { zusdToken } = _getContracts(this._readable.connection);
-    const { Transfer } = zusdToken.filters;
-    const transferZUSDFromUser = Transfer(address);
-    const transferZUSDToUser = Transfer(null, address);
+    const { zsusdToken } = _getContracts(this._readable.connection);
+    const { Transfer } = zsusdToken.filters;
+    const transferZSUSDFromUser = Transfer(address);
+    const transferZSUSDToUser = Transfer(null, address);
 
-    const zusdTransferFilters = [transferZUSDFromUser, transferZUSDToUser];
+    const zsusdTransferFilters = [transferZSUSDFromUser, transferZSUSDToUser];
 
-    const zusdTransferListener = debounce((blockTag: number) => {
-      this._readable.getZUSDBalance(address, { blockTag }).then(onZUSDBalanceChanged);
+    const zsusdTransferListener = debounce((blockTag: number) => {
+      this._readable.getZSUSDBalance(address, { blockTag }).then(onZSUSDBalanceChanged);
     });
 
-    zusdTransferFilters.forEach(filter => zusdToken.on(filter, zusdTransferListener));
+    zsusdTransferFilters.forEach(filter => zsusdToken.on(filter, zsusdTransferListener));
 
     return () =>
-      zusdTransferFilters.forEach(filter => zusdToken.removeListener(filter, zusdTransferListener));
+      zsusdTransferFilters.forEach(filter => zsusdToken.removeListener(filter, zsusdTransferListener));
   }
 
   watchNUEBalance(onNUEBalanceChanged: (balance: Decimal) => void, address?: string): () => void {
@@ -222,13 +222,13 @@ export class ObservableEthersLiquity implements ObservableLiquity {
 
     const nueTransferFilters = [transferNUEFromUser, transferNUEToUser];
 
-    const zusdTransferListener = debounce((blockTag: number) => {
+    const zsusdTransferListener = debounce((blockTag: number) => {
       this._readable.getNUEBalance(address, { blockTag }).then(onNUEBalanceChanged);
     });
 
-    nueTransferFilters.forEach(filter => nueToken.on(filter, zusdTransferListener));
+    nueTransferFilters.forEach(filter => nueToken.on(filter, zsusdTransferListener));
 
     return () =>
-      nueTransferFilters.forEach(filter => nueToken.removeListener(filter, zusdTransferListener));
+      nueTransferFilters.forEach(filter => nueToken.removeListener(filter, zsusdTransferListener));
   }
 }

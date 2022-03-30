@@ -8,7 +8,7 @@ import {
   Decimal,
   Trove,
   LiquityStoreState,
-  ZUSD_LIQUIDATION_RESERVE
+  ZSUSD_LIQUIDATION_RESERVE
 } from "@liquity/lib-base";
 import { useLiquitySelector } from "@liquity/lib-react";
 
@@ -73,7 +73,7 @@ export const TroveEditor: React.FC<TroveEditorProps> = ({
           <StaticRow
             label="Liquidation Reserve"
             inputId="trove-liquidation-reserve"
-            amount={`${ZUSD_LIQUIDATION_RESERVE}`}
+            amount={`${ZSUSD_LIQUIDATION_RESERVE}`}
             unit={borrowedToken}
             infoIcon={
               <InfoIcon

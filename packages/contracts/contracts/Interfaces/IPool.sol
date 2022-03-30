@@ -6,7 +6,7 @@ pragma solidity 0.6.11;
 interface IPool {
     // --- Events ---
 
-    event ZUSDBalanceUpdated(uint _newBalance);
+    event ZSUSDBalanceUpdated(uint _newBalance);
     event SOVTokenAddressChanged(address _sovTokenAddress);
     event ActivePoolAddressChanged(address _newActivePoolAddress);
     event DefaultPoolAddressChanged(address _newDefaultPoolAddress);
@@ -18,14 +18,14 @@ interface IPool {
     /// @return SOV pool balance
     function getSOV() external view returns (uint);
 
-    /// @return ZUSD debt pool balance
-    function getZUSDDebt() external view returns (uint);
+    /// @return ZSUSD debt pool balance
+    function getZSUSDDebt() external view returns (uint);
 
-    /// @notice Increases ZUSD debt of the pool.
-    /// @param _amount ZUSD amount to add to the pool debt
-    function increaseZUSDDebt(uint _amount) external;
+    /// @notice Increases ZSUSD debt of the pool.
+    /// @param _amount ZSUSD amount to add to the pool debt
+    function increaseZSUSDDebt(uint _amount) external;
 
-    /// @notice Decreases ZUSD debt of the pool.
-    /// @param _amount ZUSD amount to subtract to the pool debt
-    function decreaseZUSDDebt(uint _amount) external;
+    /// @notice Decreases ZSUSD debt of the pool.
+    /// @param _amount ZSUSD amount to subtract to the pool debt
+    function decreaseZSUSDDebt(uint _amount) external;
 }

@@ -18,41 +18,41 @@ import { EditableRow, StaticRow } from "../Trove/Editor";
 import { LoadingOverlay } from "../LoadingOverlay";
 import { InfoIcon } from "../InfoIcon";
 
-const select = ({ zusdBalance, zusdInStabilityPool }: LiquityStoreState) => ({
-  zusdBalance,
-  zusdInStabilityPool
+const select = ({ zsusdBalance, zsusdInStabilityPool }: LiquityStoreState) => ({
+  zsusdBalance,
+  zsusdInStabilityPool
 });
 
 type StabilityDepositEditorProps = {
   originalDeposit: StabilityDeposit;
-  editedZUSD: Decimal;
+  editedZSUSD: Decimal;
   changePending: boolean;
   dispatch: (action: { type: "setDeposit"; newValue: Decimalish } | { type: "revert" }) => void;
 };
 
 export const StabilityDepositEditor: React.FC<StabilityDepositEditorProps> = ({
   originalDeposit,
-  editedZUSD,
+  editedZSUSD,
   changePending,
   dispatch,
   children
 }) => {
-  const { zusdBalance, zusdInStabilityPool } = useLiquitySelector(select);
+  const { zsusdBalance, zsusdInStabilityPool } = useLiquitySelector(select);
   const editingState = useState<string>();
 
-  const edited = !editedZUSD.eq(originalDeposit.currentZUSD);
+  const edited = !editedZSUSD.eq(originalDeposit.currentZSUSD);
 
-  const maxAmount = originalDeposit.currentZUSD.add(zusdBalance);
-  const maxedOut = editedZUSD.eq(maxAmount);
+  const maxAmount = originalDeposit.currentZSUSD.add(zsusdBalance);
+  const maxedOut = editedZSUSD.eq(maxAmount);
 
-  const zusdInStabilityPoolAfterChange = zusdInStabilityPool
-    .sub(originalDeposit.currentZUSD)
-    .add(editedZUSD);
+  const zsusdInStabilityPoolAfterChange = zsusdInStabilityPool
+    .sub(originalDeposit.currentZSUSD)
+    .add(editedZSUSD);
 
-  const originalPoolShare = originalDeposit.currentZUSD.mulDiv(100, zusdInStabilityPool);
-  const newPoolShare = editedZUSD.mulDiv(100, zusdInStabilityPoolAfterChange);
+  const originalPoolShare = originalDeposit.currentZSUSD.mulDiv(100, zsusdInStabilityPool);
+  const newPoolShare = editedZSUSD.mulDiv(100, zsusdInStabilityPoolAfterChange);
   const poolShareChange =
-    originalDeposit.currentZUSD.nonZero &&
+    originalDeposit.currentZSUSD.nonZero &&
     Difference.between(newPoolShare, originalPoolShare).nonZero;
 
   return (
@@ -74,12 +74,12 @@ export const StabilityDepositEditor: React.FC<StabilityDepositEditorProps> = ({
         <EditableRow
           label="Deposit"
           inputId="deposit-zero"
-          amount={editedZUSD.prettify()}
+          amount={editedZSUSD.prettify()}
           maxAmount={maxAmount.toString()}
           maxedOut={maxedOut}
           unit={COIN}
           {...{ editingState }}
-          editedAmount={editedZUSD.toString(2)}
+          editedAmount={editedZSUSD.toString(2)}
           setEditedAmount={newValue => dispatch({ type: "setDeposit", newValue })}
         />
 

@@ -16,7 +16,7 @@
           "type": "uint256"
         }
       ],
-      "name": "zusdBurn",
+      "name": "zsusdBurn",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -34,7 +34,7 @@
           "type": "uint256"
         }
       ],
-      "name": "zusdMint",
+      "name": "zsusdMint",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -57,7 +57,7 @@
           "type": "uint256"
         }
       ],
-      "name": "zusdReturnFromPool",
+      "name": "zsusdReturnFromPool",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -80,7 +80,7 @@
           "type": "uint256"
         }
       ],
-      "name": "zusdSendToPool",
+      "name": "zsusdSendToPool",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"

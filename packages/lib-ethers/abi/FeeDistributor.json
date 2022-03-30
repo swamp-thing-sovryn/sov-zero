@@ -115,11 +115,11 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "_zusdDistributedAmount",
+        "name": "_zsusdDistributedAmount",
         "type": "uint256"
       }
     ],
-    "name": "ZUSDDistributed",
+    "name": "ZSUSDDistributed",
     "type": "event"
   },
   {
@@ -128,11 +128,11 @@
       {
         "indexed": false,
         "internalType": "address",
-        "name": "_zusdTokenAddress",
+        "name": "_zsusdTokenAddress",
         "type": "address"
       }
     ],
-    "name": "ZUSDTokenAddressChanged",
+    "name": "ZSUSDTokenAddressChanged",
     "type": "event"
   },
   {
@@ -254,7 +254,7 @@
       },
       {
         "internalType": "address",
-        "name": "_zusdTokenAddress",
+        "name": "_zsusdTokenAddress",
         "type": "address"
       },
       {
@@ -361,10 +361,10 @@
   },
   {
     "inputs": [],
-    "name": "zusdToken",
+    "name": "zsusdToken",
     "outputs": [
       {
-        "internalType": "contract IZUSDToken",
+        "internalType": "contract IZSUSDToken",
         "name": "",
         "type": "address"
       }

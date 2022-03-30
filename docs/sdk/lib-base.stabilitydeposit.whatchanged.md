@@ -4,19 +4,19 @@
 
 ## StabilityDeposit.whatChanged() method
 
-Calculate the difference between the `currentZUSD` in this Stability Deposit and `thatZUSD`<!-- -->.
+Calculate the difference between the `currentZSUSD` in this Stability Deposit and `thatZSUSD`<!-- -->.
 
 <b>Signature:</b>
 
 ```typescript
-whatChanged(thatZUSD: Decimalish): StabilityDepositChange<Decimal> | undefined;
+whatChanged(thatZSUSD: Decimalish): StabilityDepositChange<Decimal> | undefined;
 ```
 
 ## Parameters
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  thatZUSD | [Decimalish](./lib-base.decimalish.md) |  |
+|  thatZSUSD | [Decimalish](./lib-base.decimalish.md) |  |
 
 <b>Returns:</b>
 

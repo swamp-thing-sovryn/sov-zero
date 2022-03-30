@@ -11,7 +11,7 @@ import DefaultPool from "../../contracts/artifacts/contracts/DefaultPool.sol/Def
 import GasPool from "../../contracts/artifacts/contracts/GasPool.sol/GasPool.json";
 import HintHelpers from "../../contracts/artifacts/contracts/HintHelpers.sol/HintHelpers.json";
 import IERC20 from "../../contracts/artifacts/contracts/Dependencies/IERC20.sol/IERC20.json";
-import ZUSDToken from "../../contracts/artifacts/contracts/ZUSDToken.sol/ZUSDToken.json";
+import ZSUSDToken from "../../contracts/artifacts/contracts/ZSUSDToken.sol/ZSUSDToken.json";
 import ZEROStaking from "../../contracts/artifacts/contracts/ZERO/ZEROStaking.sol/ZEROStaking.json";
 import ZEROToken from "../../contracts/artifacts/contracts/ZERO/ZEROToken.sol/ZEROToken.json";
 import MultiTroveGetter from "../../contracts/artifacts/contracts/MultiTroveGetter.sol/MultiTroveGetter.json";
@@ -153,7 +153,7 @@ const contractArtifacts = [
   GasPool,
   HintHelpers,
   IERC20,
-  ZUSDToken,
+  ZSUSDToken,
   ZEROStaking,
   ZEROToken,
   MultiTroveGetter,

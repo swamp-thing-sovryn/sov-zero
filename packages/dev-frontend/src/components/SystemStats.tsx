@@ -8,20 +8,20 @@ import { useLiquity } from "../hooks/LiquityContext";
 import { COIN, GT } from "../strings";
 import { Statistic } from "./Statistic";
 
-const selectBalances = ({ accountBalance, zusdBalance, zeroBalance }: LiquityStoreState) => ({
+const selectBalances = ({ accountBalance, zsusdBalance, zeroBalance }: LiquityStoreState) => ({
   accountBalance,
-  zusdBalance,
+  zsusdBalance,
   zeroBalance
 });
 
 const Balances: React.FC = () => {
-  const { accountBalance, zusdBalance, zeroBalance } = useLiquitySelector(selectBalances);
+  const { accountBalance, zsusdBalance, zeroBalance } = useLiquitySelector(selectBalances);
 
   return (
     <Box sx={{ mb: 3 }}>
       <Heading>My Account Balances</Heading>
       <Statistic name="RBTC"> {accountBalance.prettify(4)}</Statistic>
-      <Statistic name={COIN}> {zusdBalance.prettify()}</Statistic>
+      <Statistic name={COIN}> {zsusdBalance.prettify()}</Statistic>
       <Statistic name={GT}>{zeroBalance.prettify()}</Statistic>
     </Box>
   );
@@ -43,7 +43,7 @@ const select = ({
   numberOfTroves,
   price,
   total,
-  zusdInStabilityPool,
+  zsusdInStabilityPool,
   borrowingRate,
   redemptionRate,
   totalStakedZERO,
@@ -52,7 +52,7 @@ const select = ({
   numberOfTroves,
   price,
   total,
-  zusdInStabilityPool,
+  zsusdInStabilityPool,
   borrowingRate,
   redemptionRate,
   totalStakedZERO,
@@ -69,15 +69,15 @@ export const SystemStats: React.FC<SystemStatsProps> = ({ variant = "info", show
   const {
     numberOfTroves,
     price,
-    zusdInStabilityPool,
+    zsusdInStabilityPool,
     total,
     borrowingRate,
     totalStakedZERO,
     kickbackRate
   } = useLiquitySelector(select);
 
-  const zusdInStabilityPoolPct =
-    total.debt.nonZero && new Percent(zusdInStabilityPool.div(total.debt));
+  const zsusdInStabilityPoolPct =
+    total.debt.nonZero && new Percent(zsusdInStabilityPool.div(total.debt));
   const totalCollateralRatioPct = new Percent(total.collateralRatio(price));
   const borrowingFeePct = new Percent(borrowingRate);
   const kickbackRatePct = frontendTag === AddressZero ? "100" : kickbackRate?.mul(100).prettify();
@@ -94,7 +94,7 @@ export const SystemStats: React.FC<SystemStatsProps> = ({ variant = "info", show
 
       <Statistic
         name="Borrowing Fee"
-        tooltip="The Borrowing Fee is a one-off fee charged as a percentage of the borrowed amount (in ZUSD) and is part of a Line of Credit's debt. The fee varies between 0.5% and 5% depending on ZUSD redemption volumes."
+        tooltip="The Borrowing Fee is a one-off fee charged as a percentage of the borrowed amount (in ZSUSD) and is part of a Line of Credit's debt. The fee varies between 0.5% and 5% depending on ZSUSD redemption volumes."
       >
         {borrowingFeePct.toString(2)}
       </Statistic>
@@ -111,17 +111,17 @@ export const SystemStats: React.FC<SystemStatsProps> = ({ variant = "info", show
       <Statistic name="Credit Lines" tooltip="The total number of active Lines of Credit in the system.">
         {Decimal.from(numberOfTroves).prettify(0)}
       </Statistic>
-      <Statistic name="ZUSD supply" tooltip="The total ZUSD minted by the Zero Protocol.">
+      <Statistic name="ZSUSD supply" tooltip="The total ZSUSD minted by the Zero Protocol.">
         {total.debt.shorten()}
       </Statistic>
-      {zusdInStabilityPoolPct && (
+      {zsusdInStabilityPoolPct && (
         <Statistic
-          name="ZUSD in Stability Pool"
-          tooltip="The total ZUSD currently held in the Stability Pool, expressed as an amount and a fraction of the ZUSD supply.
+          name="ZSUSD in Stability Pool"
+          tooltip="The total ZSUSD currently held in the Stability Pool, expressed as an amount and a fraction of the ZSUSD supply.
         "
         >
-          {zusdInStabilityPool.shorten()}
-          <Text sx={{ fontSize: 1 }}>&nbsp;({zusdInStabilityPoolPct.toString(1)})</Text>
+          {zsusdInStabilityPool.shorten()}
+          <Text sx={{ fontSize: 1 }}>&nbsp;({zsusdInStabilityPoolPct.toString(1)})</Text>
         </Statistic>
       )}
       <Statistic

@@ -5,9 +5,9 @@ pragma solidity 0.6.11;
 import "./IPool.sol";
 
 /**
- * The Active Pool holds the SOV collateral and ZUSD debt (but not ZUSD tokens) for all active troves.
+ * The Active Pool holds the SOV collateral and ZSUSD debt (but not ZSUSD tokens) for all active troves.
  *
- * When a trove is liquidated, it's SOV and ZUSD debt are transferred from the Active Pool, to either the
+ * When a trove is liquidated, it's SOV and ZSUSD debt are transferred from the Active Pool, to either the
  * Stability Pool, the Default Pool, or both, depending on the liquidation conditions.
  *
  */
@@ -16,7 +16,7 @@ interface IActivePool is IPool {
     event SOVTokenAddressChanged(address _sovTokenAddress);
     event BorrowerOperationsAddressChanged(address _newBorrowerOperationsAddress);
     event TroveManagerAddressChanged(address _newTroveManagerAddress);
-    event ActivePoolZUSDDebtUpdated(uint _ZUSDDebt);
+    event ActivePoolZSUSDDebtUpdated(uint _ZSUSDDebt);
 
     // --- Functions ---
 

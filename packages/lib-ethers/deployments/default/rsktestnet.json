@@ -28,7 +28,7 @@
     "gasPool": "0x795201D295bA80AaAf4B12a4d8cd409b1ef77A73",
     "liquityBaseParams": "0x44DA3C44cBb167b415CEeE9741F860846138C706",
     "feeDistributor": "0xAD3C8798150c90e276bF92177f0b26D7815a0f43",
-    "zusdToken": "0xF13ab0797bceE308634d0E7e13D1e45c5647c73C",
+    "zsusdToken": "0xF13ab0797bceE308634d0E7e13D1e45c5647c73C",
     "zeroToken": "0xAc19A9012b131c82Ce8D3bD59ec60ba05eef7b0B",
     "multiTroveGetter": "0x6A6E96F60CDd8d23Ed36c8F18B1822b74cbF3F25"
   },

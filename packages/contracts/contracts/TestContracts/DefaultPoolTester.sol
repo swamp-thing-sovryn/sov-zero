@@ -6,7 +6,7 @@ import "../DefaultPool.sol";
 
 contract DefaultPoolTester is DefaultPool {
     
-    function unprotectedIncreaseZUSDDebt(uint _amount) external {
-        ZUSDDebt  = ZUSDDebt.add(_amount);
+    function unprotectedIncreaseZSUSDDebt(uint _amount) external {
+        ZSUSDDebt  = ZSUSDDebt.add(_amount);
     }
 }

@@ -2,7 +2,7 @@
 const SortedTroves = artifacts.require("./SortedTroves.sol")
 const TroveManager = artifacts.require("./TroveManager.sol")
 const PriceFeed = artifacts.require("./PriceFeed.sol")
-const ZUSDToken = artifacts.require("./ZUSDToken.sol")
+const ZSUSDToken = artifacts.require("./ZSUSDToken.sol")
 const ActivePool = artifacts.require("./ActivePool.sol");
 const DefaultPool = artifacts.require("./DefaultPool.sol");
 const StabilityPool = artifacts.require("./StabilityPool.sol")
@@ -20,7 +20,7 @@ const DefaultPoolTester = artifacts.require("./DefaultPoolTester.sol")
 const LiquityMathTester = artifacts.require("./LiquityMathTester.sol")
 const BorrowerOperationsTester = artifacts.require("./BorrowerOperationsTester.sol")
 const TroveManagerTester = artifacts.require("./TroveManagerTester.sol")
-const ZUSDTokenTester = artifacts.require("./ZUSDTokenTester.sol")
+const ZSUSDTokenTester = artifacts.require("./ZSUSDTokenTester.sol")
 
 const { TestHelper: th } = require("../utils/testHelpers.js")
 
@@ -30,7 +30,7 @@ const ARBITRARY_ADDRESS = "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"   // plac
 const coreContractABIs = [
   BorrowerOperations,
   PriceFeed,
-  ZUSDToken,
+  ZSUSDToken,
   SortedTroves,
   TroveManager,
   ActivePool,
@@ -53,7 +53,7 @@ const TesterContractABIs  = [
   LiquityMathTester,
   BorrowerOperationsTester,
   TroveManagerTester,
-  ZUSDTokenTester,
+  ZSUSDTokenTester,
 ]
 
 const getGasFromContractDeployment = async (contractObject, name) => {

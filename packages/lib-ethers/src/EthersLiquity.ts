@@ -204,14 +204,14 @@ export class EthersLiquity implements ReadableEthersLiquity, TransactableLiquity
     return this._readable.getRemainingStabilityPoolZEROReward(overrides);
   }
 
-  /** {@inheritDoc @liquity/lib-base#ReadableLiquity.getZUSDInStabilityPool} */
-  getZUSDInStabilityPool(overrides?: EthersCallOverrides): Promise<Decimal> {
-    return this._readable.getZUSDInStabilityPool(overrides);
+  /** {@inheritDoc @liquity/lib-base#ReadableLiquity.getZSUSDInStabilityPool} */
+  getZSUSDInStabilityPool(overrides?: EthersCallOverrides): Promise<Decimal> {
+    return this._readable.getZSUSDInStabilityPool(overrides);
   }
 
-  /** {@inheritDoc @liquity/lib-base#ReadableLiquity.getZUSDBalance} */
-  getZUSDBalance(address?: string, overrides?: EthersCallOverrides): Promise<Decimal> {
-    return this._readable.getZUSDBalance(address, overrides);
+  /** {@inheritDoc @liquity/lib-base#ReadableLiquity.getZSUSDBalance} */
+  getZSUSDBalance(address?: string, overrides?: EthersCallOverrides): Promise<Decimal> {
+    return this._readable.getZSUSDBalance(address, overrides);
   }
 
   /** {@inheritDoc @liquity/lib-base#ReadableLiquity.getNUEBalance} */
@@ -334,30 +334,30 @@ export class EthersLiquity implements ReadableEthersLiquity, TransactableLiquity
   }
 
   /**
-   * {@inheritDoc @liquity/lib-base#TransactableLiquity.borrowZUSD}
+   * {@inheritDoc @liquity/lib-base#TransactableLiquity.borrowZSUSD}
    *
    * @throws
    * Throws {@link EthersTransactionFailedError} in case of transaction failure.
    */
-  borrowZUSD(
+  borrowZSUSD(
     amount: Decimalish,
     maxBorrowingRate?: Decimalish,
     overrides?: EthersTransactionOverrides
   ): Promise<TroveAdjustmentDetails> {
-    return this.send.borrowZUSD(amount, maxBorrowingRate, overrides).then(waitForSuccess);
+    return this.send.borrowZSUSD(amount, maxBorrowingRate, overrides).then(waitForSuccess);
   }
 
   /**
-   * {@inheritDoc @liquity/lib-base#TransactableLiquity.repayZUSD}
+   * {@inheritDoc @liquity/lib-base#TransactableLiquity.repayZSUSD}
    *
    * @throws
    * Throws {@link EthersTransactionFailedError} in case of transaction failure.
    */
-  repayZUSD(
+  repayZSUSD(
     amount: Decimalish,
     overrides?: EthersTransactionOverrides
   ): Promise<TroveAdjustmentDetails> {
-    return this.send.repayZUSD(amount, overrides).then(waitForSuccess);
+    return this.send.repayZSUSD(amount, overrides).then(waitForSuccess);
   }
 
   /** @internal */
@@ -392,30 +392,30 @@ export class EthersLiquity implements ReadableEthersLiquity, TransactableLiquity
   }
 
   /**
-   * {@inheritDoc @liquity/lib-base#TransactableLiquity.depositZUSDInStabilityPool}
+   * {@inheritDoc @liquity/lib-base#TransactableLiquity.depositZSUSDInStabilityPool}
    *
    * @throws
    * Throws {@link EthersTransactionFailedError} in case of transaction failure.
    */
-  depositZUSDInStabilityPool(
+  depositZSUSDInStabilityPool(
     amount: Decimalish,
     frontendTag?: string,
     overrides?: EthersTransactionOverrides
   ): Promise<StabilityDepositChangeDetails> {
-    return this.send.depositZUSDInStabilityPool(amount, frontendTag, overrides).then(waitForSuccess);
+    return this.send.depositZSUSDInStabilityPool(amount, frontendTag, overrides).then(waitForSuccess);
   }
 
   /**
-   * {@inheritDoc @liquity/lib-base#TransactableLiquity.withdrawZUSDFromStabilityPool}
+   * {@inheritDoc @liquity/lib-base#TransactableLiquity.withdrawZSUSDFromStabilityPool}
    *
    * @throws
    * Throws {@link EthersTransactionFailedError} in case of transaction failure.
    */
-  withdrawZUSDFromStabilityPool(
+  withdrawZSUSDFromStabilityPool(
     amount: Decimalish,
     overrides?: EthersTransactionOverrides
   ): Promise<StabilityDepositChangeDetails> {
-    return this.send.withdrawZUSDFromStabilityPool(amount, overrides).then(waitForSuccess);
+    return this.send.withdrawZSUSDFromStabilityPool(amount, overrides).then(waitForSuccess);
   }
 
   /**
@@ -443,17 +443,17 @@ export class EthersLiquity implements ReadableEthersLiquity, TransactableLiquity
   }
 
   /**
-   * {@inheritDoc @liquity/lib-base#TransactableLiquity.sendZUSD}
+   * {@inheritDoc @liquity/lib-base#TransactableLiquity.sendZSUSD}
    *
    * @throws
    * Throws {@link EthersTransactionFailedError} in case of transaction failure.
    */
-  sendZUSD(
+  sendZSUSD(
     toAddress: string,
     amount: Decimalish,
     overrides?: EthersTransactionOverrides
   ): Promise<void> {
-    return this.send.sendZUSD(toAddress, amount, overrides).then(waitForSuccess);
+    return this.send.sendZSUSD(toAddress, amount, overrides).then(waitForSuccess);
   }
 
   /**
@@ -471,17 +471,17 @@ export class EthersLiquity implements ReadableEthersLiquity, TransactableLiquity
   }
 
   /**
-   * {@inheritDoc @liquity/lib-base#TransactableLiquity.redeemZUSD}
+   * {@inheritDoc @liquity/lib-base#TransactableLiquity.redeemZSUSD}
    *
    * @throws
    * Throws {@link EthersTransactionFailedError} in case of transaction failure.
    */
-  redeemZUSD(
+  redeemZSUSD(
     amount: Decimalish,
     maxRedemptionRate?: Decimalish,
     overrides?: EthersTransactionOverrides
   ): Promise<RedemptionDetails> {
-    return this.send.redeemZUSD(amount, maxRedemptionRate, overrides).then(waitForSuccess);
+    return this.send.redeemZSUSD(amount, maxRedemptionRate, overrides).then(waitForSuccess);
   }
 
   /**

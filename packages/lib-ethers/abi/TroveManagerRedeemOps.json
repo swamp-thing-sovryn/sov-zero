@@ -24,7 +24,7 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "_L_ZUSDDebt",
+        "name": "_L_ZSUSDDebt",
         "type": "uint256"
       }
     ],
@@ -68,7 +68,7 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "_ZUSDGasCompensation",
+        "name": "_ZSUSDGasCompensation",
         "type": "uint256"
       }
     ],
@@ -100,13 +100,13 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "_attemptedZUSDAmount",
+        "name": "_attemptedZSUSDAmount",
         "type": "uint256"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "_actualZUSDAmount",
+        "name": "_actualZSUSDAmount",
         "type": "uint256"
       },
       {
@@ -219,7 +219,7 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "_L_ZUSDDebt",
+        "name": "_L_ZSUSDDebt",
         "type": "uint256"
       }
     ],
@@ -317,7 +317,7 @@
   },
   {
     "inputs": [],
-    "name": "L_ZUSDDebt",
+    "name": "L_ZSUSDDebt",
     "outputs": [
       {
         "internalType": "uint256",
@@ -440,7 +440,7 @@
   },
   {
     "inputs": [],
-    "name": "ZUSD_GAS_COMPENSATION",
+    "name": "ZSUSD_GAS_COMPENSATION",
     "outputs": [
       {
         "internalType": "uint256",
@@ -515,7 +515,7 @@
         "type": "address"
       }
     ],
-    "name": "_getPendingZUSDDebtReward",
+    "name": "_getPendingZSUSDDebtReward",
     "outputs": [
       {
         "internalType": "uint256",
@@ -599,10 +599,10 @@
   },
   {
     "inputs": [],
-    "name": "_zusdToken",
+    "name": "_zsusdToken",
     "outputs": [
       {
-        "internalType": "contract IZUSDToken",
+        "internalType": "contract IZSUSDToken",
         "name": "",
         "type": "address"
       }
@@ -742,7 +742,7 @@
   },
   {
     "inputs": [],
-    "name": "lastZUSDDebtError_Redistribution",
+    "name": "lastZSUSDDebtError_Redistribution",
     "outputs": [
       {
         "internalType": "uint256",
@@ -783,7 +783,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_ZUSDamount",
+        "name": "_ZSUSDamount",
         "type": "uint256"
       },
       {
@@ -839,7 +839,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "ZUSDDebt",
+        "name": "ZSUSDDebt",
         "type": "uint256"
       }
     ],

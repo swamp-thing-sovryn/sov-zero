@@ -4,7 +4,7 @@ pragma solidity 0.6.11;
 
 import "./Interfaces/IBorrowerOperations.sol";
 import "./Interfaces/ITroveManager.sol";
-import "./Interfaces/IZUSDToken.sol";
+import "./Interfaces/IZSUSDToken.sol";
 import "./Interfaces/ICollSurplusPool.sol";
 import "./Interfaces/ISortedTroves.sol";
 import "./Interfaces/IZEROStaking.sol";
@@ -31,7 +31,7 @@ contract BorrowerOperations is LiquityBase, BorrowerOperationsStorage, CheckCont
         uint oldICR;
         uint newICR;
         uint newTCR;
-        uint ZUSDFee;
+        uint ZSUSDFee;
         uint newDebt;
         uint newColl;
         uint stake;
@@ -41,7 +41,7 @@ contract BorrowerOperations is LiquityBase, BorrowerOperationsStorage, CheckCont
 
     struct LocalVariables_openTrove {
         uint price;
-        uint ZUSDFee;
+        uint ZSUSDFee;
         uint netDebt;
         uint compositeDebt;
         uint ICR;
@@ -53,7 +53,7 @@ contract BorrowerOperations is LiquityBase, BorrowerOperationsStorage, CheckCont
     struct ContractsCache {
         ITroveManager troveManager;
         IActivePool activePool;
-        IZUSDToken zusdToken;
+        IZSUSDToken zsusdToken;
     }
 
     enum BorrowerOperation {
@@ -72,12 +72,12 @@ contract BorrowerOperations is LiquityBase, BorrowerOperationsStorage, CheckCont
     event CollSurplusPoolAddressChanged(address _collSurplusPoolAddress);
     event PriceFeedAddressChanged(address  _newPriceFeedAddress);
     event SortedTrovesAddressChanged(address _sortedTrovesAddress);
-    event ZUSDTokenAddressChanged(address _zusdTokenAddress);
+    event ZSUSDTokenAddressChanged(address _zsusdTokenAddress);
     event ZEROStakingAddressChanged(address _zeroStakingAddress);
 
     event TroveCreated(address indexed _borrower, uint arrayIndex);
     event TroveUpdated(address indexed _borrower, uint _debt, uint _coll, uint stake, BorrowerOperation operation);
-    event ZUSDBorrowingFeePaid(address indexed _borrower, uint _ZUSDFee);
+    event ZSUSDBorrowingFeePaid(address indexed _borrower, uint _ZSUSDFee);
     
     // --- Dependency setters ---
 
@@ -93,14 +93,14 @@ contract BorrowerOperations is LiquityBase, BorrowerOperationsStorage, CheckCont
         address _collSurplusPoolAddress,
         address _priceFeedAddress,
         address _sortedTrovesAddress,
-        address _zusdTokenAddress,
+        address _zsusdTokenAddress,
         address _zeroStakingAddress
     )
         external
         override
         onlyOwner
     {
-        // This makes impossible to open a trove with zero withdrawn ZUSD
+        // This makes impossible to open a trove with zero withdrawn ZSUSD
         assert(MIN_NET_DEBT > 0);
 
         checkContract(_sovTokenAddress);
@@ -114,7 +114,7 @@ contract BorrowerOperations is LiquityBase, BorrowerOperationsStorage, CheckCont
         checkContract(_collSurplusPoolAddress);
         checkContract(_priceFeedAddress);
         checkContract(_sortedTrovesAddress);
-        checkContract(_zusdTokenAddress);
+        checkContract(_zsusdTokenAddress);
         checkContract(_zeroStakingAddress);
 
         sovToken = IERC20(_sovTokenAddress);
@@ -128,7 +128,7 @@ contract BorrowerOperations is LiquityBase, BorrowerOperationsStorage, CheckCont
         collSurplusPool = ICollSurplusPool(_collSurplusPoolAddress);
         priceFeed = IPriceFeed(_priceFeedAddress);
         sortedTroves = ISortedTroves(_sortedTrovesAddress);
-        zusdToken = IZUSDToken(_zusdTokenAddress);
+        zsusdToken = IZSUSDToken(_zsusdTokenAddress);
         zeroStakingAddress = _zeroStakingAddress;
         zeroStaking = IZEROStaking(_zeroStakingAddress);
 
@@ -142,7 +142,7 @@ contract BorrowerOperations is LiquityBase, BorrowerOperationsStorage, CheckCont
         emit CollSurplusPoolAddressChanged(_collSurplusPoolAddress);
         emit PriceFeedAddressChanged(_priceFeedAddress);
         emit SortedTrovesAddressChanged(_sortedTrovesAddress);
-        emit ZUSDTokenAddressChanged(_zusdTokenAddress);
+        emit ZSUSDTokenAddressChanged(_zsusdTokenAddress);
         emit ZEROStakingAddressChanged(_zeroStakingAddress);
     }
 
@@ -161,17 +161,17 @@ contract BorrowerOperations is LiquityBase, BorrowerOperationsStorage, CheckCont
         require(success, string(returndata));
     }
 
-    function openTroveFrom(address _owner, uint _maxFeePercentage, uint _ZUSDAmount, address _upperHint, address _lowerHint, uint _amount) external override {
-        _openTrove(_maxFeePercentage, _ZUSDAmount, _upperHint, _lowerHint, _owner, _amount, _owner);
+    function openTroveFrom(address _owner, uint _maxFeePercentage, uint _ZSUSDAmount, address _upperHint, address _lowerHint, uint _amount) external override {
+        _openTrove(_maxFeePercentage, _ZSUSDAmount, _upperHint, _lowerHint, _owner, _amount, _owner);
     }
 
-    function openTrove(uint _maxFeePercentage, uint _ZUSDAmount, address _upperHint, address _lowerHint, uint _amount) external override {
-        _openTrove(_maxFeePercentage, _ZUSDAmount, _upperHint, _lowerHint, msg.sender, _amount, msg.sender);
+    function openTrove(uint _maxFeePercentage, uint _ZSUSDAmount, address _upperHint, address _lowerHint, uint _amount) external override {
+        _openTrove(_maxFeePercentage, _ZSUSDAmount, _upperHint, _lowerHint, msg.sender, _amount, msg.sender);
     }
 
     // --- Borrower Trove Operations ---
-    function _openTrove(uint _maxFeePercentage, uint _ZUSDAmount, address _upperHint, address _lowerHint, address _sender, uint256 value, address _tokensRecipient) internal {
-        ContractsCache memory contractsCache = ContractsCache(troveManager, activePool, zusdToken);
+    function _openTrove(uint _maxFeePercentage, uint _ZSUSDAmount, address _upperHint, address _lowerHint, address _sender, uint256 value, address _tokensRecipient) internal {
+        ContractsCache memory contractsCache = ContractsCache(troveManager, activePool, zsusdToken);
         LocalVariables_openTrove memory vars;
 
         vars.price = priceFeed.fetchPrice();
@@ -180,16 +180,16 @@ contract BorrowerOperations is LiquityBase, BorrowerOperationsStorage, CheckCont
         _requireValidMaxFeePercentage(_maxFeePercentage, isRecoveryMode);
         _requireTroveisNotActive(contractsCache.troveManager, _sender);
 
-        vars.ZUSDFee;
-        vars.netDebt = _ZUSDAmount;
+        vars.ZSUSDFee;
+        vars.netDebt = _ZSUSDAmount;
 
         if (!isRecoveryMode) {
-            vars.ZUSDFee = _triggerBorrowingFee(contractsCache.troveManager, contractsCache.zusdToken, _ZUSDAmount, _maxFeePercentage);
-            vars.netDebt = vars.netDebt.add(vars.ZUSDFee);
+            vars.ZSUSDFee = _triggerBorrowingFee(contractsCache.troveManager, contractsCache.zsusdToken, _ZSUSDAmount, _maxFeePercentage);
+            vars.netDebt = vars.netDebt.add(vars.ZSUSDFee);
         }
         _requireAtLeastMinNetDebt(vars.netDebt);
 
-        // ICR is based on the composite debt, i.e. the requested ZUSD amount + ZUSD borrowing fee + ZUSD gas comp.
+        // ICR is based on the composite debt, i.e. the requested ZSUSD amount + ZSUSD borrowing fee + ZSUSD gas comp.
         vars.compositeDebt = _getCompositeDebt(vars.netDebt);
         assert(vars.compositeDebt > 0);
         
@@ -216,14 +216,14 @@ contract BorrowerOperations is LiquityBase, BorrowerOperationsStorage, CheckCont
         vars.arrayIndex = contractsCache.troveManager.addTroveOwnerToArray(_sender);
         emit TroveCreated(_sender, vars.arrayIndex);
 
-        // Move the SOV to the Active Pool, and mint the ZUSDAmount to the borrower
+        // Move the SOV to the Active Pool, and mint the ZSUSDAmount to the borrower
         _activePoolAddColl(_sender, contractsCache.activePool, value);
-        _withdrawZUSD(contractsCache.activePool, contractsCache.zusdToken, _tokensRecipient, _ZUSDAmount, vars.netDebt);
-        // Move the ZUSD gas compensation to the Gas Pool
-        _withdrawZUSD(contractsCache.activePool, contractsCache.zusdToken, gasPoolAddress, ZUSD_GAS_COMPENSATION, ZUSD_GAS_COMPENSATION);
+        _withdrawZSUSD(contractsCache.activePool, contractsCache.zsusdToken, _tokensRecipient, _ZSUSDAmount, vars.netDebt);
+        // Move the ZSUSD gas compensation to the Gas Pool
+        _withdrawZSUSD(contractsCache.activePool, contractsCache.zsusdToken, gasPoolAddress, ZSUSD_GAS_COMPENSATION, ZSUSD_GAS_COMPENSATION);
 
         emit TroveUpdated(_sender, vars.compositeDebt, value, vars.stake, BorrowerOperation.openTrove);
-        emit ZUSDBorrowingFeePaid(_sender, vars.ZUSDFee);
+        emit ZSUSDBorrowingFeePaid(_sender, vars.ZSUSDFee);
     }
 
     /// Send SOV as collateral to a trove
@@ -246,22 +246,22 @@ contract BorrowerOperations is LiquityBase, BorrowerOperationsStorage, CheckCont
         _adjustTrove(msg.sender, _collWithdrawal, 0, false, _upperHint, _lowerHint, 0, 0);
     }
 
-    /// Withdraw ZUSD tokens from a trove: mint new ZUSD tokens to the owner, and increase the trove's debt accordingly
-    function withdrawZUSD(uint _maxFeePercentage, uint _ZUSDAmount, address _upperHint, address _lowerHint) external override {
-        _adjustTrove(msg.sender, 0, _ZUSDAmount, true, _upperHint, _lowerHint, _maxFeePercentage, 0);
+    /// Withdraw ZSUSD tokens from a trove: mint new ZSUSD tokens to the owner, and increase the trove's debt accordingly
+    function withdrawZSUSD(uint _maxFeePercentage, uint _ZSUSDAmount, address _upperHint, address _lowerHint) external override {
+        _adjustTrove(msg.sender, 0, _ZSUSDAmount, true, _upperHint, _lowerHint, _maxFeePercentage, 0);
     }
 
-    /// Repay ZUSD tokens to a Trove: Burn the repaid ZUSD tokens, and reduce the trove's debt accordingly
-    function repayZUSD(uint _ZUSDAmount, address _upperHint, address _lowerHint) external override {
-        _adjustTrove(msg.sender, 0, _ZUSDAmount, false, _upperHint, _lowerHint, 0, 0);
+    /// Repay ZSUSD tokens to a Trove: Burn the repaid ZSUSD tokens, and reduce the trove's debt accordingly
+    function repayZSUSD(uint _ZSUSDAmount, address _upperHint, address _lowerHint) external override {
+        _adjustTrove(msg.sender, 0, _ZSUSDAmount, false, _upperHint, _lowerHint, 0, 0);
     }
 
-    function adjustTrove(uint _maxFeePercentage, uint _collWithdrawal, uint _ZUSDChange, bool _isDebtIncrease, address _upperHint, address _lowerHint, uint _amount) external override {
-        _adjustTrove(msg.sender, _collWithdrawal, _ZUSDChange, _isDebtIncrease, _upperHint, _lowerHint, _maxFeePercentage, _amount);
+    function adjustTrove(uint _maxFeePercentage, uint _collWithdrawal, uint _ZSUSDChange, bool _isDebtIncrease, address _upperHint, address _lowerHint, uint _amount) external override {
+        _adjustTrove(msg.sender, _collWithdrawal, _ZSUSDChange, _isDebtIncrease, _upperHint, _lowerHint, _maxFeePercentage, _amount);
     }
 
-    function _adjustTrove(address _borrower, uint _collWithdrawal, uint _ZUSDChange, bool _isDebtIncrease, address _upperHint, address _lowerHint, uint _maxFeePercentage, uint _amount) internal {
-        _adjustSenderTrove(_borrower, _collWithdrawal, _ZUSDChange, _isDebtIncrease, _upperHint, _lowerHint, _maxFeePercentage, msg.sender, _amount, msg.sender);
+    function _adjustTrove(address _borrower, uint _collWithdrawal, uint _ZSUSDChange, bool _isDebtIncrease, address _upperHint, address _lowerHint, uint _maxFeePercentage, uint _amount) internal {
+        _adjustSenderTrove(_borrower, _collWithdrawal, _ZSUSDChange, _isDebtIncrease, _upperHint, _lowerHint, _maxFeePercentage, msg.sender, _amount, msg.sender);
     }
 
     /**
@@ -271,8 +271,8 @@ contract BorrowerOperations is LiquityBase, BorrowerOperationsStorage, CheckCont
     *
     * If both are positive, it will revert.
     */
-    function _adjustSenderTrove(address _borrower, uint _collWithdrawal, uint _ZUSDChange, bool _isDebtIncrease, address _upperHint, address _lowerHint, uint _maxFeePercentage, address _sender, uint256 _value, address _tokensRecipient) internal {
-        ContractsCache memory contractsCache = ContractsCache(troveManager, activePool, zusdToken);
+    function _adjustSenderTrove(address _borrower, uint _collWithdrawal, uint _ZSUSDChange, bool _isDebtIncrease, address _upperHint, address _lowerHint, uint _maxFeePercentage, address _sender, uint256 _value, address _tokensRecipient) internal {
+        ContractsCache memory contractsCache = ContractsCache(troveManager, activePool, zsusdToken);
         LocalVariables_adjustTrove memory vars;
 
         vars.price = priceFeed.fetchPrice();
@@ -280,26 +280,26 @@ contract BorrowerOperations is LiquityBase, BorrowerOperationsStorage, CheckCont
 
         if (_isDebtIncrease) {
             _requireValidMaxFeePercentage(_maxFeePercentage, vars.isRecoveryMode);
-            _requireNonZeroDebtChange(_ZUSDChange);
+            _requireNonZeroDebtChange(_ZSUSDChange);
         }
         _requireSingularCollChange(_value, _collWithdrawal);
-        _requireNonZeroAdjustment(_value, _collWithdrawal, _ZUSDChange);
+        _requireNonZeroAdjustment(_value, _collWithdrawal, _ZSUSDChange);
         _requireTroveisActive(contractsCache.troveManager, _borrower);
 
         // Confirm the operation is either a borrower adjusting their own trove, or a pure SOV transfer from the Stability Pool to a trove
-        assert(_sender == _borrower || (_sender == stabilityPoolAddress && _value > 0 && _ZUSDChange == 0));
+        assert(_sender == _borrower || (_sender == stabilityPoolAddress && _value > 0 && _ZSUSDChange == 0));
 
         contractsCache.troveManager.applyPendingRewards(_borrower);
 
         // Get the collChange based on whether or not SOV was sent in the transaction
         (vars.collChange, vars.isCollIncrease) = _getCollChange(_value, _collWithdrawal);
 
-        vars.netDebtChange = _ZUSDChange;
+        vars.netDebtChange = _ZSUSDChange;
 
         // If the adjustment incorporates a debt increase and system is in Normal Mode, then trigger a borrowing fee
         if (_isDebtIncrease && !vars.isRecoveryMode) { 
-            vars.ZUSDFee = _triggerBorrowingFee(contractsCache.troveManager, contractsCache.zusdToken, _ZUSDChange, _maxFeePercentage);
-            vars.netDebtChange = vars.netDebtChange.add(vars.ZUSDFee); // The raw debt change includes the fee
+            vars.ZSUSDFee = _triggerBorrowingFee(contractsCache.troveManager, contractsCache.zsusdToken, _ZSUSDChange, _maxFeePercentage);
+            vars.netDebtChange = vars.netDebtChange.add(vars.ZSUSDFee); // The raw debt change includes the fee
         }
 
         vars.debt = contractsCache.troveManager.getTroveDebt(_borrower);
@@ -313,11 +313,11 @@ contract BorrowerOperations is LiquityBase, BorrowerOperationsStorage, CheckCont
         // Check the adjustment satisfies all conditions for the current system mode
         _requireValidAdjustmentInCurrentMode(vars.isRecoveryMode, _collWithdrawal, _isDebtIncrease, vars);
             
-        // When the adjustment is a debt repayment, check it's a valid amount and that the caller has enough ZUSD
-        if (!_isDebtIncrease && _ZUSDChange > 0) {
+        // When the adjustment is a debt repayment, check it's a valid amount and that the caller has enough ZSUSD
+        if (!_isDebtIncrease && _ZSUSDChange > 0) {
             _requireAtLeastMinNetDebt(_getNetDebt(vars.debt).sub(vars.netDebtChange));
-            _requireValidZUSDRepayment(vars.debt, vars.netDebtChange);
-            _requireSufficientZUSDBalance(contractsCache.zusdToken, _borrower, vars.netDebtChange);
+            _requireValidZSUSDRepayment(vars.debt, vars.netDebtChange);
+            _requireSufficientZSUSDBalance(contractsCache.zsusdToken, _borrower, vars.netDebtChange);
         }
 
         (vars.newColl, vars.newDebt) = _updateTroveFromAdjustment(contractsCache.troveManager, _borrower, vars.collChange, vars.isCollIncrease, vars.netDebtChange, _isDebtIncrease);
@@ -328,16 +328,16 @@ contract BorrowerOperations is LiquityBase, BorrowerOperationsStorage, CheckCont
         sortedTroves.reInsert(_borrower, vars.newNICR, _upperHint, _lowerHint);
 
         emit TroveUpdated(_borrower, vars.newDebt, vars.newColl, vars.stake, BorrowerOperation.adjustTrove);
-        emit ZUSDBorrowingFeePaid(_sender,  vars.ZUSDFee);
+        emit ZSUSDBorrowingFeePaid(_sender,  vars.ZSUSDFee);
 
-        // Use the unmodified _ZUSDChange here, as we don't send the fee to the user
+        // Use the unmodified _ZSUSDChange here, as we don't send the fee to the user
         _moveTokensAndSOVfromAdjustment(
             contractsCache.activePool,
-            contractsCache.zusdToken,
+            contractsCache.zsusdToken,
             _sender,
             vars.collChange,
             vars.isCollIncrease,
-            _ZUSDChange,
+            _ZSUSDChange,
             _isDebtIncrease,
             vars.netDebtChange,
             _tokensRecipient
@@ -351,7 +351,7 @@ contract BorrowerOperations is LiquityBase, BorrowerOperationsStorage, CheckCont
     function _closeTrove() internal {
         ITroveManager troveManagerCached = troveManager;
         IActivePool activePoolCached = activePool;
-        IZUSDToken zusdTokenCached = zusdToken;
+        IZSUSDToken zsusdTokenCached = zsusdToken;
 
         _requireTroveisActive(troveManagerCached, msg.sender);
         uint price = priceFeed.fetchPrice();
@@ -362,7 +362,7 @@ contract BorrowerOperations is LiquityBase, BorrowerOperationsStorage, CheckCont
         uint coll = troveManagerCached.getTroveColl(msg.sender);
         uint debt = troveManagerCached.getTroveDebt(msg.sender);
 
-        _requireSufficientZUSDBalance(zusdTokenCached, msg.sender, debt.sub(ZUSD_GAS_COMPENSATION));
+        _requireSufficientZSUSDBalance(zsusdTokenCached, msg.sender, debt.sub(ZSUSD_GAS_COMPENSATION));
 
         uint newTCR = _getNewTCRFromTroveChange(coll, false, debt, false, price);
         _requireNewTCRisAboveCCR(newTCR);
@@ -372,9 +372,9 @@ contract BorrowerOperations is LiquityBase, BorrowerOperationsStorage, CheckCont
 
         emit TroveUpdated(msg.sender, 0, 0, 0, BorrowerOperation.closeTrove);
 
-        // Burn the repaid ZUSD from the user's balance and the gas compensation from the Gas Pool
-        _repayZUSD(activePoolCached, zusdTokenCached, msg.sender, debt.sub(ZUSD_GAS_COMPENSATION));
-        _repayZUSD(activePoolCached, zusdTokenCached, gasPoolAddress, ZUSD_GAS_COMPENSATION);
+        // Burn the repaid ZSUSD from the user's balance and the gas compensation from the Gas Pool
+        _repayZSUSD(activePoolCached, zsusdTokenCached, msg.sender, debt.sub(ZSUSD_GAS_COMPENSATION));
+        _repayZSUSD(activePoolCached, zsusdTokenCached, gasPoolAddress, ZSUSD_GAS_COMPENSATION);
 
         // Send the collateral back to the user
         activePoolCached.sendSOV(msg.sender, coll);
@@ -390,15 +390,15 @@ contract BorrowerOperations is LiquityBase, BorrowerOperationsStorage, CheckCont
 
     // --- Helper functions ---
 
-    function _triggerBorrowingFee(ITroveManager _troveManager, IZUSDToken _zusdToken, uint _ZUSDAmount, uint _maxFeePercentage) internal returns (uint) {
+    function _triggerBorrowingFee(ITroveManager _troveManager, IZSUSDToken _zsusdToken, uint _ZSUSDAmount, uint _maxFeePercentage) internal returns (uint) {
         _troveManager.decayBaseRateFromBorrowing(); // decay the baseRate state variable
-        uint ZUSDFee = _troveManager.getBorrowingFee(_ZUSDAmount);
+        uint ZSUSDFee = _troveManager.getBorrowingFee(_ZSUSDAmount);
 
-        _requireUserAcceptsFee(ZUSDFee, _ZUSDAmount, _maxFeePercentage);
-        _zusdToken.mint(address(feeDistributor), ZUSDFee);
+        _requireUserAcceptsFee(ZSUSDFee, _ZSUSDAmount, _maxFeePercentage);
+        _zsusdToken.mint(address(feeDistributor), ZSUSDFee);
         feeDistributor.distributeFees();
 
-        return ZUSDFee;
+        return ZSUSDFee;
     }
 
     function _getUSDValue(uint _coll, uint _price) internal pure returns (uint) {
@@ -447,11 +447,11 @@ contract BorrowerOperations is LiquityBase, BorrowerOperationsStorage, CheckCont
     function _moveTokensAndSOVfromAdjustment
     (
         IActivePool _activePool,
-        IZUSDToken _zusdToken,
+        IZSUSDToken _zsusdToken,
         address _borrower,
         uint _collChange,
         bool _isCollIncrease,
-        uint _ZUSDChange,
+        uint _ZSUSDChange,
         bool _isDebtIncrease,
         uint _netDebtChange,
         address _tokensRecipient
@@ -459,9 +459,9 @@ contract BorrowerOperations is LiquityBase, BorrowerOperationsStorage, CheckCont
         internal
     {
         if (_isDebtIncrease) {
-            _withdrawZUSD(_activePool, _zusdToken, _tokensRecipient, _ZUSDChange, _netDebtChange);
+            _withdrawZSUSD(_activePool, _zsusdToken, _tokensRecipient, _ZSUSDChange, _netDebtChange);
         } else {
-            _repayZUSD(_activePool, _zusdToken, _borrower, _ZUSDChange);
+            _repayZSUSD(_activePool, _zsusdToken, _borrower, _ZSUSDChange);
         }
 
         if (_isCollIncrease) {
@@ -476,16 +476,16 @@ contract BorrowerOperations is LiquityBase, BorrowerOperationsStorage, CheckCont
         sovToken.transferFrom(_sender, address(_activePool), _amount);
     }
 
-    /// Issue the specified amount of ZUSD to _account and increases the total active debt (_netDebtIncrease potentially includes a ZUSDFee)
-    function _withdrawZUSD(IActivePool _activePool, IZUSDToken _zusdToken, address _account, uint _ZUSDAmount, uint _netDebtIncrease) internal {
-        _activePool.increaseZUSDDebt(_netDebtIncrease);
-        _zusdToken.mint(_account, _ZUSDAmount);
+    /// Issue the specified amount of ZSUSD to _account and increases the total active debt (_netDebtIncrease potentially includes a ZSUSDFee)
+    function _withdrawZSUSD(IActivePool _activePool, IZSUSDToken _zsusdToken, address _account, uint _ZSUSDAmount, uint _netDebtIncrease) internal {
+        _activePool.increaseZSUSDDebt(_netDebtIncrease);
+        _zsusdToken.mint(_account, _ZSUSDAmount);
     }
 
-    /// Burn the specified amount of ZUSD from _account and decreases the total active debt
-    function _repayZUSD(IActivePool _activePool, IZUSDToken _zusdToken, address _account, uint _ZUSD) internal {
-        _activePool.decreaseZUSDDebt(_ZUSD);
-        _zusdToken.burn(_account, _ZUSD);
+    /// Burn the specified amount of ZSUSD from _account and decreases the total active debt
+    function _repayZSUSD(IActivePool _activePool, IZSUSDToken _zsusdToken, address _account, uint _ZSUSD) internal {
+        _activePool.decreaseZSUSDDebt(_ZSUSD);
+        _zsusdToken.burn(_account, _ZSUSD);
     }
 
     // --- 'Require' wrapper functions ---
@@ -498,8 +498,8 @@ contract BorrowerOperations is LiquityBase, BorrowerOperationsStorage, CheckCont
         require(msg.sender == _borrower, "BorrowerOps: Caller must be the borrower for a withdrawal");
     }
 
-    function _requireNonZeroAdjustment(uint _amount, uint _collWithdrawal, uint _ZUSDChange) internal view {
-        require(_amount!= 0 || _collWithdrawal != 0 || _ZUSDChange != 0, "BorrowerOps: There must be either a collateral change or a debt change");
+    function _requireNonZeroAdjustment(uint _amount, uint _collWithdrawal, uint _ZSUSDChange) internal view {
+        require(_amount!= 0 || _collWithdrawal != 0 || _ZSUSDChange != 0, "BorrowerOps: There must be either a collateral change or a debt change");
     }
 
     function _requireTroveisActive(ITroveManager _troveManager, address _borrower) internal view {
@@ -512,8 +512,8 @@ contract BorrowerOperations is LiquityBase, BorrowerOperationsStorage, CheckCont
         require(status != 1, "BorrowerOps: Trove is active");
     }
 
-    function _requireNonZeroDebtChange(uint _ZUSDChange) internal pure {
-        require(_ZUSDChange > 0, "BorrowerOps: Debt increase requires non-zero debtChange");
+    function _requireNonZeroDebtChange(uint _ZSUSDChange) internal pure {
+        require(_ZSUSDChange > 0, "BorrowerOps: Debt increase requires non-zero debtChange");
     }
    
     function _requireNotInRecoveryMode(uint _price) internal view {
@@ -580,16 +580,16 @@ contract BorrowerOperations is LiquityBase, BorrowerOperationsStorage, CheckCont
         require (_netDebt >= MIN_NET_DEBT, "BorrowerOps: Trove's net debt must be greater than minimum");
     }
 
-    function _requireValidZUSDRepayment(uint _currentDebt, uint _debtRepayment) internal pure {
-        require(_debtRepayment <= _currentDebt.sub(ZUSD_GAS_COMPENSATION), "BorrowerOps: Amount repaid must not be larger than the Trove's debt");
+    function _requireValidZSUSDRepayment(uint _currentDebt, uint _debtRepayment) internal pure {
+        require(_debtRepayment <= _currentDebt.sub(ZSUSD_GAS_COMPENSATION), "BorrowerOps: Amount repaid must not be larger than the Trove's debt");
     }
 
     function _requireCallerIsStabilityPool() internal view {
         require(msg.sender == stabilityPoolAddress, "BorrowerOps: Caller is not Stability Pool");
     }
 
-     function _requireSufficientZUSDBalance(IZUSDToken _zusdToken, address _borrower, uint _debtRepayment) internal view {
-        require(_zusdToken.balanceOf(_borrower) >= _debtRepayment, "BorrowerOps: Caller doesnt have enough ZUSD to make repayment");
+     function _requireSufficientZSUSDBalance(IZSUSDToken _zsusdToken, address _borrower, uint _debtRepayment) internal view {
+        require(_zsusdToken.balanceOf(_borrower) >= _debtRepayment, "BorrowerOps: Caller doesnt have enough ZSUSD to make repayment");
     }
 
     function _requireValidMaxFeePercentage(uint _maxFeePercentage, bool _isRecoveryMode) internal view {

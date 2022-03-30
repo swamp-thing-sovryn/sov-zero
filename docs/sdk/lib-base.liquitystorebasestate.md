@@ -31,6 +31,6 @@ export interface LiquityStoreBaseState
 |  [troveBeforeRedistribution](./lib-base.liquitystorebasestate.trovebeforeredistribution.md) | [TroveWithPendingRedistribution](./lib-base.trovewithpendingredistribution.md) | User's Trove in its state after the last direct modification. |
 |  [zeroBalance](./lib-base.liquitystorebasestate.zerobalance.md) | [Decimal](./lib-base.decimal.md) | User's ZERO token balance. |
 |  [zeroStake](./lib-base.liquitystorebasestate.zerostake.md) | [ZEROStake](./lib-base.zerostake.md) | User's ZERO stake. |
-|  [zusdBalance](./lib-base.liquitystorebasestate.zusdbalance.md) | [Decimal](./lib-base.decimal.md) | User's ZUSD token balance. |
-|  [zusdInStabilityPool](./lib-base.liquitystorebasestate.zusdinstabilitypool.md) | [Decimal](./lib-base.decimal.md) | Total amount of ZUSD currently deposited in the Stability Pool. |
+|  [zsusdBalance](./lib-base.liquitystorebasestate.zsusdbalance.md) | [Decimal](./lib-base.decimal.md) | User's ZSUSD token balance. |
+|  [zsusdInStabilityPool](./lib-base.liquitystorebasestate.zsusdinstabilitypool.md) | [Decimal](./lib-base.decimal.md) | Total amount of ZSUSD currently deposited in the Stability Pool. |
 

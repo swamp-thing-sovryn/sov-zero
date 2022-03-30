@@ -25,8 +25,8 @@ export interface LiquityStoreBaseState {
   /** User's native currency balance (e.g. Ether). */
   accountBalance: Decimal;
 
-  /** User's ZUSD token balance. */
-  zusdBalance: Decimal;
+  /** User's ZSUSD token balance. */
+  zsusdBalance: Decimal;
 
   /** User's NUE token balance. */
   nueBalance: Decimal;
@@ -46,8 +46,8 @@ export interface LiquityStoreBaseState {
   /** Current price of the native currency (e.g. Ether) in USD. */
   price: Decimal;
 
-  /** Total amount of ZUSD currently deposited in the Stability Pool. */
-  zusdInStabilityPool: Decimal;
+  /** Total amount of ZSUSD currently deposited in the Stability Pool. */
+  zsusdInStabilityPool: Decimal;
 
   /** Total collateral and debt in the Liquity system. */
   total: Trove;
@@ -115,7 +115,7 @@ export interface LiquityStoreDerivedState {
    * Current redemption rate.
    *
    * @remarks
-   * Note that the actual rate paid by a redemption transaction will depend on the amount of ZUSD
+   * Note that the actual rate paid by a redemption transaction will depend on the amount of ZSUSD
    * being redeemed.
    *
    * Use {@link Fees.redemptionRate} to calculate a precise redemption rate.
@@ -337,11 +337,11 @@ export abstract class LiquityStore<T = unknown> {
         baseStateUpdate.accountBalance
       ),
 
-      zusdBalance: this._updateIfChanged(
+      zsusdBalance: this._updateIfChanged(
         eq,
-        "zusdBalance",
-        baseState.zusdBalance,
-        baseStateUpdate.zusdBalance
+        "zsusdBalance",
+        baseState.zsusdBalance,
+        baseStateUpdate.zsusdBalance
       ),
 
       nueBalance: this._updateIfChanged(
@@ -367,11 +367,11 @@ export abstract class LiquityStore<T = unknown> {
 
       price: this._updateIfChanged(eq, "price", baseState.price, baseStateUpdate.price),
 
-      zusdInStabilityPool: this._updateIfChanged(
+      zsusdInStabilityPool: this._updateIfChanged(
         eq,
-        "zusdInStabilityPool",
-        baseState.zusdInStabilityPool,
-        baseStateUpdate.zusdInStabilityPool
+        "zsusdInStabilityPool",
+        baseState.zsusdInStabilityPool,
+        baseStateUpdate.zsusdInStabilityPool
       ),
 
       total: this._updateIfChanged(equals, "total", baseState.total, baseStateUpdate.total),

@@ -2,7 +2,7 @@ const deploymentHelper = require("../utils/deploymentHelpers.js")
 const testHelpers = require("../utils/testHelpers.js")
 const timeMachine = require('ganache-time-traveler');
 const TroveManagerTester = artifacts.require("./TroveManagerTester.sol")
-const ZUSDTokenTester = artifacts.require("./ZUSDTokenTester.sol")
+const ZSUSDTokenTester = artifacts.require("./ZSUSDTokenTester.sol")
 
 const th = testHelpers.TestHelper
 const dec = th.dec
@@ -27,7 +27,7 @@ contract('TroveManager', async accounts => {
   const multisig = accounts[999];
 
   let priceFeed
-  let zusdToken
+  let zsusdToken
   let sortedTroves
   let troveManager
   let activePool
@@ -41,7 +41,7 @@ contract('TroveManager', async accounts => {
 
   let sovToken
 
-  const getOpenTroveZUSDAmount = async (totalDebt) => th.getOpenTroveZUSDAmount(contracts, totalDebt)
+  const getOpenTroveZSUSDAmount = async (totalDebt) => th.getOpenTroveZSUSDAmount(contracts, totalDebt)
  
   const getSnapshotsRatio = async () => {
     const ratio = (await troveManager.totalStakesSnapshot())
@@ -54,7 +54,7 @@ contract('TroveManager', async accounts => {
   before(async () => {
     contracts = await deploymentHelper.deployLiquityCore()
     contracts.troveManager = await TroveManagerTester.new()
-    contracts.zusdToken = await ZUSDTokenTester.new(
+    contracts.zsusdToken = await ZSUSDTokenTester.new(
       contracts.troveManager.address,
       contracts.stabilityPool.address,
       contracts.borrowerOperations.address
@@ -62,7 +62,7 @@ contract('TroveManager', async accounts => {
     const ZEROContracts = await deploymentHelper.deployZEROContracts(multisig)
 
     priceFeed = contracts.priceFeedTestnet
-    zusdToken = contracts.zusdToken
+    zsusdToken = contracts.zsusdToken
     sortedTroves = contracts.sortedTroves
     troveManager = contracts.troveManager
     activePool = contracts.activePool
@@ -102,25 +102,25 @@ contract('TroveManager', async accounts => {
   
     // Make 1 mega troves A at ~50% total collateral
     await sovToken.approve(borrowerOperations.address, dec(2,29), { from: A })
-    await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(1, 31)), ZERO_ADDRESS, ZERO_ADDRESS, dec(2, 29), { from: A })
+    await borrowerOperations.openTrove(th._100pct, await getOpenTroveZSUSDAmount(dec(1, 31)), ZERO_ADDRESS, ZERO_ADDRESS, dec(2, 29), { from: A })
     
     // Make 5 large troves B, C, D, E, F at ~10% total collateral
     await sovToken.approve(borrowerOperations.address, dec(4,28), { from: B })
-    await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: B })
+    await borrowerOperations.openTrove(th._100pct, await getOpenTroveZSUSDAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: B })
     await sovToken.approve(borrowerOperations.address, dec(4,28), { from: C })
-    await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: C })
+    await borrowerOperations.openTrove(th._100pct, await getOpenTroveZSUSDAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: C })
     await sovToken.approve(borrowerOperations.address, dec(4,28), { from: D })
-    await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: D })
+    await borrowerOperations.openTrove(th._100pct, await getOpenTroveZSUSDAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: D })
     await sovToken.approve(borrowerOperations.address, dec(4,28), { from: E })
-    await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: E })
+    await borrowerOperations.openTrove(th._100pct, await getOpenTroveZSUSDAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: E })
     await sovToken.approve(borrowerOperations.address, dec(4,28), { from: F })
-    await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: F })
+    await borrowerOperations.openTrove(th._100pct, await getOpenTroveZSUSDAmount(dec(2, 30)), ZERO_ADDRESS, ZERO_ADDRESS, dec(4, 28), { from: F })
   
     // Make 10 tiny troves at relatively negligible collateral (~1e-9 of total)
     const tinyTroves = accounts.slice(10, 20)
     for (account of tinyTroves) {
       await sovToken.approve(borrowerOperations.address, dec(2,20), { from: account })
-      await borrowerOperations.openTrove(th._100pct, await getOpenTroveZUSDAmount(dec(1, 22)), ZERO_ADDRESS, ZERO_ADDRESS, dec(2, 20), { from: account })
+      await borrowerOperations.openTrove(th._100pct, await getOpenTroveZSUSDAmount(dec(1, 22)), ZERO_ADDRESS, ZERO_ADDRESS, dec(2, 20), { from: account })
     }
 
     // liquidate 1 trove at ~50% total system collateral

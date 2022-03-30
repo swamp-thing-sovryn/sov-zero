@@ -4,7 +4,7 @@
 
 ## ReadableLiquity.getNUEBalance() method
 
-Get the amount of ZUSD held by an address.
+Get the amount of ZSUSD held by an address.
 
 <b>Signature:</b>
 

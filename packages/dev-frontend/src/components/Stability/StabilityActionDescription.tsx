@@ -19,11 +19,11 @@ export const StabilityActionDescription: React.FC<StabilityActionDescriptionProp
 
   return (
     <ActionDescription>
-      {change.depositZUSD ? (
+      {change.depositZSUSD ? (
         <>
           You are depositing{" "}
           <Amount>
-            {change.depositZUSD.prettify()} {COIN}
+            {change.depositZSUSD.prettify()} {COIN}
           </Amount>{" "}
           in the Stability Pool
         </>
@@ -31,7 +31,7 @@ export const StabilityActionDescription: React.FC<StabilityActionDescriptionProp
         <>
           You are withdrawing{" "}
           <Amount>
-            {change.withdrawZUSD.prettify()} {COIN}
+            {change.withdrawZSUSD.prettify()} {COIN}
           </Amount>{" "}
           to your wallet
         </>

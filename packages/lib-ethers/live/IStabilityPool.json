@@ -631,7 +631,7 @@
         },
         {
           "internalType": "address",
-          "name": "_zusdTokenAddress",
+          "name": "_zsusdTokenAddress",
           "type": "address"
         },
         {

@@ -24,10 +24,10 @@ export interface ObservableLiquity {
     address?: string
   ): () => void;
 
-  watchZUSDInStabilityPool(
-    onZUSDInStabilityPoolChanged: (zusdInStabilityPool: Decimal) => void
+  watchZSUSDInStabilityPool(
+    onZSUSDInStabilityPoolChanged: (zsusdInStabilityPool: Decimal) => void
   ): () => void;
 
-  watchZUSDBalance(onZUSDBalanceChanged: (balance: Decimal) => void, address?: string): () => void;
+  watchZSUSDBalance(onZSUSDBalanceChanged: (balance: Decimal) => void, address?: string): () => void;
   watchNUEBalance(onNUEBalanceChanged: (balance: Decimal) => void, address?: string): () => void;
 }
