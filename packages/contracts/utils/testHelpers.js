@@ -718,50 +718,6 @@ class TestHelper {
     }, params) 
   }
 
-  static async openNueTrove(contracts, {
-    maxFeePercentage,
-    extraZUSDAmount,
-    upperHint,
-    lowerHint,
-    ICR,
-    extraParams
-  }) {
-    let value = extraParams.value
-    if (!maxFeePercentage) maxFeePercentage = this._100pct
-    if (!extraZUSDAmount) extraZUSDAmount = this.toBN(0)
-    else if (typeof extraZUSDAmount == 'string') extraZUSDAmount = this.toBN(extraZUSDAmount)
-    if (!upperHint) upperHint = this.ZERO_ADDRESS
-    if (!lowerHint) lowerHint = this.ZERO_ADDRESS
-
-    const MIN_DEBT = (
-      await this.getNetBorrowingAmount(contracts, await contracts.borrowerOperations.MIN_NET_DEBT())
-    ).add(this.toBN(1)) // add 1 to avoid rounding issues
-    const zusdAmount = MIN_DEBT.add(extraZUSDAmount)
-
-    if (!ICR && !extraParams.value) ICR = this.toBN(this.dec(15, 17)) // 150%
-    else if (typeof ICR == 'string') ICR = this.toBN(ICR)
-
-    const totalDebt = await this.getOpenTroveTotalDebt(contracts, zusdAmount)
-    const netDebt = await this.getActualDebtFromComposite(totalDebt, contracts)
-
-    if (ICR) {
-      const price = await contracts.priceFeedTestnet.getPrice()
-      value = ICR.mul(totalDebt).div(price)
-    }
-
-    await contracts.sovTokenTester.approve(contracts.borrowerOperations.address, value, {from: extraParams.from} )
-    const tx = await contracts.borrowerOperations.openNueTrove(maxFeePercentage, zusdAmount, upperHint, lowerHint, value, {from: extraParams.from} )
-
-    return {
-      zusdAmount,
-      netDebt,
-      totalDebt,
-      ICR,
-      collateral: value,
-      tx
-    }
-  }
-
   static async withdrawZUSD(contracts, {
     maxFeePercentage,
     zusdAmount,
